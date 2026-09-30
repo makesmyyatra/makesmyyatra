@@ -1,0 +1,43 @@
+{% extends 'custom_admin/base.html' %}
+{% block title %}Manage Stays | Makes My Yatra Admin{% endblock %}
+{% block page_title %}Hotel Directory{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-3xl border border-[#e2d9cc] shadow-sm overflow-hidden">
+  <div class="p-6 border-b border-[#e2d9cc] flex justify-between items-center">
+    <p class="text-sm font-bold text-[#0f2e24]">All Managed Stays</p>
+    <a href="{% url 'portal_hotel_add' %}" class="bg-[#0f2e24] text-white px-4 py-2 rounded-xl text-xs font-bold hover:opacity-90 transition flex items-center gap-1.5">
+      <i data-lucide="plus" class="h-4 w-4"></i> Add Stay
+    </a>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-xs">
+      <thead class="bg-[#faf8f5] text-[#0f2e24] font-bold border-b border-[#e2d9cc]">
+        <tr>
+          <th class="py-3.5 px-4">Hotel Name</th>
+          <th class="py-3.5 px-4">Location</th>
+          <th class="py-3.5 px-4">Rating</th>
+          <th class="py-3.5 px-4">Address</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-[#e2d9cc]">
+        {% for hotel in hotels %}
+        <tr class="hover:bg-[#faf8f5] transition">
+          <td class="py-3.5 px-4 font-semibold text-[#0f2e24]">{{ hotel.name }}</td>
+          <td class="py-3.5 px-4">{{ hotel.city }}, {{ hotel.state }}</td>
+          <td class="py-3.5 px-4">★ {{ hotel.star_rating }}.0</td>
+          <td class="py-3.5 px-4 text-[#64748b]">{{ hotel.address }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="py-8 text-center text-[#64748b]">
+            No properties added yet. Click "Add Stay" to register your first hotel.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

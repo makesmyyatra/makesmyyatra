@@ -1,0 +1,177 @@
+{% extends 'custom_admin/base.html' %}
+
+{% block title %}List New Property | MakesMyYatra Portal{% endblock %}
+{% block page_title %}Add New Stay / Hotel{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+
+  <!-- Flash Messages -->
+  {% if messages %}
+    <div class="space-y-2">
+      {% for message in messages %}
+        <div class="p-4 rounded-2xl text-xs font-bold {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% else %}bg-rose-50 text-rose-800 border border-rose-200{% endif %} flex items-center justify-between shadow-sm">
+          <span>{{ message }}</span>
+          <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">✕</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Main Form Card (enctype added for file upload) -->
+  <form action="{% url 'portal_hotel_add' %}" method="POST" enctype="multipart/form-data" class="space-y-6">
+    {% csrf_token %}
+
+    <!-- Section 1: Property Identity & Type -->
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-[#e2d9cc]/70 shadow-sm space-y-5">
+      <div class="border-b border-slate-100 pb-4">
+        <h3 class="text-base font-black text-[#0f2e24] flex items-center gap-2">
+          <i data-lucide="building-2" class="w-5 h-5 text-blue-600"></i> Property Identity
+        </h3>
+        <p class="text-xs text-slate-500 mt-0.5">Enter official registered property information.</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Property Name -->
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Property / Hotel Name *</label>
+          <input type="text" name="name" required placeholder="e.g. Pine View Heritage Resort & Spa" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+        </div>
+
+        <!-- Property Type -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Property Category</label>
+          <select name="property_type" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+            <option value="Hotel">Hotel</option>
+            <option value="Resort">Luxury Resort</option>
+            <option value="Homestay">Himachali Homestay</option>
+            <option value="OYO / Budget Stay">OYO / Budget Stay</option>
+            <option value="Cottage">Valley Cottage / Villa</option>
+          </select>
+        </div>
+
+        <!-- Star Rating -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Star Rating</label>
+          <select name="star_rating" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+            <option value="3">★★★☆☆ (3 Star Standard)</option>
+            <option value="4" selected>★★★★☆ (4 Star Premium)</option>
+            <option value="5">★★★★★ (5 Star Luxury)</option>
+            <option value="2">★★☆☆☆ (2 Star Budget)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Location & Base Tariff -->
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-[#e2d9cc]/70 shadow-sm space-y-5">
+      <div class="border-b border-slate-100 pb-4">
+        <h3 class="text-base font-black text-[#0f2e24] flex items-center gap-2">
+          <i data-lucide="map-pin" class="w-5 h-5 text-emerald-600"></i> Location & Base Pricing
+        </h3>
+        <p class="text-xs text-slate-500 mt-0.5">Specify destination district and starting tariff per night.</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- City / District Dropdown -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Destination / District *</label>
+          <select name="city" required class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+            <option value="Hamirpur">Hamirpur</option>
+            <option value="Una">Una</option>
+            <option value="Kangra">Kangra</option>
+            <option value="Dharamshala">Dharamshala</option>
+            <option value="Mandi">Mandi</option>
+            <option value="Solan">Solan</option>
+            <option value="Bilaspur">Bilaspur</option>
+            <option value="Shimla" selected>Shimla</option>
+            <option value="Manali">Manali</option>
+            <option value="Kullu">Kullu</option>
+            <option value="Kasol">Kasol</option>
+            <option value="Dalhousie">Dalhousie</option>
+            <option value="Chamba">Chamba</option>
+            <option value="Palampur">Palampur</option>
+          </select>
+        </div>
+
+        <!-- Starting Tariff -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Starting Tariff Per Night (₹) *</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-3 text-slate-400 font-bold text-xs">₹</span>
+            <input type="number" name="base_price" value="2499" required class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl pl-8 pr-4 py-3 text-xs font-black text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+          </div>
+        </div>
+
+        <!-- Detailed Address -->
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Detailed Address / Landmark *</label>
+          <textarea name="address" rows="2" required placeholder="e.g. Near Mall Road, The Ridge, Shimla, Himachal Pradesh - 171001" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl p-3.5 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Device Photo Upload & Real-Time Preview -->
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-[#e2d9cc]/70 shadow-sm space-y-5">
+      <div class="border-b border-slate-100 pb-4">
+        <h3 class="text-base font-black text-[#0f2e24] flex items-center gap-2">
+          <i data-lucide="image" class="w-5 h-5 text-indigo-600"></i> Property Cover Photo
+        </h3>
+        <p class="text-xs text-slate-500 mt-0.5">Upload a high-quality property photo directly from your device (phone/computer).</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 items-center">
+        <!-- File Input -->
+        <div class="sm:col-span-2 space-y-3">
+          <label class="block text-xs font-bold text-slate-700">Choose Image File</label>
+          <input type="file" 
+                 id="coverImageFileInput" 
+                 name="cover_image" 
+                 accept="image/*" 
+                 class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-medium text-slate-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer transition"
+                 onchange="previewDeviceImage(event)">
+          <p class="text-[11px] text-slate-400">Supported formats: JPG, PNG, WEBP. (Max: 5MB)</p>
+        </div>
+
+        <!-- Live Preview Thumbnail -->
+        <div>
+          <span class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Live Preview</span>
+          <div class="w-full h-32 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center relative shadow-inner">
+            <img id="imagePreview" 
+                 src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80" 
+                 alt="Preview" 
+                 class="w-full h-full object-cover">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit Action Buttons -->
+    <div class="flex items-center justify-end gap-3 pt-2">
+      <a href="{% url 'portal_hotels' %}" class="px-5 py-3 rounded-2xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+        Cancel
+      </a>
+      <button type="submit" class="bg-[#0f2e24] hover:bg-[#1a4a3a] text-white text-xs font-black uppercase tracking-wider px-8 py-3.5 rounded-2xl shadow-lg transition flex items-center gap-2">
+        <i data-lucide="plus-circle" class="w-4 h-4"></i> Save & Publish Stay
+      </button>
+    </div>
+
+  </form>
+
+</div>
+
+<script>
+  // Real-time Device Image Preview
+  function previewDeviceImage(event) {
+    const file = event.target.files[0];
+    const preview = document.getElementById('imagePreview');
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        preview.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+</script>
+{% endblock %}

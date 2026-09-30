@@ -1,0 +1,83 @@
+{% extends 'custom_admin/base.html' %}
+{% block title %}Dashboard | Makes My Yatra Admin{% endblock %}
+{% block page_title %}Operations Overview{% endblock %}
+
+{% block content %}
+<!-- Metric Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+  <div class="bg-white p-6 rounded-3xl border border-[#e2d9cc] shadow-sm flex items-center justify-between">
+    <div>
+      <p class="text-xs font-bold text-[#64748b] uppercase tracking-wider">Active Stays</p>
+      <h3 class="text-3xl font-serif font-bold text-[#0f2e24] mt-1">{{ total_hotels }}</h3>
+    </div>
+    <div class="h-12 w-12 rounded-2xl bg-[#f4efe6] flex items-center justify-center text-[#0f2e24]">
+      <i data-lucide="hotel" class="h-6 w-6"></i>
+    </div>
+  </div>
+
+  <div class="bg-white p-6 rounded-3xl border border-[#e2d9cc] shadow-sm flex items-center justify-between">
+    <div>
+      <p class="text-xs font-bold text-[#64748b] uppercase tracking-wider">Total Bookings</p>
+      <h3 class="text-3xl font-serif font-bold text-[#0f2e24] mt-1">{{ total_bookings }}</h3>
+    </div>
+    <div class="h-12 w-12 rounded-2xl bg-[#f4efe6] flex items-center justify-center text-[#0f2e24]">
+      <i data-lucide="calendar-check" class="h-6 w-6"></i>
+    </div>
+  </div>
+
+  <div class="bg-white p-6 rounded-3xl border border-[#e2d9cc] shadow-sm flex items-center justify-between">
+    <div>
+      <p class="text-xs font-bold text-[#64748b] uppercase tracking-wider">Pending Support Requests</p>
+      <h3 class="text-3xl font-serif font-bold text-[#0f2e24] mt-1">{{ total_supports }}</h3>
+    </div>
+    <div class="h-12 w-12 rounded-2xl bg-[#f4efe6] flex items-center justify-center text-[#0f2e24]">
+      <i data-lucide="phone-call" class="h-6 w-6"></i>
+    </div>
+  </div>
+</div>
+
+<!-- Two-column Tables -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+  <!-- Recent Properties -->
+  <div class="bg-white p-6 rounded-3xl border border-[#e2d9cc] shadow-sm">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-serif text-lg font-bold text-[#0f2e24]">Recently Added Hotels</h3>
+      <a href="{% url 'portal_hotels' %}" class="text-xs font-bold text-[#0f2e24] hover:underline">View All →</a>
+    </div>
+    <div class="divide-y divide-[#e2d9cc]">
+      {% for hotel in hotels %}
+      <div class="py-3 flex justify-between items-center text-sm">
+        <div>
+          <p class="font-bold text-[#0f2e24]">{{ hotel.name }}</p>
+          <p class="text-xs text-[#64748b]">{{ hotel.city }}, {{ hotel.state }}</p>
+        </div>
+        <span class="text-xs bg-[#f4efe6] text-[#0f2e24] px-2.5 py-1 rounded-full font-bold">★ {{ hotel.star_rating }}.0</span>
+      </div>
+      {% empty %}
+      <p class="text-xs text-[#64748b] py-4 text-center">No properties on record.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Recent Queries -->
+  <div class="bg-white p-6 rounded-3xl border border-[#e2d9cc] shadow-sm">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-serif text-lg font-bold text-[#0f2e24]">Urgent Help Logs</h3>
+      <a href="{% url 'portal_urgent_help' %}" class="text-xs font-bold text-red-600 hover:underline">Open Desk →</a>
+    </div>
+    <div class="space-y-3">
+      {% for item in supports %}
+      <div class="p-3 rounded-2xl bg-[#faf8f5] border border-[#e2d9cc] text-xs">
+        <div class="flex justify-between items-center font-bold text-[#0f2e24]">
+          <span>{{ item.name }} ({{ item.phone }})</span>
+          <span class="text-[10px] font-normal text-[#64748b]">{{ item.created_at|timesince }} ago</span>
+        </div>
+        <p class="text-[#64748b] mt-1">{{ item.message|truncatewords:15 }}</p>
+      </div>
+      {% empty %}
+      <p class="text-xs text-[#64748b] py-4 text-center">No active urgent messages.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

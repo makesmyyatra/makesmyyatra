@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}MakeMyYatra Operations Desk{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-[#faf8f5] text-[#1a2e22] antialiased">
+  <div class="min-h-screen flex flex-col md:flex-row">
+    <!-- Sidebar -->
+    <aside class="w-full md:w-64 bg-[#0f2e24] text-white flex-shrink-0">
+      <div class="p-6 border-b border-white/10">
+        <h1 class="font-serif text-xl font-bold tracking-wider text-[#c5a880]">MAKES MY YATRA</h1>
+        <p class="text-xs text-white/60 mt-1">Operations Portal</p>
+      </div>
+
+      <nav class="p-4 space-y-1 text-sm font-medium">
+        <a href="{% url 'portal_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition hover:bg-white/10 text-white/90">
+          <i data-lucide="layout-dashboard" class="h-4 w-4 text-[#c5a880]"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="{% url 'portal_hotels' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition hover:bg-white/10 text-white/90">
+          <i data-lucide="hotel" class="h-4 w-4 text-[#c5a880]"></i>
+          <span>All Stays</span>
+        </a>
+        <a href="{% url 'portal_hotel_add' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition hover:bg-white/10 text-white/90">
+          <i data-lucide="plus-circle" class="h-4 w-4 text-[#c5a880]"></i>
+          <span>Add New Stay</span>
+        </a>
+        <a href="{% url 'portal_bookings' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition hover:bg-white/10 text-white/90">
+          <i data-lucide="calendar-check" class="h-4 w-4 text-[#c5a880]"></i>
+          <span>Bookings</span>
+        </a>
+        <a href="{% url 'portal_urgent_help' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition hover:bg-white/10 text-white/90">
+          <i data-lucide="phone-call" class="h-4 w-4 text-red-400"></i>
+          <span>Urgent Desk</span>
+        </a>
+      </nav>
+
+      <div class="p-4 mt-auto border-t border-white/10">
+        <div class="text-xs text-white/70 mb-3 px-2">
+          Signed in as: <strong class="text-white">{{ request.user.username }}</strong>
+        </div>
+        <a href="{% url 'portal_logout' %}" class="block text-center rounded-xl bg-white/10 hover:bg-white/20 py-2.5 text-xs font-bold text-white transition">
+          Sign Out
+        </a>
+        <a href="{% url 'index' %}" class="block text-center mt-2 text-xs text-[#c5a880] hover:underline">
+          Visit Live Website →
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-6 md:p-10 overflow-y-auto">
+      <div class="max-w-6xl mx-auto">
+        <header class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#e2d9cc] pb-6">
+          <div>
+            <h2 class="font-serif text-2xl font-bold text-[#0f2e24]">{% block page_title %}Dashboard{% endblock %}</h2>
+            <p class="text-xs text-[#64748b] mt-1">MakesMyYatra Operations & Fleet Management</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <a href="{% url 'portal_hotel_add' %}" class="inline-flex items-center gap-2 rounded-xl bg-[#0f2e24] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#164234] transition">
+              <i data-lucide="plus" class="h-3.5 w-3.5"></i> Add Property
+            </a>
+          </div>
+        </header>
+
+        {% if messages %}
+          <div class="mb-6 space-y-2">
+            {% for message in messages %}
+              <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-800 flex items-center gap-2">
+                <i data-lucide="check-circle" class="h-4 w-4"></i>
+                <span>{{ message }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+      </div>
+    </main>
+  </div>
+
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

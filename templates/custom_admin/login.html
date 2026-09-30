@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Portal Login | MAKES MY YATRA</title>
+    <style>
+        :root {
+            --primary: #0f2e24;
+            --primary-light: #164234;
+            --accent: #c5a880;
+            --sand: #f4efe6;
+            --background: #faf8f5;
+            --card: #ffffff;
+            --border: #e2d9cc;
+            --text-dark: #1a2e22;
+            --muted: #64748b;
+            --danger-bg: #fef2f2;
+            --danger-border: #fecaca;
+            --danger-text: #991b1b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .login-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 440px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(15, 46, 36, 0.06);
+        }
+
+        .brand-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .brand-title {
+            font-family: Georgia, serif;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            color: var(--primary);
+        }
+
+        .brand-badge {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            background: rgba(197, 168, 128, 0.15);
+            padding: 4px 12px;
+            border-radius: 9999px;
+        }
+
+        .brand-desc {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .alert-error {
+            background: var(--danger-bg);
+            border: 1px solid var(--danger-border);
+            color: var(--danger-text);
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--background);
+            color: var(--text-dark);
+            font-size: 14px;
+            font-weight: 500;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(15, 46, 36, 0.12);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px 20px;
+            border-radius: 14px;
+            background: var(--primary);
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.15s ease, background-color 0.15s ease;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-light);
+            transform: translateY(-1px);
+        }
+
+        .footer-note {
+            margin-top: 24px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .footer-note a {
+            color: var(--primary);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .footer-note a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="brand-header">
+            <h1 class="brand-title">MAKES MY YATRA</h1>
+            <span class="brand-badge">Una Operations Desk</span>
+            <p class="brand-desc">Authorized Concierge & Admin Access</p>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert-error">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST" action="{% url 'portal_login' %}">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label" for="username">Username</label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    name="username" 
+                    class="form-control" 
+                    placeholder="e.g. Enter your username" 
+                    required 
+                    autocomplete="username"
+                >
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    class="form-control" 
+                    placeholder="e.g. Enter your password" 
+                    required 
+                    autocomplete="current-password"
+                >
+            </div>
+
+            <button type="submit" class="btn-submit">
+                Sign In to Dashboard
+            </button>
+        </form>
+
+        <div class="footer-note">
+            Return to <a href="{% url 'index' %}">Main Website</a>
+        </div>
+    </div>
+
+</body>
+</html>
