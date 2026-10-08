@@ -2,6 +2,9 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('dashboard/', views.user_dashboard, name='user_dashboard'),
+    path('booking/<str:booking_id>/', views.booking_detail, name='booking_detail'),
+
     # Public Client Facing
     path('', views.index, name='index'),
     path('taxi/', views.taxi, name='taxi'),
@@ -28,6 +31,10 @@ urlpatterns = [
     # Urgent Support Desk
     path('portal/urgent-help/', views.portal_urgent_help, name='portal_urgent_help'),
     path('portal/urgent-help/<int:support_id>/resolve/', views.portal_urgent_help_resolve, name='portal_urgent_help_resolve'),
-
     path('portal/bookings/<int:booking_id>/status/', views.portal_booking_status, name='portal_booking_status'),
+
+    path('custom-admin/hotels/', views.portal_hotels, name='portal_hotels'),
+    path('custom-admin/hotels/add/', views.portal_hotel_add, name='portal_hotel_add'),
+    path('custom-admin/hotels/edit/<int:hotel_id>/', views.portal_hotel_edit, name='portal_hotel_edit'),
+    path('custom-admin/hotels/delete/<int:hotel_id>/', views.portal_hotel_delete, name='portal_hotel_delete'),
 ]

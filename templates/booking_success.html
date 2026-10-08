@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking Confirmed | MakesMyYatra</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #051322; }</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 antialiased text-slate-800">
+
+  <div class="bg-white max-w-lg w-full rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200">
+    
+    <!-- Success Badge -->
+    <div class="text-center">
+      <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
+        <i data-lucide="check" class="w-8 h-8 stroke-[3]"></i>
+      </div>
+      <span class="text-[10px] font-black tracking-widest text-emerald-600 uppercase bg-emerald-50 px-3 py-1 rounded-full">Reservation Confirmed</span>
+      <h2 class="text-2xl font-black text-slate-900 mt-2">Booking Voucher</h2>
+      <p class="text-xs text-slate-500 mt-0.5">Your stay has been confirmed in Himachal Pradesh.</p>
+    </div>
+
+    <!-- Booking Summary Card -->
+    <div class="mt-6 bg-slate-50 rounded-2xl p-5 border border-slate-200/80 space-y-3">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-200 text-xs">
+        <span class="text-slate-500 font-semibold">Booking ID</span>
+        <span class="font-black text-blue-600 font-mono text-sm tracking-wide">{{ booking.booking_id }}</span>
+      </div>
+
+      <div class="flex justify-between items-center text-xs">
+        <span class="text-slate-500 font-medium">Hotel / Stay</span>
+        <span class="font-bold text-slate-900 text-right">{{ hotel.name }}</span>
+      </div>
+
+      <div class="flex justify-between items-center text-xs">
+        <span class="text-slate-500 font-medium">Destination</span>
+        <span class="font-bold text-slate-900">{{ hotel.city }}, Himachal Pradesh</span>
+      </div>
+
+      <div class="flex justify-between items-center text-xs">
+        <span class="text-slate-500 font-medium">Guest Name</span>
+        <span class="font-bold text-slate-900">{{ guest_name }}</span>
+      </div>
+
+      <div class="flex justify-between items-center text-xs">
+        <span class="text-slate-500 font-medium">Check-in → Check-out</span>
+        <span class="font-bold text-slate-900">{{ check_in }} → {{ check_out }}</span>
+      </div>
+
+      <div class="flex justify-between items-center text-xs">
+        <span class="text-slate-500 font-medium">Payment Mode</span>
+        <span class="font-bold text-slate-700 bg-slate-200 px-2 py-0.5 rounded text-[10px]">Pay at Hotel</span>
+      </div>
+
+      <div class="flex justify-between items-center pt-3 border-t border-slate-200 text-sm">
+        <span class="font-black text-slate-800">Total Payable Amount</span>
+        <span class="font-black text-emerald-600 text-base">₹{{ booking.total_amount }}</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="mt-6 flex flex-col gap-2">
+      <button onclick="window.print()" class="w-full bg-slate-900 hover:bg-black text-white font-black text-xs uppercase tracking-wider py-3.5 rounded-xl transition flex items-center justify-center gap-2 shadow-md">
+        <i data-lucide="printer" class="w-4 h-4"></i> Print Customer Voucher
+      </button>
+      <a href="{% url 'index' %}" class="w-full text-center text-xs font-bold text-slate-500 hover:text-slate-900 py-2 transition">
+        ← Back to Browse Stays
+      </a>
+    </div>
+
+  </div>
+
+  <script>lucide.createIcons();</script>
+</body>
+</html>

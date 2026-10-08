@@ -35,9 +35,9 @@ class CouponAdmin(admin.ModelAdmin):
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ('booking_id', 'guest_name', 'guest_phone', 'hotel', 'status', 'final_amount', 'created_at')
-    list_filter = ('status', 'payment_mode', 'is_paid')
-    search_fields = ('booking_id', 'guest_name', 'guest_phone', 'hotel__name')
+    list_display = ('booking_id', 'user', 'destination_title', 'travel_date', 'total_amount', 'payment_status', 'created_at')
+    list_filter = ('payment_status', 'travel_date')
+    search_fields = ('booking_id', 'user__username', 'destination_title', 'transaction_id')
 
 @admin.register(EmergencySupport)
 class EmergencySupportAdmin(admin.ModelAdmin):

@@ -1,43 +1,155 @@
 {% extends 'custom_admin/base.html' %}
-{% block title %}Manage Stays | Makes My Yatra Admin{% endblock %}
-{% block page_title %}Hotel Directory{% endblock %}
+
+{% block title %}Manage Stays | MakesMyYatra Portal{% endblock %}
+{% block page_title %}Hotel Properties Directory{% endblock %}
 
 {% block content %}
-<div class="bg-white rounded-3xl border border-[#e2d9cc] shadow-sm overflow-hidden">
-  <div class="p-6 border-b border-[#e2d9cc] flex justify-between items-center">
-    <p class="text-sm font-bold text-[#0f2e24]">All Managed Stays</p>
-    <a href="{% url 'portal_hotel_add' %}" class="bg-[#0f2e24] text-white px-4 py-2 rounded-xl text-xs font-bold hover:opacity-90 transition flex items-center gap-1.5">
-      <i data-lucide="plus" class="h-4 w-4"></i> Add Stay
-    </a>
+<div class="space-y-6">
+
+  <!-- Header Section with Stats & Action -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-3xl border border-[#e2d9cc]/70 shadow-sm">
+    <div>
+      <h2 class="text-xl font-black text-[#0f2e24] tracking-tight">Active Properties Directory</h2>
+      <p class="text-xs text-slate-500 mt-1">Manage listings, tariffs, availability, and regional stay details.</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="bg-[#faf8f5] px-4 py-2.5 rounded-2xl border border-[#e2d9cc] text-xs font-bold text-[#0f2e24]">
+        Total: <span class="text-emerald-700 font-black">{{ hotels|length }}</span> Listed
+      </div>
+      <a href="{% url 'portal_hotel_add' %}" class="bg-[#0f2e24] hover:bg-[#1a4a3a] text-white text-xs font-black uppercase tracking-wider px-5 py-3 rounded-2xl shadow-lg transition flex items-center gap-2">
+        <i data-lucide="plus-circle" class="w-4 h-4"></i> Add New Stay
+      </a>
+    </div>
   </div>
 
-  <div class="overflow-x-auto">
-    <table class="w-full text-left text-xs">
-      <thead class="bg-[#faf8f5] text-[#0f2e24] font-bold border-b border-[#e2d9cc]">
-        <tr>
-          <th class="py-3.5 px-4">Hotel Name</th>
-          <th class="py-3.5 px-4">Location</th>
-          <th class="py-3.5 px-4">Rating</th>
-          <th class="py-3.5 px-4">Address</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-[#e2d9cc]">
-        {% for hotel in hotels %}
-        <tr class="hover:bg-[#faf8f5] transition">
-          <td class="py-3.5 px-4 font-semibold text-[#0f2e24]">{{ hotel.name }}</td>
-          <td class="py-3.5 px-4">{{ hotel.city }}, {{ hotel.state }}</td>
-          <td class="py-3.5 px-4">★ {{ hotel.star_rating }}.0</td>
-          <td class="py-3.5 px-4 text-[#64748b]">{{ hotel.address }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="4" class="py-8 text-center text-[#64748b]">
-            No properties added yet. Click "Add Stay" to register your first hotel.
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <!-- Flash Messages -->
+  {% if messages %}
+    <div class="space-y-2">
+      {% for message in messages %}
+        <div class="p-4 rounded-2xl text-xs font-bold {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% else %}bg-rose-50 text-rose-800 border border-rose-200{% endif %} flex items-center justify-between shadow-sm">
+          <span>{{ message }}</span>
+          <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">✕</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Table Card -->
+  <div class="bg-white rounded-3xl border border-[#e2d9cc]/70 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-[#faf8f5] border-b border-[#e2d9cc]/80 text-[11px] font-black uppercase tracking-wider text-slate-500">
+            <th class="py-4 px-6">Property / Stay</th>
+            <th class="py-4 px-6">Category</th>
+            <th class="py-4 px-6">Destination</th>
+            <th class="py-4 px-6 text-center">Rating</th>
+            <th class="py-4 px-6 text-center">Base Tariff</th>
+            <th class="py-4 px-6 text-center">Status</th>
+            <th class="py-4 px-6 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[#e2d9cc]/50 text-xs">
+          {% for hotel in hotels %}
+          <tr class="hover:bg-[#faf8f5]/60 transition-colors">
+            
+            <!-- Property Name & Photo -->
+            <td class="py-4 px-6">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200">
+                  {% if hotel.cover_image %}
+                    <img src="{{ hotel.cover_image.url }}" alt="{{ hotel.name }}" class="w-full h-full object-cover">
+                  {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-slate-400">
+                      <i data-lucide="hotel" class="w-5 h-5"></i>
+                    </div>
+                  {% endif %}
+                </div>
+                <div>
+                  <h4 class="font-bold text-[#0f2e24] text-sm leading-tight">{{ hotel.name }}</h4>
+                  <p class="text-[11px] text-slate-400 mt-0.5 line-clamp-1">{{ hotel.address|default:"Himachal Pradesh" }}</p>
+                </div>
+              </div>
+            </td>
+
+            <!-- Category -->
+            <td class="py-4 px-6">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#f4efe6] text-[#0f2e24] border border-[#e2d9cc]">
+                {{ hotel.get_category_display|default:hotel.category|default:"Hotel" }}
+              </span>
+            </td>
+
+            <!-- Destination -->
+            <td class="py-4 px-6 font-semibold text-slate-700">
+              <div class="flex items-center gap-1.5">
+                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-600"></i>
+                {{ hotel.city|default:"Himachal" }}
+              </div>
+            </td>
+
+            <!-- Rating -->
+            <td class="py-4 px-6 text-center">
+              <span class="inline-flex items-center gap-1 text-amber-500 font-black">
+                ★ {{ hotel.star_rating }}.0
+              </span>
+            </td>
+
+            <!-- Base Tariff -->
+            <td class="py-4 px-6 text-center font-bold text-slate-800">
+              ₹{{ hotel.base_price|default:"2,499" }}
+            </td>
+
+            <!-- Status Badge -->
+            <td class="py-4 px-6 text-center">
+              {% if hotel.is_active %}
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  ● ACTIVE
+                </span>
+              {% else %}
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-200">
+                  ● INACTIVE
+                </span>
+              {% endif %}
+            </td>
+
+            <!-- Actions -->
+            <td class="py-4 px-6 text-right">
+              <div class="flex items-center justify-end gap-2">
+                <a href="{% url 'portal_hotel_edit' hotel.id %}" 
+                   class="p-2 rounded-xl text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100 transition" 
+                   title="Edit Stay">
+                  <i data-lucide="edit-3" class="w-4 h-4"></i>
+                </a>
+                <a href="{% url 'portal_hotel_delete' hotel.id %}" 
+                   onclick="return confirm('Are you sure you want to remove \'{{ hotel.name }}\'?');" 
+                   class="p-2 rounded-xl text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100 transition" 
+                   title="Delete Stay">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </a>
+              </div>
+            </td>
+
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="py-12 text-center">
+              <div class="max-w-xs mx-auto space-y-3">
+                <div class="w-12 h-12 rounded-2xl bg-[#faf8f5] text-slate-400 mx-auto flex items-center justify-center">
+                  <i data-lucide="inbox" class="w-6 h-6"></i>
+                </div>
+                <h5 class="text-sm font-bold text-[#0f2e24]">No properties listed yet</h5>
+                <p class="text-xs text-slate-500">Get started by onboarding your first hotel or cottage in the portal.</p>
+                <a href="{% url 'portal_hotel_add' %}" class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:underline pt-2">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add First Stay
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
+
 </div>
 {% endblock %}

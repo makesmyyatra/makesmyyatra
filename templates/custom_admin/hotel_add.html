@@ -1,7 +1,7 @@
 {% extends 'custom_admin/base.html' %}
 
-{% block title %}List New Property | MakesMyYatra Portal{% endblock %}
-{% block page_title %}Add New Stay / Hotel{% endblock %}
+{% block title %}{% if is_edit %}Edit {{ hotel.name }}{% else %}List New Property{% endif %} | MakesMyYatra Portal{% endblock %}
+{% block page_title %}{% if is_edit %}Edit Stay / Hotel{% else %}Add New Stay / Hotel{% endif %}{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto space-y-6">
@@ -12,14 +12,14 @@
       {% for message in messages %}
         <div class="p-4 rounded-2xl text-xs font-bold {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% else %}bg-rose-50 text-rose-800 border border-rose-200{% endif %} flex items-center justify-between shadow-sm">
           <span>{{ message }}</span>
-          <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">✕</button>
+          <button type="button" onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">✕</button>
         </div>
       {% endfor %}
     </div>
   {% endif %}
 
-  <!-- Main Form Card (enctype added for file upload) -->
-  <form action="{% url 'portal_hotel_add' %}" method="POST" enctype="multipart/form-data" class="space-y-6">
+  <!-- Main Form Card (Fixed: Removed the premature closing tag) -->
+  <form action="{% if is_edit %}{% url 'portal_hotel_edit' hotel.id %}{% else %}{% url 'portal_hotel_add' %}{% endif %}" method="POST" class="space-y-6">
     {% csrf_token %}
 
     <!-- Section 1: Property Identity & Type -->
@@ -35,18 +35,17 @@
         <!-- Property Name -->
         <div class="sm:col-span-2">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">Property / Hotel Name *</label>
-          <input type="text" name="name" required placeholder="e.g. Pine View Heritage Resort & Spa" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+          <input type="text" name="name" required value="{{ hotel.name|default:'' }}" placeholder="e.g. Pine View Heritage Resort & Spa" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
         </div>
 
-        <!-- Property Type -->
+        <!-- Property Type (Matches your Model CATEGORY_CHOICES: luxury, boutique, budget, homestay) -->
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1.5">Property Category</label>
           <select name="property_type" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
-            <option value="Hotel">Hotel</option>
-            <option value="Resort">Luxury Resort</option>
-            <option value="Homestay">Himachali Homestay</option>
-            <option value="OYO / Budget Stay">OYO / Budget Stay</option>
-            <option value="Cottage">Valley Cottage / Villa</option>
+            <option value="budget" {% if hotel.category == 'budget' %}selected{% endif %}>Budget Stay</option>
+            <option value="luxury" {% if hotel.category == 'luxury' %}selected{% endif %}>Luxury Resort</option>
+            <option value="boutique" {% if hotel.category == 'boutique' %}selected{% endif %}>Boutique Hotel</option>
+            <option value="homestay" {% if hotel.category == 'homestay' %}selected{% endif %}>Cozy Homestay</option>
           </select>
         </div>
 
@@ -54,10 +53,10 @@
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1.5">Star Rating</label>
           <select name="star_rating" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
-            <option value="3">★★★☆☆ (3 Star Standard)</option>
-            <option value="4" selected>★★★★☆ (4 Star Premium)</option>
-            <option value="5">★★★★★ (5 Star Luxury)</option>
-            <option value="2">★★☆☆☆ (2 Star Budget)</option>
+            <option value="3" {% if hotel.star_rating == 3 %}selected{% endif %}>★★★☆☆ (3 Star Standard)</option>
+            <option value="4" {% if hotel.star_rating == 4 %}selected{% endif %}>★★★★☆ (4 Star Premium)</option>
+            <option value="5" {% if hotel.star_rating == 5 %}selected{% endif %}>★★★★★ (5 Star Luxury)</option>
+            <option value="2" {% if hotel.star_rating == 2 %}selected{% endif %}>★★☆☆☆ (2 Star Budget)</option>
           </select>
         </div>
       </div>
@@ -77,20 +76,20 @@
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1.5">Destination / District *</label>
           <select name="city" required class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
-            <option value="Hamirpur">Hamirpur</option>
-            <option value="Una">Una</option>
-            <option value="Kangra">Kangra</option>
-            <option value="Dharamshala">Dharamshala</option>
-            <option value="Mandi">Mandi</option>
-            <option value="Solan">Solan</option>
-            <option value="Bilaspur">Bilaspur</option>
-            <option value="Shimla" selected>Shimla</option>
-            <option value="Manali">Manali</option>
-            <option value="Kullu">Kullu</option>
-            <option value="Kasol">Kasol</option>
-            <option value="Dalhousie">Dalhousie</option>
-            <option value="Chamba">Chamba</option>
-            <option value="Palampur">Palampur</option>
+            <option value="Hamirpur" {% if hotel.city == 'Hamirpur' %}selected{% endif %}>Hamirpur</option>
+            <option value="Una" {% if hotel.city == 'Una' %}selected{% endif %}>Una</option>
+            <option value="Kangra" {% if hotel.city == 'Kangra' %}selected{% endif %}>Kangra</option>
+            <option value="Dharamshala" {% if hotel.city == 'Dharamshala' %}selected{% endif %}>Dharamshala</option>
+            <option value="Mandi" {% if hotel.city == 'Mandi' %}selected{% endif %}>Mandi</option>
+            <option value="Solan" {% if hotel.city == 'Solan' %}selected{% endif %}>Solan</option>
+            <option value="Bilaspur" {% if hotel.city == 'Bilaspur' %}selected{% endif %}>Bilaspur</option>
+            <option value="Shimla" {% if hotel.city == 'Shimla' or not hotel %}selected{% endif %}>Shimla</option>
+            <option value="Manali" {% if hotel.city == 'Manali' %}selected{% endif %}>Manali</option>
+            <option value="Kullu" {% if hotel.city == 'Kullu' %}selected{% endif %}>Kullu</option>
+            <option value="Kasol" {% if hotel.city == 'Kasol' %}selected{% endif %}>Kasol</option>
+            <option value="Dalhousie" {% if hotel.city == 'Dalhousie' %}selected{% endif %}>Dalhousie</option>
+            <option value="Chamba" {% if hotel.city == 'Chamba' %}selected{% endif %}>Chamba</option>
+            <option value="Palampur" {% if hotel.city == 'Palampur' %}selected{% endif %}>Palampur</option>
           </select>
         </div>
 
@@ -99,46 +98,51 @@
           <label class="block text-xs font-bold text-slate-700 mb-1.5">Starting Tariff Per Night (₹) *</label>
           <div class="relative">
             <span class="absolute left-3.5 top-3 text-slate-400 font-bold text-xs">₹</span>
-            <input type="number" name="base_price" value="2499" required class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl pl-8 pr-4 py-3 text-xs font-black text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+            <input type="number" 
+                   name="base_price" 
+                   value="{{ current_price }}" 
+                   placeholder="e.g. 1800" 
+                   step="0.01" 
+                   required 
+                   class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl pl-8 pr-4 py-3 text-xs font-black text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
           </div>
         </div>
 
         <!-- Detailed Address -->
         <div class="sm:col-span-2">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">Detailed Address / Landmark *</label>
-          <textarea name="address" rows="2" required placeholder="e.g. Near Mall Road, The Ridge, Shimla, Himachal Pradesh - 171001" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl p-3.5 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"></textarea>
+          <textarea name="address" rows="2" required placeholder="e.g. Near Mall Road, The Ridge, Shimla, Himachal Pradesh - 171001" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl p-3.5 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">{{ hotel.address|default:'' }}</textarea>
         </div>
       </div>
     </div>
 
-    <!-- Section 3: Device Photo Upload & Real-Time Preview -->
+    <!-- Section 3: Cover Image URL -->
     <div class="bg-white rounded-3xl p-6 sm:p-8 border border-[#e2d9cc]/70 shadow-sm space-y-5">
       <div class="border-b border-slate-100 pb-4">
         <h3 class="text-base font-black text-[#0f2e24] flex items-center gap-2">
-          <i data-lucide="image" class="w-5 h-5 text-indigo-600"></i> Property Cover Photo
+          <i data-lucide="image" class="w-5 h-5 text-indigo-600"></i> Property Cover Photo URL
         </h3>
-        <p class="text-xs text-slate-500 mt-0.5">Upload a high-quality property photo directly from your device (phone/computer).</p>
+        <p class="text-xs text-slate-500 mt-0.5">Paste an image web URL for the cover photo.</p>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 items-center">
-        <!-- File Input -->
         <div class="sm:col-span-2 space-y-3">
-          <label class="block text-xs font-bold text-slate-700">Choose Image File</label>
-          <input type="file" 
-                 id="coverImageFileInput" 
+          <label class="block text-xs font-bold text-slate-700">Image Web Link (URL)</label>
+          <input type="url" 
+                 id="coverImageUrlInput" 
                  name="cover_image" 
-                 accept="image/*" 
-                 class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-medium text-slate-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer transition"
-                 onchange="previewDeviceImage(event)">
-          <p class="text-[11px] text-slate-400">Supported formats: JPG, PNG, WEBP. (Max: 5MB)</p>
+                 value="{{ hotel.cover_image|default:'' }}" 
+                 placeholder="https://images.unsplash.com/photo-..." 
+                 class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
+                 oninput="previewUrlImage(this.value)">
+          <p class="text-[11px] text-slate-400">Provide direct image link (JPG, PNG, or Unsplash URL).</p>
         </div>
 
-        <!-- Live Preview Thumbnail -->
         <div>
           <span class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Live Preview</span>
           <div class="w-full h-32 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center relative shadow-inner">
             <img id="imagePreview" 
-                 src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80" 
+                 src="{% if hotel.cover_image %}{{ hotel.cover_image }}{% else %}https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80{% endif %}" 
                  alt="Preview" 
                  class="w-full h-full object-cover">
           </div>
@@ -151,26 +155,20 @@
       <a href="{% url 'portal_hotels' %}" class="px-5 py-3 rounded-2xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
         Cancel
       </a>
-      <button type="submit" class="bg-[#0f2e24] hover:bg-[#1a4a3a] text-white text-xs font-black uppercase tracking-wider px-8 py-3.5 rounded-2xl shadow-lg transition flex items-center gap-2">
-        <i data-lucide="plus-circle" class="w-4 h-4"></i> Save & Publish Stay
+      <button type="submit" class="bg-[#0f2e24] hover:bg-[#1a4a3a] text-white text-xs font-black uppercase tracking-wider px-8 py-3.5 rounded-2xl shadow-lg transition flex items-center gap-2 cursor-pointer">
+        <i data-lucide="{% if is_edit %}save{% else %}plus-circle{% endif %}" class="w-4 h-4"></i> 
+        {% if is_edit %}Save Changes{% else %}Save & Publish Stay{% endif %}
       </button>
     </div>
 
   </form>
-
 </div>
 
 <script>
-  // Real-time Device Image Preview
-  function previewDeviceImage(event) {
-    const file = event.target.files[0];
+  function previewUrlImage(url) {
     const preview = document.getElementById('imagePreview');
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        preview.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
+    if (url && url.trim() !== '') {
+      preview.src = url;
     }
   }
 </script>

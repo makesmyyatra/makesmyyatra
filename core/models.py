@@ -1,15 +1,22 @@
 import uuid
+from decimal import Decimal
 from django.db import models
 from django.contrib.auth.models import User
 
+
+# ==========================================
+# 1. HOTEL PROFILE & OWNER MANAGEMENT
+# ==========================================
 class Hotel(models.Model):
     CATEGORY_CHOICES = [
         ('luxury', 'Luxury Resort'),
         ('boutique', 'Boutique Hotel'),
         ('budget', 'Budget Stay'),
         ('homestay', 'Cozy Homestay'),
+        ('camp', 'Camping & Glamping'),
     ]
 
+    owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='owned_hotels')
     name = models.CharField(max_length=200, default='New Hotel')
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='budget')
     city = models.CharField(max_length=100, default='Una')
@@ -18,17 +25,22 @@ class Hotel(models.Model):
     star_rating = models.PositiveSmallIntegerField(default=3)
     cover_image = models.URLField(max_length=500, blank=True, default='')
 
-    # Amenities Booleans
-    has_wifi = models.BooleanField(default=True)
-    has_parking = models.BooleanField(default=True)
-    has_pool = models.BooleanField(default=False)
-    has_restaurant = models.BooleanField(default=True)
-    has_ac = models.BooleanField(default=True)
-    has_heater = models.BooleanField(default=False)
-
-    # Operational/Staff Info
+    # Operational & Owner Contact Info
     owner_name = models.CharField(max_length=150, blank=True, default='')
     owner_phone = models.CharField(max_length=20, blank=True, default='')
+    owner_email = models.EmailField(blank=True, default='')
+
+    # Detailed Amenities Checklist
+    has_wifi = models.BooleanField(default=True)
+    has_parking = models.BooleanField(default=True)
+    has_ac = models.BooleanField(default=True)
+    has_heater = models.BooleanField(default=False)
+    has_restaurant = models.BooleanField(default=True)
+    has_breakfast = models.BooleanField(default=True)
+    has_pool = models.BooleanField(default=False)
+
+    # Commission & Status
+    commission_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=15.00)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -36,6 +48,9 @@ class Hotel(models.Model):
         return f"{self.name} ({self.city})"
 
 
+# ==========================================
+# 2. PHOTO & VIDEO GALLERY
+# ==========================================
 class HotelGalleryImage(models.Model):
     hotel = models.ForeignKey(Hotel, related_name='gallery_images', on_delete=models.CASCADE)
     image_url = models.URLField(max_length=500)
@@ -45,19 +60,39 @@ class HotelGalleryImage(models.Model):
         return f"Image for {self.hotel.name}"
 
 
+# ==========================================
+# 3. ROOM TYPES, OCCUPANCY & PRICING
+# ==========================================
 class RoomType(models.Model):
     hotel = models.ForeignKey(Hotel, related_name='room_types', on_delete=models.CASCADE)
-    name = models.CharField(max_length=100, default='Standard Room')
+    name = models.CharField(max_length=100, default='Standard Deluxe')
     description = models.TextField(blank=True, default='')
+
+    # Compatibility Fields for existing forms.py
     max_guests = models.PositiveSmallIntegerField(default=2)
-    base_price = models.DecimalField(max_digits=10, decimal_places=2, default=1500.00)
-    total_inventory = models.PositiveIntegerField(default=5)
     is_available = models.BooleanField(default=True)
+
+    # Detailed Occupancy Setup (Owner Requirements)
+    max_adults = models.PositiveSmallIntegerField(default=2)
+    max_children = models.PositiveSmallIntegerField(default=1)
+    extra_bed_charge = models.DecimalField(max_digits=10, decimal_places=2, default=500.00)
+
+    # Seasonal & Dynamic Rate Engine
+    base_price = models.DecimalField(max_digits=10, decimal_places=2, default=1800.00)
+    weekend_price = models.DecimalField(max_digits=10, decimal_places=2, default=2200.00)
+    festival_price = models.DecimalField(max_digits=10, decimal_places=2, default=2800.00)
+
+    # Inventory Setup (1-Click Open/Close)
+    total_inventory = models.PositiveIntegerField(default=5)
+    is_open = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.hotel.name} - {self.name}"
 
 
+# ==========================================
+# 4. RATE & MEAL PLANS (EP, CP, MAP, AP)
+# ==========================================
 class MealPlan(models.Model):
     PLAN_CHOICES = [
         ('EP', 'European Plan (Room Only)'),
@@ -73,6 +108,9 @@ class MealPlan(models.Model):
         return f"{self.room_type.name} - {self.get_plan_code_display()}"
 
 
+# ==========================================
+# 5. COUPON CODE & DISCOUNT ENGINE
+# ==========================================
 class Coupon(models.Model):
     DISCOUNT_TYPES = [
         ('flat', 'Flat Discount (₹)'),
@@ -88,49 +126,64 @@ class Coupon(models.Model):
         return self.code
 
 
+# ==========================================
+# 6. BOOKING ENGINE WITH FULL STATUS PIPELINE
+# ==========================================
 class Booking(models.Model):
     STATUS_CHOICES = [
-        ('confirmed', 'Confirmed'),
-        ('cancelled', 'Cancelled'),
-        ('completed', 'Completed'),
-        ('checked_in', 'Checked In'),
+        ('PENDING', 'Pending Payment'),
+        ('CONFIRMED', 'Confirmed'),
+        ('CHECKED_IN', 'Checked-In'),
+        ('CHECKED_OUT', 'Checked-Out'),
+        ('CANCELLED', 'Cancelled'),
     ]
     PAYMENT_MODES = [
-        ('pay_at_hotel', 'Pay at Hotel'),
-        ('online', 'Online Payment'),
+        ('PREPAID', 'Full Online Payment'),
+        ('PAY_AT_HOTEL', 'Pay at Hotel'),
+        ('PARTIAL', 'Partial Deposit'),
     ]
 
-    booking_id = models.CharField(max_length=30, unique=True, default='MMY-HTL-DEFAULT')
-    hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE)
+    booking_id = models.CharField(max_length=50, unique=True) # MMY-HTL-XXXX
+    hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='bookings', null=True, blank=True)
     room_type = models.ForeignKey(RoomType, on_delete=models.SET_NULL, null=True, blank=True)
-    meal_plan = models.ForeignKey(MealPlan, on_delete=models.SET_NULL, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='bookings')
 
-    guest_name = models.CharField(max_length=150, default='Guest')
+    guest_name = models.CharField(max_length=150, blank=True, default='Guest')
+    guest_phone = models.CharField(max_length=20, blank=True, default='')
     guest_email = models.EmailField(blank=True, default='')
-    guest_phone = models.CharField(max_length=20, default='0000000000')
 
-    check_in = models.DateField()
-    check_out = models.DateField()
-    guests_count = models.PositiveIntegerField(default=1)
+    check_in = models.DateField(null=True, blank=True)
+    check_out = models.DateField(null=True, blank=True)
 
+    # Backward Compatibility for existing views
+    destination_title = models.CharField(max_length=200, blank=True, default='')
+    travel_date = models.DateField(null=True, blank=True)
+    guests_count = models.PositiveIntegerField(default=2)
+
+    adults_count = models.PositiveSmallIntegerField(default=2)
+    children_count = models.PositiveSmallIntegerField(default=0)
+
+    # Financial Breakup
     base_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    extra_bed_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    final_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    gst_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
-    payment_mode = models.CharField(max_length=30, choices=PAYMENT_MODES, default='pay_at_hotel')
-    is_paid = models.BooleanField(default=False)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='confirmed')
+    payment_mode = models.CharField(max_length=20, choices=PAYMENT_MODES, default='PAY_AT_HOTEL')
+    payment_status = models.CharField(max_length=20, default='CONFIRMED')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='CONFIRMED')
+
+    transaction_id = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def save(self, *args, **kwargs):
-        if not self.booking_id or self.booking_id == 'MMY-HTL-DEFAULT':
-            self.booking_id = f"MMY-HTL-{uuid.uuid4().hex[:6].upper()}"
-        super().save(*args, **kwargs)
-
     def __str__(self):
-        return f"{self.booking_id} - {self.guest_name}"
+        return f"{self.booking_id} - {self.guest_name} ({self.status})"
 
 
+# ==========================================
+# 7. EMERGENCY ASSISTANCE & HELPDESK
+# ==========================================
 class EmergencySupport(models.Model):
     STATUS_CHOICES = [
         ('open', 'Open / Active'),
