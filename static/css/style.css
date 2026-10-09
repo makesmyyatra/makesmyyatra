@@ -1,0 +1,342 @@
+/* ==========================================================================
+   MakesMyYatra - Official Brand Design System & Master Stylesheet
+   Theme: Pine Forest & Sand Heritage (Himachal Tourism Concierge)
+   ========================================================================== */
+
+/* 1. CSS Custom Properties / Design Tokens */
+:root {
+  --primary: #0f2e24;         /* Deep Forest Pine */
+  --primary-light: #164234;   /* Pine Hover / Lighter Variant */
+  --primary-dark: #0a1f18;    /* Dark Forest Base */
+  --accent: #c5a880;          /* Warm Heritage Gold / Sand Accent */
+  --accent-light: #e5d5be;    /* Subtle Gold Tint */
+  --background: #faf8f5;      /* Ivory Soft Background */
+  --surface: #ffffff;         /* Pure Card White */
+  --surface-alt: #f4efe6;     /* Warm Cream Container */
+  --border: #e2d9cc;          /* Soft Sand Border */
+  --border-light: #ece6dc;    /* Muted Hairline Border */
+  --text-dark: #1a2e22;       /* Charcoal Pine Reading Text */
+  --text-muted: #64748b;      /* Slate Grey Secondary Text */
+  --text-light: #94a3b8;      /* Faded Caption Text */
+  --success: #059669;         /* Confirmed / Active Green */
+  --warning: #d97706;         /* Pending / Caution Amber */
+  --danger: #dc2626;          /* Cancelled / Emergency Red */
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --shadow-sm: 0 2px 8px rgba(15, 46, 36, 0.04);
+  --shadow-md: 0 8px 24px rgba(15, 46, 36, 0.07);
+  --shadow-lg: 0 16px 40px rgba(15, 46, 36, 0.11);
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-full: 9999px;
+  --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 2. Reset & Typography Foundations */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text-dark);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, .brand-font {
+  font-family: var(--font-serif);
+  color: var(--primary);
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* 3. Utility Container & Grid Helpers */
+.container {
+  width: 100%;
+  max-width: 1240px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+/* 4. Custom Header & Hero Accents */
+.brand-title {
+  font-family: var(--font-serif);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--surface);
+}
+
+.brand-title span {
+  color: var(--accent);
+}
+
+.hero-banner {
+  background: linear-gradient(135deg, rgba(15, 46, 36, 0.95), rgba(10, 31, 24, 0.88)), 
+              url('https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
+  color: #ffffff;
+  padding: 70px 20px;
+  border-radius: 0 0 36px 36px;
+  box-shadow: var(--shadow-lg);
+}
+
+/* 5. Hotel Card & Inventory Showcase */
+.hotel-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+}
+
+.hotel-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--accent);
+}
+
+.hotel-thumb {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  background-color: var(--surface-alt);
+}
+
+.hotel-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.hotel-card:hover .hotel-thumb img {
+  transform: scale(1.04);
+}
+
+.hotel-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: rgba(15, 46, 36, 0.88);
+  color: #ffffff;
+  backdrop-filter: blur(6px);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.hotel-rating {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 9px;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 6. Form Controls & Modal Design */
+.form-input {
+  width: 100%;
+  background: var(--background);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--text-dark);
+  font-weight: 500;
+  outline: none;
+  transition: var(--transition);
+}
+
+.form-input:focus {
+  border-color: var(--primary);
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(15, 46, 36, 0.08);
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: var(--primary);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 12px 22px;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: var(--transition);
+  box-shadow: 0 4px 14px rgba(15, 46, 36, 0.15);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-light);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: var(--surface-alt);
+  color: var(--primary);
+  border: 1px solid var(--border);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 11px 20px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-secondary:hover {
+  background-color: #eee7dc;
+}
+
+/* 7. Status Badges & Timeline Indicators */
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.badge-confirmed {
+  background-color: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.badge-pending {
+  background-color: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.badge-cancelled {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.badge-checkedin {
+  background-color: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+/* 8. Interactive Timeline (Track My Booking Step Tracker) */
+.timeline-stepper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  margin: 20px 0;
+}
+
+.timeline-stepper::before {
+  content: '';
+  position: absolute;
+  top: 18px;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background-color: var(--border);
+  z-index: 1;
+}
+
+.step-node {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.step-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 13px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  color: var(--text-muted);
+  transition: var(--transition);
+}
+
+.step-node.completed .step-circle {
+  background: var(--success);
+  border-color: var(--success);
+  color: #ffffff;
+}
+
+.step-node.active .step-circle {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(197, 168, 128, 0.35);
+}
+
+/* 9. Print Stylesheet for Customer Vouchers */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  header, footer, .no-print, button, form {
+    display: none !important;
+  }
+
+  .print-only-voucher {
+    border: 2px solid #000000 !important;
+    box-shadow: none !important;
+    padding: 20px !important;
+    border-radius: 0 !important;
+  }
+}

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Partner Desk | MakesMyYatra</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-[#faf8f5] text-slate-800 min-h-screen">
+  <header class="bg-[#0f2e24] text-white py-4 px-6 border-b border-white/10">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div>
+        <h1 class="font-serif font-black text-lg text-[#c5a880]">MakesMyYatra Hotelier Desk</h1>
+        <p class="text-[11px] text-white/60">Partner: {{ request.user.username }}</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="{% url 'portal_logout' %}" class="text-xs bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl font-bold transition">Sign Out</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto p-6 space-y-6">
+    <!-- Managed Hotels Strip -->
+    <div class="bg-white p-5 rounded-2xl border border-[#e2d9cc] shadow-sm flex items-center justify-between">
+      <div>
+        <span class="text-[10px] font-bold uppercase text-slate-400">Assigned Properties</span>
+        <h2 class="text-base font-bold text-[#0f2e24]">
+          {% for h in hotels %}{{ h.name }}{% if not forloop.last %}, {% endif %}{% empty %}No Property Linked Yet{% endfor %}
+        </h2>
+      </div>
+      <span class="text-xs font-bold px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200">Active Partner</span>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="bg-white p-5 rounded-2xl border border-[#e2d9cc] shadow-sm">
+        <p class="text-xs font-bold text-slate-400 uppercase">Total Guest Reservations</p>
+        <h3 class="text-3xl font-black text-[#0f2e24] mt-1">{{ total_bookings }}</h3>
+      </div>
+      <div class="bg-white p-5 rounded-2xl border border-[#e2d9cc] shadow-sm">
+        <p class="text-xs font-bold text-slate-400 uppercase">Total Revenue Settled</p>
+        <h3 class="text-3xl font-black text-emerald-700 mt-1">₹{{ partner_revenue }}</h3>
+      </div>
+    </div>
+
+    <!-- Bookings Table -->
+    <div class="bg-white rounded-3xl border border-[#e2d9cc] p-6 shadow-sm">
+      <h3 class="font-bold text-sm text-[#0f2e24] mb-4">Guest Arrival Log</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-[#faf8f5] uppercase font-bold text-[10px] text-slate-500 border-b border-slate-200">
+            <tr>
+              <th class="p-3">Booking ID</th>
+              <th class="p-3">Guest Name</th>
+              <th class="p-3">Phone</th>
+              <th class="p-3">Check-In</th>
+              <th class="p-3">Check-Out</th>
+              <th class="p-3">Tariff</th>
+              <th class="p-3">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for b in bookings %}
+            <tr class="hover:bg-slate-50">
+              <td class="p-3 font-mono font-bold text-[#0f2e24]">#{{ b.booking_id }}</td>
+              <td class="p-3 font-bold">{{ b.guest_name }}</td>
+              <td class="p-3 font-mono text-slate-600">{{ b.guest_phone }}</td>
+              <td class="p-3">{{ b.check_in|date:"d M Y" }}</td>
+              <td class="p-3">{{ b.check_out|date:"d M Y" }}</td>
+              <td class="p-3 font-black text-[#0f2e24]">₹{{ b.total_amount }}</td>
+              <td class="p-3">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800">
+                  {{ b.status|upper }}
+                </span>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="p-6 text-center text-slate-400">No bookings for your properties yet.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

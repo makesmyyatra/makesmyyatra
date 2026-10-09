@@ -1,0 +1,65 @@
+{% extends 'custom_admin/base.html' %}
+{% block title %}Guest Directory | MakesMyYatra{% endblock %}
+{% block page_title %}Traveler & Customer Directory{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="flex justify-between items-center bg-white p-5 rounded-2xl border border-[#e2d9cc]/70 shadow-sm">
+    <div>
+      <h3 class="font-black text-sm text-[#0f2e24]">Registered Guest Profiles</h3>
+      <p class="text-xs text-slate-500">Aggregated traveler history and repeat visit records</p>
+    </div>
+    <span class="text-xs font-bold bg-[#faf8f5] px-3.5 py-1.5 rounded-xl border border-[#e2d9cc] text-[#0f2e24]">
+      Total Unique Guests: {{ customers|length }}
+    </span>
+  </div>
+
+  <div class="bg-white rounded-3xl border border-[#e2d9cc]/70 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-[#faf8f5] text-[#0f2e24] uppercase font-bold text-[10px] tracking-wider border-b border-[#e2d9cc]">
+          <tr>
+            <th class="py-3.5 px-4">Guest Name</th>
+            <th class="py-3.5 px-4">Phone / WhatsApp</th>
+            <th class="py-3.5 px-4">Email</th>
+            <th class="py-3.5 px-4">Total Trips</th>
+            <th class="py-3.5 px-4">Total Spent</th>
+            <th class="py-3.5 px-4">Last Visit</th>
+            <th class="py-3.5 px-4 text-right">Quick Contact</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[#e2d9cc]/40">
+          {% for c in customers %}
+          <tr class="hover:bg-[#faf8f5]/50 transition">
+            <td class="py-3.5 px-4 font-bold text-[#0f2e24]">{{ c.guest_name }}</td>
+            <td class="py-3.5 px-4 font-mono font-medium">{{ c.guest_phone }}</td>
+            <td class="py-3.5 px-4 text-slate-500">{{ c.guest_email|default:"Not Provided" }}</td>
+            <td class="py-3.5 px-4">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold {% if c.total_stays > 1 %}bg-emerald-100 text-emerald-800{% else %}bg-slate-100 text-slate-700{% endif %}">
+                {{ c.total_stays }} Stay(s)
+              </span>
+            </td>
+            <td class="py-3.5 px-4 font-bold text-[#0f2e24]">₹{{ c.total_spent|default:0 }}</td>
+            <td class="py-3.5 px-4 text-slate-600">{{ c.last_stay|date:"d M Y" }}</td>
+            <td class="py-3.5 px-4 text-right">
+              <div class="inline-flex items-center gap-1.5">
+                <a href="tel:{{ c.guest_phone }}" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">
+                  <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+                </a>
+                <a href="https://wa.me/91{{ c.guest_phone }}" target="_blank" class="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700">
+                  <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="py-8 text-center text-slate-400">No traveler records logged yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

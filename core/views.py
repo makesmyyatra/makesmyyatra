@@ -5,23 +5,19 @@ from datetime import date
 from openpyxl.styles import Font, PatternFill, Alignment
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required, user_passes_test,login_required
+from django.contrib.auth import authenticate, login, logout, models
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.utils import timezone
-from django.db.models import Sum,Q
+from django.db.models import Sum, Q, Count, Max
 from django.core.mail import send_mail
 from django.conf import settings
-from .models import Hotel,RoomType, Booking, EmergencySupport
+from .models import Hotel, RoomType, Booking, EmergencySupport
 from .forms import HotelForm, RoomTypeForm, BookingStatusForm
 
-
-# ==========================================
 # 0. HELPER FUNCTIONS
-# ==========================================
 def is_admin(user):
     return user.is_authenticated and (user.is_staff or user.is_superuser)
-
 
 # ==========================================
 # 1. HOMEPAGE & ADVANCED HOTEL SEARCH FILTER
@@ -31,7 +27,6 @@ def index(request):
     max_price = request.GET.get('max_price', '')
     property_type = request.GET.get('property_type', '')
     min_rating = request.GET.get('min_rating', '')
-
     hotels = Hotel.objects.filter(is_active=True).prefetch_related('room_types')
 
     # Destination / City Filter
@@ -61,7 +56,6 @@ def index(request):
         'selected_city': city,
         'request': request,
     })
-
 
 # ==========================================
 # 2. BOOKING ENGINE (MMY-HTL-XXXX GENERATOR)
@@ -118,9 +112,7 @@ def book_hotel(request):
             'check_in': check_in,
             'check_out': check_out,
         })
-
     return redirect('index')
-
 
 # ==========================================
 # 3. HELPDESK & TRAVELER SUPPORT
@@ -131,7 +123,6 @@ def support_request(request):
         phone = request.POST.get('phone')
         location = request.POST.get('location', '')
         details = request.POST.get('details') or request.POST.get('issue', '')
-
         EmergencySupport.objects.create(
             name=name,
             phone=phone,
@@ -140,9 +131,7 @@ def support_request(request):
         )
         messages.success(request, 'Your emergency assistance request has been received. Our team will contact you shortly.')
         return redirect('support_request')
-
     return render(request, 'traveler_help.html')
-
 
 # ==========================================
 # 4. ADMIN AUTHENTICATION
@@ -160,18 +149,16 @@ def portal_login(request):
             messages.error(request, 'Invalid admin credentials.')
     return render(request, 'custom_admin/login.html')
 
-
 def portal_logout(request):
     logout(request)
     return redirect('portal_login')
 
-
 # ==========================================
-# 5. ADMIN OPERATIONS DASHBOARD
+# 5. ADMIN OPERATIONS DASHBOARD & DIRECTORY
 # ==========================================
 @user_passes_test(is_admin, login_url='portal_login')
 def portal_dashboard(request):
-    today = date.today()
+    today = timezone.localdate()
     total_hotels = Hotel.objects.count()
     total_bookings = Booking.objects.count()
     active_supports = EmergencySupport.objects.filter(status='open').count()
@@ -198,7 +185,7 @@ def portal_dashboard(request):
     # Recent Data
     hotels = Hotel.objects.all().order_by('-created_at')[:5]
     supports = EmergencySupport.objects.all().order_by('-created_at')[:5]
-    recent_bookings = Booking.objects.select_related('user', 'hotel').order_by('-created_at')[:5]
+    recent_bookings = Booking.objects.select_related('user', 'hotel').order_by('-created_at')[:8]
 
     context = {
         'total_hotels': total_hotels,
@@ -214,9 +201,20 @@ def portal_dashboard(request):
         'hotels': hotels,
         'supports': supports,
         'bookings': recent_bookings,
+        'today_date': today,
     }
     return render(request, 'custom_admin/dashboard.html', context)
 
+@user_passes_test(is_admin, login_url='portal_login')
+def portal_customers(request):
+    # Customer database: Group by phone to identify recurring travelers
+    customers = Booking.objects.values('guest_name', 'guest_phone', 'guest_email').annotate(
+        total_stays=Count('id'),
+        total_spent=Sum('total_amount'),
+        last_stay=Max('check_in')
+    ).order_by('-total_stays')
+
+    return render(request, 'custom_admin/customers.html', {'customers': customers})
 
 # ==========================================
 # 6. HOTEL INVENTORY & MANAGEMENT (CRUD)
@@ -225,7 +223,6 @@ def portal_dashboard(request):
 def portal_hotels(request):
     hotels = Hotel.objects.all().prefetch_related('room_types').order_by('-created_at')
     return render(request, 'custom_admin/hotel_list.html', {'hotels': hotels})
-
 
 @user_passes_test(is_admin, login_url='portal_login')
 def portal_hotel_add(request):
@@ -263,7 +260,6 @@ def portal_hotel_add(request):
             max_guests=2,
             is_open=True
         )
-
         messages.success(request, f"Property '{name}' published successfully!")
         return redirect('portal_hotels')
 
@@ -271,7 +267,6 @@ def portal_hotel_add(request):
         'is_edit': False,
         'current_price': ''
     })
-
 
 @user_passes_test(is_admin, login_url='portal_login')
 def portal_hotel_edit(request, hotel_id):
@@ -284,10 +279,8 @@ def portal_hotel_edit(request, hotel_id):
         hotel.category = request.POST.get('property_type', 'budget')
         hotel.star_rating = int(request.POST.get('star_rating', 3))
         hotel.address = request.POST.get('address')
-
         if request.POST.get('cover_image'):
             hotel.cover_image = request.POST.get('cover_image')
-
         hotel.save()
 
         price_val = request.POST.get('base_price')
@@ -309,7 +302,6 @@ def portal_hotel_edit(request, hotel_id):
         'is_edit': True
     })
 
-
 @user_passes_test(is_admin, login_url='portal_login')
 def portal_hotel_delete(request, hotel_id):
     hotel = get_object_or_404(Hotel, id=hotel_id)
@@ -317,7 +309,6 @@ def portal_hotel_delete(request, hotel_id):
     hotel.delete()
     messages.success(request, f"Property '{hotel_name}' has been deleted.")
     return redirect('portal_hotels')
-
 
 # ==========================================
 # 7. BOOKINGS & STATUS WORKFLOW
@@ -327,13 +318,12 @@ def portal_bookings(request):
     bookings = Booking.objects.select_related('hotel', 'room_type').order_by('-created_at')
     return render(request, 'custom_admin/bookings.html', {'bookings': bookings})
 
-
 @login_required(login_url='portal_login')
 def portal_booking_status_change(request, booking_id, new_status):
     booking = get_object_or_404(Booking, booking_id=booking_id)
     valid_statuses = ['PENDING', 'CONFIRMED', 'CHECKED_IN', 'CHECKED_OUT', 'CANCELLED']
-
     upper_status = new_status.upper()
+
     if upper_status in valid_statuses:
         booking.status = upper_status
         booking.save()
@@ -371,9 +361,7 @@ MakesMyYatra 24x7 Operations Desk: +91 98160XXXXX
                 messages.success(request, f"Booking {booking.booking_id} status updated to {upper_status}.")
         else:
             messages.success(request, f"Booking {booking.booking_id} status changed to {upper_status}.")
-
     return redirect('portal_bookings')
-
 
 @login_required(login_url='portal_login')
 def portal_booking_status(request, booking_id):
@@ -385,7 +373,6 @@ def portal_booking_status(request, booking_id):
             booking.save()
             messages.success(request, f"Booking #{booking.booking_id} updated to {booking.status}.")
     return redirect('portal_bookings')
-
 
 @login_required(login_url='portal_login')
 def portal_booking_update(request, booking_id):
@@ -399,7 +386,6 @@ def portal_booking_update(request, booking_id):
     else:
         form = BookingStatusForm(instance=booking)
     return render(request, 'custom_admin/booking_update.html', {'form': form, 'booking': booking})
-
 
 # ==========================================
 # 8. EXCEL REPORT EXPORT
@@ -455,7 +441,6 @@ def export_bookings_excel(request):
     wb.save(response)
     return response
 
-
 # ==========================================
 # 9. URGENT ASSISTANCE HELPDESK
 # ==========================================
@@ -463,7 +448,6 @@ def export_bookings_excel(request):
 def portal_urgent_help(request):
     supports = EmergencySupport.objects.all().order_by('-created_at')
     return render(request, 'custom_admin/urgent_help.html', {'supports': supports})
-
 
 @login_required(login_url='portal_login')
 def portal_urgent_help_resolve(request, support_id):
@@ -473,7 +457,9 @@ def portal_urgent_help_resolve(request, support_id):
     messages.success(request, f"Urgent request from {item.name} marked as resolved.")
     return redirect('portal_urgent_help')
 
-# 10. USER DASHBOARD (CUSTOMER PORTAL)
+# ==========================================
+# 10. USER DASHBOARD & TRACKING
+# ==========================================
 @login_required(login_url='login')
 def user_dashboard(request):
     bookings = Booking.objects.filter(user=request.user).order_by('-created_at')
@@ -485,21 +471,18 @@ def user_dashboard(request):
     }
     return render(request, 'user_dashboard.html', context)
 
-# Taxi
 def taxi(request):
     return render(request, 'taxi.html')
 
 @login_required
 def admin_operations_dashboard(request):
     today = timezone.localdate()
-    
-    # HotelBooking ki jagah Booking use karein
     bookings = Booking.objects.all().order_by('-created_at')
-    
+
     today_checkins = Booking.objects.filter(check_in=today, status__in=['CONFIRMED', 'CHECKED_IN']).count()
     today_checkouts = Booking.objects.filter(check_out=today, status='CHECKED_IN').count()
     new_bookings_today = Booking.objects.filter(created_at__date=today).count()
-    
+
     total_revenue = Booking.objects.filter(
         status__in=['CONFIRMED', 'CHECKED_IN', 'CHECKED_OUT']
     ).aggregate(total=Sum('base_amount'))['total'] or 0
@@ -509,7 +492,7 @@ def admin_operations_dashboard(request):
 
     if status_filter and status_filter != 'ALL':
         bookings = bookings.filter(status=status_filter)
-        
+
     if search_query:
         bookings = bookings.filter(
             Q(booking_id__icontains=search_query) |
@@ -530,8 +513,62 @@ def admin_operations_dashboard(request):
     }
     return render(request, 'admin/operations_dashboard.html', context)
 
-
 @login_required(login_url='login')
 def booking_detail(request, booking_id):
     booking = get_object_or_404(Booking, booking_id=booking_id, user=request.user)
     return render(request, 'booking_detail.html', {'booking': booking})
+
+def track_booking(request):
+    booking = None
+    query_id = request.GET.get('booking_id', '').strip()
+
+    if query_id:
+        clean_id = query_id.replace('#', '').strip()
+        booking = Booking.objects.select_related('hotel', 'room_type').filter(booking_id__iexact=clean_id).first()
+
+        if not booking and clean_id.isdigit():
+            booking = Booking.objects.select_related('hotel', 'room_type').filter(id=int(clean_id)).first()
+
+        if not booking:
+            messages.error(request, f"No reservation found for Booking ID '{query_id}'. Please check and try again.")
+
+    return render(request, 'track_booking.html', {
+        'booking': booking,
+        'query_id': query_id
+    })
+# PARTNER / OWNER PORTAL
+
+def partner_login(request):
+    if request.user.is_authenticated:
+        return redirect('partner_dashboard')
+        
+    if request.method == 'POST':
+        u = request.POST.get('username')
+        p = request.POST.get('password')
+        user = authenticate(request, username=u, password=p)
+        if user is not None:
+            login(request, user)
+            return redirect('partner_dashboard')
+        else:
+            messages.error(request, 'Invalid hotel partner credentials.')
+    return render(request, 'partner/login.html')
+
+@login_required(login_url='partner_login')
+def partner_dashboard(request):
+    # Find hotels managed by this logged-in partner
+    partner_hotels = Hotel.objects.filter(partner=request.user)
+    
+    # Superuser ya staff testing ke liye fallback (agar koi partner link na ho)
+    if not partner_hotels.exists() and request.user.is_staff:
+        partner_hotels = Hotel.objects.all()[:1]
+        
+    bookings = Booking.objects.filter(hotel__in=partner_hotels).select_related('hotel').order_by('-created_at')
+    partner_revenue = bookings.filter(payment_status='CONFIRMED').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+    
+    context = {
+        'hotels': partner_hotels,
+        'bookings': bookings,
+        'total_bookings': bookings.count(),
+        'partner_revenue': partner_revenue,
+    }
+    return render(request, 'partner/dashboard.html', context)

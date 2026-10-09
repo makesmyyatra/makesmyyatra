@@ -1,0 +1,196 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track Your Reservation | MakesMyYatra</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #faf8f5; }
+  </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col justify-between antialiased">
+
+  <!-- Minimal Header -->
+  <header class="bg-[#0f2e24] text-white py-4 px-6 border-b border-white/10 shadow-sm">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+      <a href="{% url 'index' %}" class="font-serif text-lg font-bold tracking-wider text-[#c5a880]">
+        MAKES MY YATRA
+      </a>
+      <a href="{% url 'index' %}" class="text-xs text-white/80 hover:text-white flex items-center gap-1.5 transition">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Stays
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Section -->
+  <main class="max-w-2xl mx-auto px-4 py-10 w-full flex-1">
+    
+    <!-- Search Bar Card -->
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-[#e2d9cc] shadow-sm mb-8">
+      <div class="text-center mb-6">
+        <span class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-[#c5a880] bg-[#0f2e24]/5 px-3 py-1 rounded-full">
+          <i data-lucide="compass" class="w-3.5 h-3.5"></i> Guest Assistance
+        </span>
+        <h1 class="text-2xl font-black text-[#0f2e24] mt-2">Track Your Stay Reservation</h1>
+        <p class="text-xs text-slate-500 mt-1">Enter your Booking ID to view current confirmation status and stay details.</p>
+      </div>
+
+      <form method="GET" action="{% url 'track_booking' %}" class="flex flex-col sm:flex-row gap-2.5">
+        <div class="relative flex-1">
+          <i data-lucide="hash" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+          <input type="text" name="booking_id" value="{{ query_id }}" required placeholder="e.g. MMY-HTL-1234 ya MMY1234" class="w-full bg-[#faf8f5] border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-[#0f2e24] focus:bg-white transition uppercase">
+        </div>
+        <button type="submit" class="bg-[#0f2e24] hover:bg-[#164234] text-white text-xs font-bold py-3 px-6 rounded-2xl shadow-md transition flex items-center justify-center gap-2">
+          <i data-lucide="search" class="w-4 h-4 text-[#c5a880]"></i> Track Status
+        </button>
+      </form>
+
+      {% if messages %}
+        <div class="mt-4 space-y-2">
+          {% for message in messages %}
+            <div class="p-3.5 rounded-xl text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-2">
+              <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600"></i>
+              <span>{{ message }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Live Status Result -->
+    {% if booking %}
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-[#e2d9cc] shadow-sm space-y-6">
+      
+      <!-- Top Reference & Badge -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-5">
+        <div>
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Booking ID</span>
+          <h2 class="text-xl font-black text-[#0f2e24]">#{{ booking.booking_id|default:booking.id }}</h2>
+          <p class="text-[11px] text-slate-500">Reserved on {{ booking.created_at|date:"d M Y, h:i A" }}</p>
+        </div>
+        <div>
+          {% if booking.status|lower == 'confirmed' %}
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+              <i data-lucide="check-circle" class="w-4 h-4"></i> Stay Confirmed
+            </span>
+          {% elif booking.status|lower == 'checked_in' %}
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
+              <i data-lucide="key-round" class="w-4 h-4"></i> Checked In
+            </span>
+          {% elif booking.status|lower == 'cancelled' %}
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800">
+              <i data-lucide="x-circle" class="w-4 h-4"></i> Cancelled
+            </span>
+          {% else %}
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+              <i data-lucide="clock" class="w-4 h-4"></i> Confirmation Pending
+            </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- 4-Stage Timeline Pipeline -->
+      <div>
+        <p class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-4">Reservation Timeline</p>
+        <div class="grid grid-cols-4 gap-2 text-center">
+          
+          <!-- Step 1: Placed -->
+          <div>
+            <div class="w-9 h-9 rounded-full mx-auto flex items-center justify-center font-bold text-xs bg-emerald-600 text-white shadow-sm mb-1.5">
+              ✓
+            </div>
+            <p class="text-xs font-bold text-[#0f2e24]">Requested</p>
+            <p class="text-[10px] text-slate-400">Order Placed</p>
+          </div>
+
+          <!-- Step 2: Confirmed -->
+          <div>
+            <div class="w-9 h-9 rounded-full mx-auto flex items-center justify-center font-bold text-xs {% if booking.status|lower in 'confirmed,checked_in,completed' %}bg-emerald-600 text-white{% else %}bg-slate-100 text-slate-400{% endif %} mb-1.5">
+              {% if booking.status|lower in 'confirmed,checked_in,completed' %}✓{% else %}2{% endif %}
+            </div>
+            <p class="text-xs font-bold text-[#0f2e24]">Confirmed</p>
+            <p class="text-[10px] text-slate-400">Room Blocked</p>
+          </div>
+
+          <!-- Step 3: Checked In -->
+          <div>
+            <div class="w-9 h-9 rounded-full mx-auto flex items-center justify-center font-bold text-xs {% if booking.status|lower in 'checked_in,completed' %}bg-blue-600 text-white{% else %}bg-slate-100 text-slate-400{% endif %} mb-1.5">
+              {% if booking.status|lower in 'checked_in,completed' %}✓{% else %}3{% endif %}
+            </div>
+            <p class="text-xs font-bold text-[#0f2e24]">Checked In</p>
+            <p class="text-[10px] text-slate-400">At Property</p>
+          </div>
+
+          <!-- Step 4: Checkout -->
+          <div>
+            <div class="w-9 h-9 rounded-full mx-auto flex items-center justify-center font-bold text-xs {% if booking.status|lower == 'completed' %}bg-[#0f2e24] text-white{% else %}bg-slate-100 text-slate-400{% endif %} mb-1.5">
+              4
+            </div>
+            <p class="text-xs font-bold text-[#0f2e24]">Checked Out</p>
+            <p class="text-[10px] text-slate-400">Completed</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Hotel & Stay Info -->
+      <div class="bg-[#faf8f5] p-5 rounded-2xl border border-[#e2d9cc] space-y-4">
+        <div class="flex justify-between items-start">
+          <div>
+            <span class="text-[10px] font-bold text-slate-400 uppercase">Selected Stay</span>
+            <h3 class="text-base font-bold text-[#0f2e24]">{{ booking.hotel.name }}</h3>
+            <p class="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+              <i data-lucide="map-pin" class="w-3.5 h-3.5 text-[#c5a880]"></i> {{ booking.hotel.city }}, Himachal Pradesh
+            </p>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] font-bold text-slate-400 uppercase">Total Tariff</span>
+            <p class="text-lg font-black text-[#0f2e24]">₹{{ booking.final_amount|default:booking.base_amount }}</p>
+            <span class="text-[10px] text-slate-500">{{ booking.get_payment_mode_display|default:'Pay at Hotel' }}</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-3 border-t border-slate-200 text-xs">
+          <div>
+            <span class="text-[10px] text-slate-400 uppercase font-bold block">Guest Name</span>
+            <span class="font-bold text-[#0f2e24]">{{ booking.guest_name }}</span>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 uppercase font-bold block">Check-In</span>
+            <span class="font-bold text-[#0f2e24]">{{ booking.check_in|date:"d M Y" }}</span>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 uppercase font-bold block">Check-Out</span>
+            <span class="font-bold text-[#0f2e24]">{{ booking.check_out|date:"d M Y" }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-between pt-2">
+        <a href="tel:{{ booking.hotel.owner_phone|default:'9816000000' }}" class="text-xs font-bold text-[#0f2e24] hover:text-[#c5a880] flex items-center gap-1.5 transition">
+          <i data-lucide="phone" class="w-4 h-4 text-emerald-600"></i> Call Property
+        </a>
+        <button onclick="window.print()" class="bg-[#0f2e24] hover:bg-[#164234] text-white px-5 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+          <i data-lucide="printer" class="w-4 h-4 text-[#c5a880]"></i> Print Voucher
+        </button>
+      </div>
+
+    </div>
+    {% endif %}
+
+  </main>
+
+  <footer class="py-6 text-center text-xs text-slate-400 border-t border-[#e2d9cc]">
+    © 2026 MakesMyYatra Concierge Desk. Built for Travelers.
+  </footer>
+
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

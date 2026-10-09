@@ -3,7 +3,6 @@ from decimal import Decimal
 from django.db import models
 from django.contrib.auth.models import User
 
-
 # ==========================================
 # 1. HOTEL PROFILE & OWNER MANAGEMENT
 # ==========================================
@@ -143,7 +142,7 @@ class Booking(models.Model):
         ('PARTIAL', 'Partial Deposit'),
     ]
 
-    booking_id = models.CharField(max_length=50, unique=True) # MMY-HTL-XXXX
+    booking_id = models.CharField(max_length=50, unique=True)  # MMY-HTL-XXXX
     hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='bookings', null=True, blank=True)
     room_type = models.ForeignKey(RoomType, on_delete=models.SET_NULL, null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='bookings')

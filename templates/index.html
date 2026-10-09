@@ -22,7 +22,11 @@
       </div>
       
       <div class="flex items-center gap-4 text-[11px]">
-        <a href="#hotelsSearchForm" class="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1.5 transition">
+        <a href="{% url 'partner_login' %}" class="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1.5 transition">
+          <i data-lucide="building" class="w-3.5 h-3.5"></i> Partner Login
+        </a>
+        <span class="text-slate-700">|</span>
+        <a href="{% url 'track_booking' %}" class="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1.5 transition text-[11px]">
           <i data-lucide="ticket" class="w-3.5 h-3.5"></i> Check Booking Status
         </a>
         <span class="text-slate-700">|</span>
@@ -59,10 +63,13 @@
         </a>
       </nav>
 
-      <!-- Admin Login Button -->
-      <div class="flex items-center gap-3">
-        <a href="{% url 'portal_login' %}" class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition flex items-center gap-1.5 shadow-sm">
-          <i data-lucide="lock" class="w-3.5 h-3.5 text-blue-600"></i> Admin Login
+      <!-- Action Buttons (Partner + Admin Login) -->
+      <div class="flex items-center gap-2.5">
+        <a href="{% url 'partner_login' %}" class="px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-900 border border-amber-300 text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+          <i data-lucide="key" class="w-3.5 h-3.5 text-amber-600"></i> Partner Desk
+        </a>
+        <a href="{% url 'portal_login' %}" class="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition flex items-center gap-1.5 shadow-sm">
+          <i data-lucide="lock" class="w-3.5 h-3.5 text-blue-600"></i> Admin
         </a>
       </div>
     </div>
@@ -401,11 +408,19 @@
       </div>
 
       <div>
-        <h4 class="text-white font-black uppercase tracking-wider text-[11px] mb-3">Company</h4>
+        <h4 class="text-white font-black uppercase tracking-wider text-[11px] mb-3">For Hoteliers</h4>
         <ul class="space-y-2 text-slate-400">
-          <li><a href="#" class="hover:text-white transition">About Us</a></li>
-          <li><a href="{% url 'support_request' %}" class="hover:text-white transition">Contact</a></li>
-          <li><a href="#" class="hover:text-white transition">Privacy Policy</a></li>
+          <li>
+            <a href="{% url 'partner_login' %}" class="text-amber-400 hover:text-amber-300 font-bold transition flex items-center gap-1.5">
+              <i data-lucide="store" class="w-3.5 h-3.5"></i> List Your Property
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'partner_login' %}" class="hover:text-white transition">Partner Dashboard</a>
+          </li>
+          <li>
+            <a href="{% url 'support_request' %}" class="hover:text-white transition">Partner Support</a>
+          </li>
         </ul>
       </div>
 
@@ -425,8 +440,13 @@
       </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 mt-12 pt-6 border-t border-slate-900 text-center text-slate-600 text-[11px]">
+    <div class="max-w-7xl mx-auto px-4 mt-12 pt-6 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-slate-600 text-[11px] gap-2">
       <p>© 2026 MakesMyYatra. All rights reserved.</p>
+      <div class="flex items-center gap-4">
+        <a href="{% url 'partner_login' %}" class="hover:text-slate-400 transition">Hotelier Login</a>
+        <span>•</span>
+        <a href="{% url 'portal_login' %}" class="hover:text-slate-400 transition">Admin Portal</a>
+      </div>
     </div>
   </footer>
 
@@ -440,6 +460,7 @@
       const cabsForm = document.getElementById('cabsSearchForm');
       const tabHotelsBtn = document.getElementById('tabHotelsBtn');
       const tabCabsBtn = document.getElementById('tabCabsBtn');
+
       if (tab === 'hotels') {
         hotelsForm.classList.remove('hidden');
         cabsForm.classList.add('hidden');
@@ -466,7 +487,6 @@
       const checkInInput = document.getElementById('modalCheckIn');
       const checkOutInput = document.getElementById('modalCheckOut');
       const baseInput = document.getElementById('modalBaseAmount');
-
       const unitRate = parseFloat(baseInput.dataset.unitPrice || 1800);
       const d1 = new Date(checkInInput.value);
       const d2 = new Date(checkOutInput.value);
@@ -500,16 +520,14 @@
       const d1 = new Date(checkInVal);
       const minCheckOut = new Date(d1);
       minCheckOut.setDate(d1.getDate() + 1);
-
       const minCheckOutStr = formatDateStr(minCheckOut);
+
       const checkOutElem = document.getElementById('modalCheckOut');
       checkOutElem.min = minCheckOutStr;
 
-      // Agar checkout checkin ke pehle ya barabar ho jaye to auto-advance
       if (checkOutElem.value <= checkInVal) {
         checkOutElem.value = minCheckOutStr;
       }
-
       calculateBookingTotal();
     }
 
@@ -537,7 +555,6 @@
 
       checkInElem.min = todayStr;
       checkInElem.value = todayStr;
-
       checkOutElem.min = tomorrowStr;
       checkOutElem.value = tomorrowStr;
 
