@@ -15,31 +15,25 @@
         <h1 class="font-serif text-xl font-bold tracking-wider text-[#c5a880]">MAKES MY YATRA</h1>
         <p class="text-xs text-white/60 mt-1">Operations Portal</p>
       </div>
-
-      <nav class="p-4 space-y-1 text-sm font-medium">
-        <a href="{% url 'portal_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition hover:bg-white/10 text-white/90">
-          <i data-lucide="layout-dashboard" class="h-4 w-4 text-[#c5a880]"></i>
-          <span>Dashboard</span>
+      <!-- Navigation Links -->
+      <nav class="p-4 space-y-1.5 text-xs font-bold">
+        <a href="{% url 'portal_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
         </a>
-        <a href="{% url 'portal_hotels' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition hover:bg-white/10 text-white/90">
-          <i data-lucide="hotel" class="h-4 w-4 text-[#c5a880]"></i>
-          <span>All Stays</span>
+        <a href="{% url 'portal_hotels' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition">
+          <i data-lucide="building-2" class="w-4 h-4"></i> All Stays
         </a>
-        <a href="{% url 'portal_hotel_add' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition hover:bg-white/10 text-white/90">
-          <i data-lucide="plus-circle" class="h-4 w-4 text-[#c5a880]"></i>
-          <span>Add New Stay</span>
+        <a href="{% url 'portal_hotel_add' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i> Add New Stay
         </a>
-        <a href="{% url 'portal_bookings' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition hover:bg-white/10 text-white/90">
-          <i data-lucide="calendar-check" class="h-4 w-4 text-[#c5a880]"></i>
-          <span>Bookings</span>
+        <a href="{% url 'portal_bookings' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/30 transition">
+          <i data-lucide="calendar-check" class="w-4 h-4"></i> Bookings
         </a>
-        <a href="{% url 'portal_customers' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition hover:bg-white/10 text-white/90">
-          <i data-lucide="users" class="h-4 w-4 text-[#c5a880]"></i>
-          <span>Travelers Directory</span>
+        <a href="{% url 'portal_customers' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition">
+          <i data-lucide="users" class="w-4 h-4"></i> Travelers Directory
         </a>
-        <a href="{% url 'portal_urgent_help' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition hover:bg-white/10 text-white/90">
-          <i data-lucide="phone-call" class="h-4 w-4 text-red-400"></i>
-          <span>Urgent Desk</span>
+        <a href="{% url 'portal_urgent_help' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition">
+          <i data-lucide="phone-call" class="w-4 h-4"></i> Urgent Desk
         </a>
       </nav>
 

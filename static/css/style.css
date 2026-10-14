@@ -1,9 +1,4 @@
-/* ==========================================================================
-   MakesMyYatra - Official Brand Design System & Master Stylesheet
-   Theme: Pine Forest & Sand Heritage (Himachal Tourism Concierge)
-   ========================================================================== */
 
-/* 1. CSS Custom Properties / Design Tokens */
 :root {
   --primary: #0f2e24;         /* Deep Forest Pine */
   --primary-light: #164234;   /* Pine Hover / Lighter Variant */

@@ -96,7 +96,7 @@
 
             <!-- Base Tariff -->
             <td class="py-4 px-6 text-center font-bold text-slate-800">
-              ₹{{ hotel.base_price|default:"2,499" }}
+              ₹{{ hotel.room_types.all.0.base_price }}
             </td>
 
             <!-- Status Badge -->

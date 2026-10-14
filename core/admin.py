@@ -9,6 +9,10 @@ class RoomTypeInline(admin.TabularInline):
     model = RoomType
     extra = 1
 
+class MealPlanInline(admin.TabularInline):
+    model = MealPlan
+    extra = 1
+
 @admin.register(Hotel)
 class HotelAdmin(admin.ModelAdmin):
     list_display = ('name', 'category', 'city', 'star_rating', 'is_active')
@@ -21,11 +25,12 @@ class RoomTypeAdmin(admin.ModelAdmin):
     list_display = ('hotel', 'name', 'base_price', 'total_inventory', 'is_available')
     list_filter = ('hotel', 'is_available')
     search_fields = ('name', 'hotel__name')
+    inlines = [MealPlanInline]
 
 @admin.register(MealPlan)
 class MealPlanAdmin(admin.ModelAdmin):
-    list_display = ('room_type', 'plan_code', 'additional_price')
-    list_filter = ('plan_code',)
+    list_display = ('room_type', 'plan_code', 'additional_price', 'is_active')
+    list_filter = ('plan_code', 'is_active')
 
 @admin.register(Coupon)
 class CouponAdmin(admin.ModelAdmin):
@@ -35,9 +40,9 @@ class CouponAdmin(admin.ModelAdmin):
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ('booking_id', 'user', 'destination_title', 'travel_date', 'total_amount', 'payment_status', 'created_at')
-    list_filter = ('payment_status', 'travel_date')
-    search_fields = ('booking_id', 'user__username', 'destination_title', 'transaction_id')
+    list_display = ('booking_id', 'guest_name', 'hotel', 'total_amount', 'payment_mode', 'status', 'created_at')
+    list_filter = ('status', 'payment_mode', 'created_at')
+    search_fields = ('booking_id', 'guest_name', 'guest_phone', 'guest_email', 'transaction_id')
 
 @admin.register(EmergencySupport)
 class EmergencySupportAdmin(admin.ModelAdmin):
