@@ -5,19 +5,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MakesMyYatra - Himachal's Leading Stays, Homestays & Cabs Portal</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f4f6fa; }
     .hero-bg {
-      background: linear-gradient(180deg, #051322 0%, #0c2b4d 60%, #15457c 100%);
+      background: linear-gradient(180deg, #051423 0%, #0c2b4d 55%, #15457c 100%);
     }
+    .mmt-nav-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 12px;
+      color: #64748b;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .mmt-nav-tab:hover {
+      color: #0d6efd;
+    }
+    .mmt-nav-tab.active {
+      color: #0d6efd;
+      font-weight: 800;
+    }
+    .mmt-nav-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 10px;
+      right: 10px;
+      height: 3px;
+      background: #0d6efd;
+      border-radius: 9999px;
+    }
+    /* Hide scrollbar for clean horizontal swipe on mobile */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
 <body class="text-slate-800 antialiased flex flex-col min-h-screen justify-between">
 
   <!-- ================= TOP TRAVEL ADVISORY TICKER ================= -->
-  <div class="bg-[#030d17] text-slate-300 text-xs py-2.5 px-4 border-b border-slate-800">
+  <div class="bg-[#030d17] text-slate-300 text-xs py-2 px-4 border-b border-slate-800">
     <div class="max-w-7xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-2">
         <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -31,14 +63,14 @@
     </div>
   </div>
 
-  <!-- ================= HERO WITH MMT FLOATING SEARCH CONTAINER ================= -->
-  <header class="hero-bg relative pt-8 pb-32 px-4">
-    <div class="max-w-7xl mx-auto">
+  <!-- ================= HERO & INTEGRATED MMT SEARCH HUB ================= -->
+  <header class="hero-bg relative pt-6 pb-28 px-4">
+    <div class="max-w-6xl mx-auto">
       
-      <!-- Brand & Top-Right Header Actions (MMT Style) -->
+      <!-- Brand & Top-Right Header Actions -->
       <div class="flex items-center justify-between mb-8">
         <a href="{% url 'index' %}" class="flex items-center gap-2.5">
-          <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 text-2xl font-black">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 text-xl font-black">
             ⛰️
           </div>
           <div>
@@ -47,190 +79,203 @@
           </div>
         </a>
 
-        <!-- Top Right Actions: My Trips, Partner & Admin -->
+        <!-- Top Right Actions -->
         <div class="flex items-center gap-2.5">
-          <!-- 1. MMT-Style Top "My Trips / Track Booking" Tile -->
-          <a href="{% url 'track_booking' %}" class="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/20 transition shadow-sm group">
-            <div class="w-7 h-7 rounded-xl bg-amber-400 text-slate-900 flex items-center justify-center font-bold">
-              <i data-lucide="ticket" class="w-4 h-4"></i>
-            </div>
-            <div class="text-left hidden sm:block">
-              <span class="block text-xs font-black text-white group-hover:text-amber-300 transition leading-tight">My Trips</span>
-              <span class="block text-[9px] text-slate-300 font-medium">Track Booking</span>
-            </div>
+          <a href="{% url 'track_booking' %}" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 transition shadow-sm">
+            <i data-lucide="ticket" class="w-4 h-4 text-amber-400"></i>
+            <span class="text-xs font-bold hidden sm:inline">My Trips</span>
           </a>
-
-          <!-- 2. Partner Desk Link -->
-          <a href="{% url 'partner_login' %}" class="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-400/30 text-xs font-bold transition">
-            <i data-lucide="building" class="w-3.5 h-3.5 text-emerald-400"></i> Partner Desk
+          <a href="{% url 'partner_login' %}" class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-400/30 text-xs font-bold transition">
+            <i data-lucide="building" class="w-3.5 h-3.5"></i> Partner Desk
           </a>
-
-          <!-- 3. Admin Login -->
-          <a href="{% url 'portal_login' %}" class="flex items-center gap-1.5 px-3 py-2 rounded-2xl border border-slate-700/80 bg-slate-900/50 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition shadow-sm">
+          <a href="{% url 'portal_login' %}" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900/50 text-xs font-bold text-slate-300 hover:text-white transition">
             <i data-lucide="lock" class="w-3.5 h-3.5 text-blue-400"></i> Admin
           </a>
         </div>
       </div>
 
-      <!-- MMT-Style Floating Service Navigation Tabs -->
-      <div class="max-w-5xl mx-auto bg-white rounded-t-3xl shadow-2xl p-2 flex items-center justify-around border-b border-slate-100">
-        <button onclick="switchTab('hotels')" id="navHotels" class="flex-1 py-3 px-2 flex flex-col items-center gap-1 text-blue-600 font-black border-b-2 border-blue-600 text-xs transition">
-          <i data-lucide="hotel" class="w-5 h-5"></i>
-          <span>Hotels & Stays</span>
-        </button>
-        <button onclick="switchTab('homestays')" id="navHomestays" class="flex-1 py-3 px-2 flex flex-col items-center gap-1 text-slate-500 hover:text-slate-900 font-bold text-xs transition">
-          <i data-lucide="home" class="w-5 h-5"></i>
-          <span>Homestays & Villas</span>
-        </button>
-        <button onclick="switchTab('cabs')" id="navCabs" class="flex-1 py-3 px-2 flex flex-col items-center gap-1 text-slate-500 hover:text-slate-900 font-bold text-xs transition">
-          <i data-lucide="car-taxi-front" class="w-5 h-5"></i>
-          <span>Outstation Cabs</span>
-        </button>
-        <button onclick="switchTab('tours')" id="navTours" class="flex-1 py-3 px-2 flex flex-col items-center gap-1 text-slate-500 hover:text-slate-900 font-bold text-xs transition">
-          <i data-lucide="mountain-snow" class="w-5 h-5"></i>
-          <span>Tour Packages</span>
-        </button>
-      </div>
-
-      <!-- Search Box Main Frame -->
-      <div class="max-w-5xl mx-auto bg-white rounded-b-3xl shadow-2xl p-6 border border-slate-100">
+      <!-- ================= SINGLE CLEAN MMT CARD ================= -->
+      <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
         
-        <!-- 1. Stays / Hotels Form -->
-        <form id="hotelsSearchPanel" action="{% url 'index' %}" method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+        <!-- MMT Top Navigation Service Row -->
+        <div class="flex items-center border-b border-slate-200 px-3 bg-slate-50/70 overflow-x-auto no-scrollbar gap-1 sm:gap-2 justify-start sm:justify-around">
           
-          <!-- Auto-Suggest City Destination -->
-          <div class="sm:col-span-2 p-3 bg-slate-50 border border-slate-200 rounded-2xl hover:border-blue-500 transition relative">
-            <span class="block text-[10px] font-black uppercase tracking-wider text-slate-400">City / Hotel / Area</span>
-            <div class="relative mt-1">
+          <div onclick="selectMmtTab(this, 'hotels')" class="mmt-nav-tab active">
+            <i data-lucide="hotel" class="w-5 h-5 mb-1 text-blue-600"></i>
+            <span class="text-[11px] font-bold">Hotels & Stays</span>
+          </div>
+
+          <div onclick="selectMmtTab(this, 'homestays')" class="mmt-nav-tab">
+            <i data-lucide="home" class="w-5 h-5 mb-1"></i>
+            <span class="text-[11px] font-semibold">Homestays</span>
+          </div>
+
+          <div onclick="selectMmtTab(this, 'dummy')" class="mmt-nav-tab">
+            <i data-lucide="plane" class="w-5 h-5 mb-1"></i>
+            <span class="text-[11px] font-semibold">Flights</span>
+          </div>
+
+          <div onclick="selectMmtTab(this, 'dummy')" class="mmt-nav-tab">
+            <i data-lucide="train-track" class="w-5 h-5 mb-1"></i>
+            <span class="text-[11px] font-semibold">Trains/Bus</span>
+          </div>
+
+          <div onclick="selectMmtTab(this, 'cabs')" class="mmt-nav-tab">
+            <i data-lucide="car-taxi-front" class="w-5 h-5 mb-1"></i>
+            <span class="text-[11px] font-semibold">Outstation Cabs</span>
+          </div>
+
+          <div onclick="selectMmtTab(this, 'tours')" class="mmt-nav-tab">
+            <i data-lucide="palmtree" class="w-5 h-5 mb-1"></i>
+            <span class="text-[11px] font-semibold">Holiday Packages</span>
+          </div>
+
+          <div onclick="selectMmtTab(this, 'dummy')" class="mmt-nav-tab">
+            <i data-lucide="coins" class="w-5 h-5 mb-1"></i>
+            <span class="text-[11px] font-semibold">Forex</span>
+          </div>
+
+          <div onclick="selectMmtTab(this, 'dummy')" class="mmt-nav-tab">
+            <i data-lucide="shield-check" class="w-5 h-5 mb-1"></i>
+            <span class="text-[11px] font-semibold">Insurance</span>
+          </div>
+
+        </div>
+
+        <!-- Card Content Body -->
+        <div class="p-6">
+          
+          <!-- 1. Stays / Hotels Form -->
+          <form id="hotelsSearchPanel" action="{% url 'index' %}" method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+            
+            <!-- City Destination -->
+            <div class="sm:col-span-2 p-3 bg-slate-50 border border-slate-200 rounded-2xl hover:border-blue-500 transition relative">
+              <span class="block text-[10px] font-black uppercase tracking-wider text-slate-400">City / Hotel / Area</span>
               <input 
                 type="text" 
                 name="city" 
-                id="citySearchInput"
-                autocomplete="off"
+                id="citySearchInput" 
+                autocomplete="off" 
                 placeholder="e.g. Manali, Shimla, Hamirpur" 
-                value="{% if selected_city and selected_city != 'All' %}{{ selected_city }}{% endif %}"
-                class="w-full bg-transparent font-black text-sm text-slate-900 outline-none placeholder:text-slate-400 placeholder:font-normal"
-                onfocus="showCitySuggestions()"
+                value="{% if selected_city and selected_city != 'All' %}{{ selected_city }}{% endif %}" 
+                class="w-full bg-transparent font-black text-sm text-slate-900 outline-none placeholder:text-slate-400 placeholder:font-normal mt-1" 
+                onfocus="showCitySuggestions()" 
                 oninput="filterCitySuggestions()"
               >
-            </div>
-
-            <!-- Dynamic Dropdown List -->
-            <div id="citySuggestionsDropdown" class="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 p-2 z-50 hidden max-h-60 overflow-y-auto">
-              <div class="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
-                Popular Himachal Destinations
+              <!-- Dynamic Dropdown List -->
+              <div id="citySuggestionsDropdown" class="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 p-2 z-50 hidden max-h-60 overflow-y-auto">
+                <div class="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
+                  Popular Himachal Destinations
+                </div>
+                <ul id="citySuggestionsList" class="space-y-1">
+                  <li onclick="selectCity('All')" class="p-2 hover:bg-blue-50 rounded-xl cursor-pointer flex items-center justify-between text-xs font-bold text-slate-700">
+                    <span class="flex items-center gap-2"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-blue-600"></i> All Across Himachal</span>
+                    <span class="text-[10px] text-slate-400">All Stays</span>
+                  </li>
+                  <li onclick="selectCity('Manali')" class="p-2 hover:bg-blue-50 rounded-xl cursor-pointer flex items-center justify-between text-xs font-bold text-slate-700">
+                    <span class="flex items-center gap-2"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-blue-600"></i> Manali</span>
+                    <span class="text-[10px] text-slate-400">Kullu Valley</span>
+                  </li>
+                  <li onclick="selectCity('Shimla')" class="p-2 hover:bg-blue-50 rounded-xl cursor-pointer flex items-center justify-between text-xs font-bold text-slate-700">
+                    <span class="flex items-center gap-2"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-blue-600"></i> Shimla</span>
+                    <span class="text-[10px] text-slate-400">Mall Road</span>
+                  </li>
+                  <li onclick="selectCity('Dharamshala')" class="p-2 hover:bg-blue-50 rounded-xl cursor-pointer flex items-center justify-between text-xs font-bold text-slate-700">
+                    <span class="flex items-center gap-2"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-blue-600"></i> Dharamshala</span>
+                    <span class="text-[10px] text-slate-400">Kangra</span>
+                  </li>
+                  <li onclick="selectCity('Hamirpur')" class="p-2 hover:bg-blue-50 rounded-xl cursor-pointer flex items-center justify-between text-xs font-bold text-slate-700">
+                    <span class="flex items-center gap-2"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-blue-600"></i> Hamirpur</span>
+                    <span class="text-[10px] text-slate-400">Barsar</span>
+                  </li>
+                </ul>
               </div>
-              <ul id="citySuggestionsList" class="space-y-1">
-                <li onclick="selectCity('All')" class="p-2 hover:bg-blue-50 rounded-xl cursor-pointer flex items-center justify-between text-xs font-bold text-slate-700">
-                  <span class="flex items-center gap-2"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-blue-600"></i> All Across Himachal</span>
-                  <span class="text-[10px] text-slate-400">All Stays</span>
-                </li>
-                <li onclick="selectCity('Manali')" class="p-2 hover:bg-blue-50 rounded-xl cursor-pointer flex items-center justify-between text-xs font-bold text-slate-700">
-                  <span class="flex items-center gap-2"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-blue-600"></i> Manali</span>
-                  <span class="text-[10px] text-slate-400">Kullu Valley</span>
-                </li>
-                <li onclick="selectCity('Shimla')" class="p-2 hover:bg-blue-50 rounded-xl cursor-pointer flex items-center justify-between text-xs font-bold text-slate-700">
-                  <span class="flex items-center gap-2"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-blue-600"></i> Shimla</span>
-                  <span class="text-[10px] text-slate-400">Mall Road & Ridge</span>
-                </li>
-                <li onclick="selectCity('Dharamshala')" class="p-2 hover:bg-blue-50 rounded-xl cursor-pointer flex items-center justify-between text-xs font-bold text-slate-700">
-                  <span class="flex items-center gap-2"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-blue-600"></i> Dharamshala</span>
-                  <span class="text-[10px] text-slate-400">Kangra / McLeodganj</span>
-                </li>
-                <li onclick="selectCity('Hamirpur')" class="p-2 hover:bg-blue-50 rounded-xl cursor-pointer flex items-center justify-between text-xs font-bold text-slate-700">
-                  <span class="flex items-center gap-2"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-blue-600"></i> Hamirpur</span>
-                  <span class="text-[10px] text-slate-400">Barsar / Deotsidh</span>
-                </li>
-                <li onclick="selectCity('Kasol')" class="p-2 hover:bg-blue-50 rounded-xl cursor-pointer flex items-center justify-between text-xs font-bold text-slate-700">
-                  <span class="flex items-center gap-2"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-blue-600"></i> Kasol</span>
-                  <span class="text-[10px] text-slate-400">Parvati Valley</span>
-                </li>
-                <li onclick="selectCity('Spiti')" class="p-2 hover:bg-blue-50 rounded-xl cursor-pointer flex items-center justify-between text-xs font-bold text-slate-700">
-                  <span class="flex items-center gap-2"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-blue-600"></i> Spiti Valley</span>
-                  <span class="text-[10px] text-slate-400">Kaza / Tabo</span>
-                </li>
-              </ul>
             </div>
-          </div>
 
-          <!-- Stay Category -->
-          <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl hover:border-blue-500 transition">
-            <span class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Property Type</span>
-            <select name="property_type" id="propertyTypeSelect" class="w-full bg-transparent font-black text-sm text-slate-900 outline-none mt-1 cursor-pointer">
-              <option value="" {% if not request.GET.property_type %}selected{% endif %}>All Types</option>
-              <option value="Hotel" {% if request.GET.property_type == 'Hotel' %}selected{% endif %}>Hotels</option>
-              <option value="Resort" {% if request.GET.property_type == 'Resort' %}selected{% endif %}>Resorts</option>
-              <option value="Homestay" {% if request.GET.property_type == 'Homestay' %}selected{% endif %}>Homestays</option>
-              <option value="Camp" {% if request.GET.property_type == 'Camp' %}selected{% endif %}>Camps</option>
-            </select>
-          </div>
-
-          <!-- Check-In Date Card -->
-          <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl hover:border-blue-500 transition">
-            <span class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Check-In</span>
-            <input type="date" name="check_in" id="searchCheckIn" class="w-full bg-transparent font-black text-xs text-slate-900 outline-none mt-1 cursor-pointer">
-          </div>
-
-          <!-- Check-Out Date Card -->
-          <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl hover:border-blue-500 transition">
-            <span class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Check-Out</span>
-            <input type="date" name="check_out" id="searchCheckOut" class="w-full bg-transparent font-black text-xs text-slate-900 outline-none mt-1 cursor-pointer">
-          </div>
-
-          <!-- Search CTA -->
-          <div class="flex items-center">
-            <button type="submit" class="w-full h-full min-h-[56px] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-blue-500/30 transition flex items-center justify-center gap-2">
-              <i data-lucide="search" class="w-4 h-4"></i> Search Stays
-            </button>
-          </div>
-        </form>
-
-        <!-- 2. Outstation Cabs Panel -->
-        <div id="cabsSearchPanel" class="hidden py-6 text-center">
-          <div class="max-w-md mx-auto space-y-3">
-            <div class="w-14 h-14 bg-amber-500/10 text-amber-600 rounded-2xl flex items-center justify-center mx-auto border border-amber-200 shadow-sm">
-              <i data-lucide="car" class="w-7 h-7"></i>
+            <!-- Property Type -->
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl hover:border-blue-500 transition">
+              <span class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Property Type</span>
+              <select name="property_type" id="propertyTypeSelect" class="w-full bg-transparent font-black text-sm text-slate-900 outline-none mt-1 cursor-pointer">
+                <option value="" {% if not request.GET.property_type %}selected{% endif %}>All Types</option>
+                <option value="Hotel" {% if request.GET.property_type == 'Hotel' %}selected{% endif %}>Hotels</option>
+                <option value="Resort" {% if request.GET.property_type == 'Resort' %}selected{% endif %}>Resorts</option>
+                <option value="Homestay" {% if request.GET.property_type == 'Homestay' %}selected{% endif %}>Homestays</option>
+                <option value="Camp" {% if request.GET.property_type == 'Camp' %}selected{% endif %}>Camps</option>
+              </select>
             </div>
-            <h3 class="text-lg font-black text-slate-900">Himachal Outstation & Intercity Cabs</h3>
-            <p class="text-xs text-slate-500">Shimla, Manali, Dharamshala and local sightseeing's verified mountain chauffeurs.</p>
-            <div class="pt-2">
-              <a href="{% url 'taxi' %}" class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-xs px-6 py-3 rounded-xl transition shadow-lg shadow-blue-500/25">
+
+            <!-- Check-In -->
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl hover:border-blue-500 transition">
+              <span class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Check-In</span>
+              <input type="date" name="check_in" id="searchCheckIn" class="w-full bg-transparent font-black text-xs text-slate-900 outline-none mt-1 cursor-pointer">
+            </div>
+
+            <!-- Check-Out -->
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl hover:border-blue-500 transition">
+              <span class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Check-Out</span>
+              <input type="date" name="check_out" id="searchCheckOut" class="w-full bg-transparent font-black text-xs text-slate-900 outline-none mt-1 cursor-pointer">
+            </div>
+
+            <!-- CTA Button -->
+            <div class="flex items-center">
+              <button type="submit" class="w-full h-full min-h-[56px] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-blue-500/30 transition flex items-center justify-center gap-2">
+                <i data-lucide="search" class="w-4 h-4"></i> Search Stays
+              </button>
+            </div>
+          </form>
+
+          <!-- 2. Cabs Panel -->
+          <div id="cabsSearchPanel" class="hidden py-8 text-center">
+            <div class="max-w-md mx-auto space-y-2">
+              <i data-lucide="car-taxi-front" class="w-10 h-10 text-amber-500 mx-auto mb-2"></i>
+              <h3 class="text-base font-black text-slate-900">Himachal Outstation & Intercity Cabs</h3>
+              <p class="text-xs text-slate-500 mb-3">Shimla, Manali, Dharamshala verified mountain chauffeurs.</p>
+              <a href="{% url 'taxi' %}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs px-5 py-2.5 rounded-xl transition shadow">
                 <span>Check Available Cabs & Tariffs</span>
                 <i data-lucide="arrow-right" class="w-4 h-4"></i>
               </a>
             </div>
           </div>
-        </div>
 
-        <!-- 3. Tour Packages Panel -->
-        <div id="toursSearchPanel" class="hidden py-6 text-center">
-          <div class="max-w-md mx-auto space-y-3">
-            <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto border border-blue-200 shadow-sm text-2xl">
-              🏔️
-            </div>
-            <h3 class="text-lg font-black text-slate-900">Curated Himachal Tour Packages</h3>
-            <p class="text-xs text-slate-500">Spiti Valley circuit, Parvati Valley treks, Kinnaur expeditions aur honeymoon packages coming soon.</p>
-            <div>
-              <span class="inline-block px-3.5 py-1.5 bg-blue-50 text-blue-800 text-[11px] font-bold rounded-lg border border-blue-200">
-                🚀 Coming Soon in Next Phase
+          <!-- 3. Tour Packages Panel -->
+          <div id="toursSearchPanel" class="hidden py-8 text-center">
+            <div class="max-w-md mx-auto space-y-2">
+              <span class="text-3xl block mb-2">🏔️</span>
+              <h3 class="text-base font-black text-slate-900">Curated Himachal Tour Packages</h3>
+              <p class="text-xs text-slate-500 mb-3">Spiti Valley circuit, Parvati Valley treks, and Honeymoon tours.</p>
+              <span class="inline-block px-3 py-1 bg-blue-50 text-blue-700 text-[11px] font-bold rounded-lg border border-blue-200">
+                🚀 Coming Soon
               </span>
             </div>
           </div>
+
+          <!-- 4. General Dummy Service Panel (Flights, Trains, Forex etc.) -->
+          <div id="dummySearchPanel" class="hidden py-8 text-center">
+            <div class="max-w-md mx-auto space-y-2">
+              <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-2">
+                <i data-lucide="sparkles" class="w-5 h-5"></i>
+              </div>
+              <h3 id="dummyTitle" class="text-base font-black text-slate-900">Service Integration</h3>
+              <p class="text-xs text-slate-500">This feature is currently being integrated for Himachal routes.</p>
+              <button onclick="selectMmtTab(document.querySelector('.mmt-nav-tab'), 'hotels')" class="text-xs font-bold text-blue-600 hover:underline pt-2 block mx-auto">
+                ← Go back to Hotels & Stays
+              </button>
+            </div>
+          </div>
+
         </div>
-
       </div>
-
     </div>
   </header>
 
   <!-- ================= MMT OFFERS BANNER STRIP ================= -->
-  <div class="max-w-7xl mx-auto px-4 -mt-10 mb-8 relative z-20">
+  <div class="max-w-6xl mx-auto px-4 -mt-10 mb-8 relative z-20">
     <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 text-white rounded-2xl p-4 shadow-xl flex flex-col md:flex-row items-center justify-between gap-3">
       <div class="flex items-center gap-3">
         <span class="text-3xl">🎁</span>
         <div>
           <span class="font-black text-sm block">EXCLUSIVE INAUGURAL PASS: FLAT 20% OFF* on First Mountain Stay!</span>
-          <span class="text-xs text-amber-100">Zero cancellation fee on select hotels </span>
+          <span class="text-xs text-amber-100">Zero cancellation fee on select hotels</span>
         </div>
       </div>
       <div class="flex items-center gap-2">
@@ -244,9 +289,8 @@
     </div>
   </div>
 
-  <main class="max-w-7xl mx-auto px-4 py-4 w-full flex-1">
-
-    <!-- Flash Messages Container -->
+  <!-- ================= MAIN PROPERTY LISTING ================= -->
+  <main class="max-w-6xl mx-auto px-4 py-4 w-full flex-1">
     {% if messages %}
     <div class="mb-6 space-y-2">
       {% for message in messages %}
@@ -261,11 +305,10 @@
     </div>
     {% endif %}
 
-    <!-- Inventory Filter & Counts Header -->
     <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 border-b border-slate-200 pb-4">
       <div>
         <span class="text-[11px] font-black uppercase tracking-wider text-blue-600">Verified Accommodations</span>
-        <h2 class="text-2xl md:text-3xl font-black text-slate-900 mt-1">
+        <h2 class="text-2xl font-black text-slate-900 mt-1">
           {% if selected_city and selected_city != 'All' %}
             Stays in {{ selected_city }} ({{ hotels.count }} Verified)
           {% else %}
@@ -273,8 +316,6 @@
           {% endif %}
         </h2>
       </div>
-
-      <!-- Quick Destination Pills -->
       <div class="flex flex-wrap gap-1.5 text-xs font-bold">
         <a href="{% url 'index' %}" class="px-3 py-1.5 rounded-xl border {% if not selected_city or selected_city == 'All' %}bg-slate-900 text-white border-slate-900{% else %}bg-white text-slate-600 border-slate-200 hover:border-slate-400{% endif %} transition">All</a>
         <a href="{% url 'index' %}?city=Shimla" class="px-3 py-1.5 rounded-xl border {% if selected_city == 'Shimla' %}bg-slate-900 text-white border-slate-900{% else %}bg-white text-slate-600 border-slate-200 hover:border-slate-400{% endif %} transition">Shimla</a>
@@ -284,17 +325,14 @@
       </div>
     </div>
 
-    <!-- Properties Grid -->
+    <!-- Properties Cards Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {% for hotel in hotels %}
       <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group">
-        
-        <!-- Cover & Badge Tags -->
-        <div class="relative h-56 bg-slate-100 overflow-hidden">
+        <div class="relative h-52 bg-slate-100 overflow-hidden">
           <img src="{{ hotel.cover_image|default:'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80' }}" 
                alt="{{ hotel.name }}" 
                class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-          
           <div class="absolute top-3 left-3 bg-[#051322]/85 backdrop-blur-md text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-lg">
             {{ hotel.city }}
           </div>
@@ -305,8 +343,6 @@
             <i data-lucide="shield-check" class="w-3 h-3 text-emerald-600"></i> Verified Stay
           </div>
         </div>
-
-        <!-- Body Details -->
         <div class="p-5 flex-1 flex flex-col justify-between">
           <div>
             <span class="uppercase tracking-wider font-bold text-[10px] text-blue-600">{{ hotel.category }}</span>
@@ -314,15 +350,12 @@
             <p class="text-xs text-slate-500 mt-1 flex items-center gap-1">
               <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400"></i> {{ hotel.address|truncatechars:45 }}
             </p>
-            
             <div class="flex flex-wrap gap-1.5 mt-3">
               <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">Free Wi-Fi</span>
               <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">Mountain View</span>
               <span class="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md">Pay @ Hotel</span>
             </div>
           </div>
-
-          <!-- MMT Pricing Box -->
           {% with first_room=hotel.room_types.all.0 %}
           {% with live_price=first_room.base_price|default:1850 %}
           <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
@@ -354,10 +387,9 @@
       </div>
       {% endfor %}
     </div>
-
   </main>
 
-  <!-- ================= DYNAMIC 2-STEP BOOKING MODAL WITH PROMO ENGINE ================= -->
+  <!-- ================= BOOKING MODAL ================= -->
   <div id="bookingModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl border border-slate-200 relative max-h-[90vh] overflow-y-auto">
       <button onclick="closeBookingModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
@@ -368,17 +400,14 @@
         <h3 id="modalHotelName" class="text-lg font-black text-slate-900 mt-2">Hotel Booking</h3>
         <p id="modalHotelCity" class="text-xs text-slate-500 font-medium">Himachal Pradesh</p>
       </div>
-
       <form action="{% url 'book_hotel' %}" method="POST" class="mt-5 space-y-3">
         {% csrf_token %}
         <input type="hidden" name="hotel_id" id="modalHotelId">
         <input type="hidden" name="base_amount" id="modalBaseAmount" value="1850">
-
         <div>
           <label class="block text-[11px] font-bold text-slate-600 mb-1">Primary Guest Name</label>
           <input type="text" name="guest_name" required placeholder="e.g. Vishal Gautam" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500">
         </div>
-
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-[11px] font-bold text-slate-600 mb-1">Contact Phone</label>
@@ -389,7 +418,6 @@
             <input type="email" name="guest_email" required placeholder="guest@gmail.com" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500">
           </div>
         </div>
-
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-[11px] font-bold text-slate-600 mb-1">Check-in Date</label>
@@ -400,8 +428,6 @@
             <input type="date" name="check_out" id="modalCheckOut" required onchange="calculateBookingTotal()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500">
           </div>
         </div>
-
-        <!-- Promo Code Input Strip -->
         <div class="p-3 bg-amber-50/60 border border-amber-200 rounded-2xl">
           <label class="block text-[10px] font-black uppercase tracking-wider text-amber-800 mb-1">Apply Coupon Code</label>
           <div class="flex gap-2">
@@ -414,8 +440,6 @@
             ✓ 20% discount applied successfully!
           </span>
         </div>
-
-        <!-- Transparent Bill Breakdown -->
         <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 space-y-1.5">
           <div class="flex items-center justify-between text-xs text-slate-600">
             <span id="modalStayDuration">Stay Duration: 1 Night</span>
@@ -440,7 +464,6 @@
             <span id="modalDisplayPrice" class="text-base text-blue-700">₹2,072</span>
           </div>
         </div>
-
         <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-xs uppercase tracking-wider py-3.5 rounded-xl transition shadow-lg shadow-blue-600/30 mt-3 flex items-center justify-center gap-2">
           <span>Confirm & Get Reservation Pass</span>
           <i data-lucide="arrow-right" class="w-4 h-4"></i>
@@ -449,9 +472,9 @@
     </div>
   </div>
 
-  <!-- ================= COMPREHENSIVE FOOTER ================= -->
+  <!-- ================= FOOTER ================= -->
   <footer class="bg-[#030d17] text-slate-400 text-xs pt-12 pb-8 border-t border-slate-800 mt-16">
-    <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+    <div class="max-w-6xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
       <div>
         <h4 class="text-white font-black uppercase tracking-wider text-[11px] mb-3">Popular Valleys</h4>
         <ul class="space-y-1.5 text-slate-400">
@@ -479,11 +502,11 @@
       </div>
       <div>
         <h4 class="text-white font-black uppercase tracking-wider text-[11px] mb-3">Emergency Control Room</h4>
-        <p class="text-slate-400 mb-2">Dedicated ground team for bookings, snow updates, and roadblocks across Himachal Pradesh.</p>
+        <p class="text-slate-400 mb-2">Dedicated ground team across Himachal Pradesh.</p>
         <span class="text-white font-bold block">📞 +91 98160 XXXXX</span>
       </div>
     </div>
-    <div class="max-w-7xl mx-auto px-4 mt-8 pt-6 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-slate-600 text-[11px]">
+    <div class="max-w-6xl mx-auto px-4 mt-8 pt-6 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-slate-600 text-[11px]">
       <p>© 2026 MakesMyYatra. All rights reserved.</p>
       <div class="flex items-center gap-4">
         <a href="{% url 'partner_login' %}" class="hover:text-slate-400">Partner Desk</a>
@@ -496,10 +519,8 @@
   <!-- ================= JAVASCRIPT ================= -->
   <script>
     lucide.createIcons();
-
     let appliedDiscountPercentage = 0;
 
-    // Helper: Date format YYYY-MM-DD
     function formatDateStr(dateObj) {
       const year = dateObj.getFullYear();
       const month = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -507,32 +528,22 @@
       return `${year}-${month}-${day}`;
     }
 
-    // Auto-suggest dropdown controls
     function showCitySuggestions() {
       document.getElementById('citySuggestionsDropdown').classList.remove('hidden');
     }
-
     function selectCity(cityName) {
       const input = document.getElementById('citySearchInput');
       input.value = cityName === 'All' ? '' : cityName;
       document.getElementById('citySuggestionsDropdown').classList.add('hidden');
     }
-
     function filterCitySuggestions() {
       const query = document.getElementById('citySearchInput').value.toLowerCase();
       const listItems = document.querySelectorAll('#citySuggestionsList li');
-      
       listItems.forEach(item => {
-        const text = item.innerText.toLowerCase();
-        if (text.includes(query)) {
-          item.style.display = 'flex';
-        } else {
-          item.style.display = 'none';
-        }
+        item.style.display = item.innerText.toLowerCase().includes(query) ? 'flex' : 'none';
       });
     }
 
-    // Close suggestion box on outside click
     document.addEventListener('click', function(e) {
       const input = document.getElementById('citySearchInput');
       const dropdown = document.getElementById('citySuggestionsDropdown');
@@ -541,7 +552,6 @@
       }
     });
 
-    // Real-Time Total & Nights Calculation
     function calculateBookingTotal() {
       const checkInInput = document.getElementById('modalCheckIn');
       const checkOutInput = document.getElementById('modalCheckOut');
@@ -549,7 +559,6 @@
       const unitRate = parseFloat(baseInput.dataset.unitPrice || 1850);
       const d1 = new Date(checkInInput.value);
       const d2 = new Date(checkOutInput.value);
-
       const diffTime = d2 - d1;
       let nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       if (isNaN(nights) || nights < 1) {
@@ -558,15 +567,12 @@
         nextDay.setDate(d1.getDate() + 1);
         checkOutInput.value = formatDateStr(nextDay);
       }
-
       const subtotal = unitRate * nights;
       const discount = Math.round(subtotal * (appliedDiscountPercentage / 100));
       const taxableBase = Math.max(0, subtotal - discount);
-
       const gstRate = unitRate < 1000 ? 0.0 : (unitRate <= 7500 ? 0.12 : 0.18);
       const totalGst = Math.round(taxableBase * gstRate);
       const grandTotal = taxableBase + totalGst;
-
       baseInput.value = taxableBase;
       document.getElementById('modalStayDuration').innerText = `Stay Duration: ${nights} Night${nights > 1 ? 's' : ''}`;
       document.getElementById('modalRateCalculation').innerText = `₹${unitRate.toLocaleString('en-IN')} × ${nights}`;
@@ -578,7 +584,6 @@
       } else {
         document.getElementById('discountRow').classList.add('hidden');
       }
-
       document.getElementById('modalGstAmount').innerText = `+ ₹${totalGst.toLocaleString('en-IN')}`;
       document.getElementById('modalDisplayPrice').innerText = `₹${grandTotal.toLocaleString('en-IN')}`;
     }
@@ -623,11 +628,9 @@
       document.getElementById('modalHotelId').value = hotelId;
       document.getElementById('modalHotelName').innerText = hotelName;
       document.getElementById('modalHotelCity').innerText = hotelCity + ', Himachal Pradesh';
-
       const cleanPrice = parseFloat(String(basePrice).replace(/[^0-9.]/g, '')) || 1850;
       const baseInput = document.getElementById('modalBaseAmount');
       baseInput.dataset.unitPrice = cleanPrice;
-
       const today = new Date();
       const tomorrow = new Date();
       tomorrow.setDate(today.getDate() + 1);
@@ -640,7 +643,6 @@
       checkInElem.value = todayStr;
       checkOutElem.min = tomorrowStr;
       checkOutElem.value = tomorrowStr;
-
       calculateBookingTotal();
       document.getElementById('bookingModal').classList.remove('hidden');
     }
@@ -649,42 +651,45 @@
       document.getElementById('bookingModal').classList.add('hidden');
     }
 
-    // Tab Switcher between Stays, Homestays, Cabs, Tours
-    function switchTab(tab) {
-      const navHotels = document.getElementById('navHotels');
-      const navHomestays = document.getElementById('navHomestays');
-      const navCabs = document.getElementById('navCabs');
-      const navTours = document.getElementById('navTours');
+    // Unified Clean Tab Switcher
+    function selectMmtTab(el, tab) {
+      document.querySelectorAll('.mmt-nav-tab').forEach(item => {
+        item.classList.remove('active');
+        const icon = item.querySelector('i');
+        if (icon) icon.classList.remove('text-blue-600');
+      });
+
+      if (el) {
+        el.classList.add('active');
+        const icon = el.querySelector('i');
+        if (icon) icon.classList.add('text-blue-600');
+      }
 
       const hotelsPanel = document.getElementById('hotelsSearchPanel');
       const cabsPanel = document.getElementById('cabsSearchPanel');
       const toursPanel = document.getElementById('toursSearchPanel');
+      const dummyPanel = document.getElementById('dummySearchPanel');
       const propSelect = document.getElementById('propertyTypeSelect');
 
-      // Reset active tabs
-      [navHotels, navHomestays, navCabs, navTours].forEach(btn => {
-        if (btn) btn.className = "flex-1 py-3 px-2 flex flex-col items-center gap-1 text-slate-500 hover:text-slate-900 font-bold text-xs transition";
-      });
-
-      // Hide all panels
       hotelsPanel.classList.add('hidden');
       cabsPanel.classList.add('hidden');
       toursPanel.classList.add('hidden');
+      dummyPanel.classList.add('hidden');
 
       if (tab === 'hotels') {
-        navHotels.className = "flex-1 py-3 px-2 flex flex-col items-center gap-1 text-blue-600 font-black border-b-2 border-blue-600 text-xs transition";
         hotelsPanel.classList.remove('hidden');
         if (propSelect) propSelect.value = '';
       } else if (tab === 'homestays') {
-        navHomestays.className = "flex-1 py-3 px-2 flex flex-col items-center gap-1 text-blue-600 font-black border-b-2 border-blue-600 text-xs transition";
         hotelsPanel.classList.remove('hidden');
         if (propSelect) propSelect.value = 'Homestay';
       } else if (tab === 'cabs') {
-        navCabs.className = "flex-1 py-3 px-2 flex flex-col items-center gap-1 text-blue-600 font-black border-b-2 border-blue-600 text-xs transition";
         cabsPanel.classList.remove('hidden');
       } else if (tab === 'tours') {
-        navTours.className = "flex-1 py-3 px-2 flex flex-col items-center gap-1 text-blue-600 font-black border-b-2 border-blue-600 text-xs transition";
         toursPanel.classList.remove('hidden');
+      } else if (tab === 'dummy') {
+        dummyPanel.classList.remove('hidden');
+        const titleText = el.innerText.trim();
+        document.getElementById('dummyTitle').innerText = titleText + " Booking";
       }
     }
   </script>
