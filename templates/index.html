@@ -9,22 +9,23 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f2f4f8; }
+    
     .hero-bg {
-      background: linear-gradient(180deg, #051322 0%, #0c2b4d 60%, #15457c 100%);
+      background: linear-gradient(180deg, #051322 0%, #0c2b4d 55%, #15457c 100%);
     }
 
-    /* MMT Floating Pill Bar */
+    /* MMT Exact 16 Options Pill Wrapper */
     .mmt-nav-pill-wrapper {
       background: #ffffff;
       border-radius: 9999px;
-      box-shadow: 0 4px 25px 0 rgba(0, 0, 0, 0.18);
+      box-shadow: 0 4px 25px 0 rgba(0, 0, 0, 0.2);
       width: max-content;
       max-width: 100%;
       margin: 0 auto;
-      transform: translateY(26px);
+      transform: translateY(28px);
       position: relative;
       z-index: 30;
-      transition: all 0.3s ease;
+      border: 1px solid #edf2f7;
     }
 
     .mmt-nav-item {
@@ -32,7 +33,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 8px 18px;
+      padding: 8px 16px;
       cursor: pointer;
       color: #555555;
       text-decoration: none;
@@ -49,19 +50,20 @@
       font-weight: 800;
     }
 
-    /* Main Floating Search Container */
+    /* Main Search Container */
     .mmt-search-card {
       background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 4px 30px 0 rgba(0, 0, 0, 0.12);
-      border: 1px solid #e7e7e7;
-      padding: 40px 28px 30px 28px;
+      border-radius: 20px;
+      box-shadow: 0 8px 35px 0 rgba(0, 0, 0, 0.16);
+      border: 1px solid #e2e8f0;
+      padding: 50px 32px 32px 32px;
       position: relative;
+      z-index: 10;
     }
 
     .mmt-input-col {
       padding: 10px 14px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #cbd5e1;
       border-radius: 12px;
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
       background: #ffffff;
@@ -71,24 +73,21 @@
       box-shadow: 0 0 0 1px #008cff;
     }
 
-    /* Center Pill Search Button */
     .mmt-search-btn {
       background: linear-gradient(93deg, #53b2fe, #065af3);
-      box-shadow: 0 2px 10px 0 rgba(6, 90, 243, 0.35);
+      box-shadow: 0 3px 12px 0 rgba(6, 90, 243, 0.4);
       border-radius: 34px;
       color: #ffffff;
       font-weight: 900;
       letter-spacing: 1px;
       padding: 12px 64px;
-      position: absolute;
-      left: 50%;
-      bottom: -22px;
-      transform: translateX(-50%);
+      margin: 0 auto;
+      display: block;
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
     .mmt-search-btn:hover {
-      transform: translateX(-50%) translateY(-2px);
-      box-shadow: 0 6px 18px 0 rgba(6, 90, 243, 0.45);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px 0 rgba(6, 90, 243, 0.5);
     }
 
     /* Sticky Top Mini-Navbar on Scroll */
@@ -107,7 +106,6 @@
       transform: translateY(0);
     }
 
-    /* Counter Buttons in Guests Modal */
     .counter-btn {
       width: 32px;
       height: 32px;
@@ -132,9 +130,9 @@
 </head>
 <body class="text-slate-800 antialiased flex flex-col min-h-screen justify-between">
 
-  <!-- ================= SCROLL STICKY TOP MINI-NAVBAR ================= -->
+  <!-- ================= STICKY TOP MINI-NAVBAR (ON SCROLL) ================= -->
   <div id="stickyMiniNav" class="sticky-scroll-nav py-2.5 px-4 border-b border-slate-200">
-    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+    <div class="max-w-[1200px] mx-auto flex items-center justify-between gap-4">
       <a href="{% url 'index' %}" class="flex items-center gap-2 flex-shrink-0">
         <div class="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white text-base font-black">
           ⛰️
@@ -142,28 +140,29 @@
         <span class="text-base font-black tracking-tight text-slate-900 hidden sm:inline">MAKES<span class="text-blue-500">MY</span>YATRA</span>
       </a>
 
-      <!-- Quick Compact Category Bar on Scroll -->
+      <!-- Quick Category Pills -->
       <div class="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
-        <button onclick="switchTab('flights')" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Flights</button>
-        <button onclick="switchTab('hotels')" class="sticky-tab-btn active-sticky px-3 py-1.5 rounded-full text-xs font-bold bg-blue-50 text-blue-600 whitespace-nowrap">Hotels</button>
-        <button onclick="switchTab('homestays')" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Homestays</button>
-        <button onclick="switchTab('tours')" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Holidays</button>
-        <button onclick="switchTab('trains')" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Trains</button>
-        <button onclick="switchTab('buses')" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Buses</button>
-        <button onclick="switchTab('cabs')" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Cabs</button>
-        <button onclick="switchTab('forex')" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Forex</button>
-        <button onclick="switchTab('insurance')" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Insurance</button>
+        <button type="button" onclick="switchTab('flights')" id="stickyNavFlights" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Flights</button>
+        <button type="button" onclick="switchTab('hotels')" id="stickyNavHotels" class="sticky-tab-btn active-sticky px-3 py-1.5 rounded-full text-xs font-bold bg-blue-50 text-blue-600 whitespace-nowrap">Hotels</button>
+        <button type="button" onclick="switchTab('homestays')" id="stickyNavHomestays" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Homestays</button>
+        <button type="button" onclick="switchTab('tours')" id="stickyNavTours" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Holidays</button>
+        <button type="button" onclick="switchTab('trains')" id="stickyNavTrains" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Trains</button>
+        <button type="button" onclick="switchTab('buses')" id="stickyNavBuses" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Buses</button>
+        <button type="button" onclick="switchTab('cabs')" id="stickyNavCabs" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Cabs</button>
+        <button type="button" onclick="switchTab('hourly')" id="stickyNavHourly" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Hourly Stays</button>
+        <button type="button" onclick="switchTab('forex')" id="stickyNavForex" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Forex</button>
+        <button type="button" onclick="switchTab('insurance')" id="stickyNavInsurance" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Insurance</button>
       </div>
 
-      <button onclick="scrollToSearchCard()" class="flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs px-4 py-2 rounded-xl transition shadow">
+      <button type="button" onclick="scrollToSearchCard()" class="flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs px-4 py-2 rounded-xl transition shadow">
         Modify Search
       </button>
     </div>
   </div>
 
-  <!-- ================= TOP TRAVEL ADVISORY TICKER ================= -->
+  <!-- ================= TOP TRAVEL ADVISORY ================= -->
   <div class="bg-[#030d17] text-slate-300 text-xs py-2.5 px-4 border-b border-slate-800">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
+    <div class="max-w-[1200px] mx-auto flex items-center justify-between">
       <div class="flex items-center gap-2">
         <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
         <span class="text-white font-bold">Himachal Verified Network:</span> Instant confirmation & verified local stays across all 12 districts.
@@ -176,12 +175,12 @@
     </div>
   </div>
 
-  <!-- ================= HERO & FLOATING SEARCH CONTAINER ================= -->
-  <header class="hero-bg relative pt-8 pb-32 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto">
+  <!-- ================= HERO & PERFECTLY ALIGNED HEADER ================= -->
+  <header class="hero-bg relative pt-6 pb-28 px-4">
+    <div class="max-w-[1200px] mx-auto">
       
-      <!-- Brand & Top-Right Header Actions -->
-      <div class="flex items-center justify-between mb-6">
+      <!-- Brand & Top-Right Header Actions (Parallel Grid Alignment) -->
+      <div class="flex items-center justify-between mb-4">
         <a href="{% url 'index' %}" class="flex items-center gap-2.5">
           <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 text-2xl font-black">
             ⛰️
@@ -192,10 +191,10 @@
           </div>
         </a>
 
-        <!-- Top Right Actions: My Trips, Partner & Admin -->
-        <div class="flex items-center gap-2.5 sm:gap-3">
-          <a href="{% url 'partner_login' %}" class="hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-400/30 text-xs font-bold transition">
-            <i data-lucide="building" class="w-3.5 h-3.5 text-emerald-400"></i>
+        <!-- Right Side Nav Chips -->
+        <div class="flex items-center gap-3">
+          <a href="{% url 'partner_login' %}" class="hidden md:flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-400/30 text-xs font-bold transition">
+            <i data-lucide="building" class="w-4 h-4 text-emerald-400"></i>
             <div>
               <span class="block leading-tight">List Your Property</span>
               <span class="text-[9px] text-emerald-300 font-medium">Grow your business!</span>
@@ -212,70 +211,117 @@
             </div>
           </a>
 
-          <a href="{% url 'portal_login' %}" class="flex items-center gap-1.5 px-3 py-2 rounded-2xl border border-slate-700/80 bg-slate-900/50 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition shadow-sm">
+          <a href="{% url 'portal_login' %}" class="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl border border-slate-700/80 bg-slate-900/60 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition shadow-sm">
             <i data-lucide="lock" class="w-3.5 h-3.5 text-blue-400"></i> Admin
           </a>
         </div>
       </div>
 
-      <!-- MMT-Style Floating Rounded Pill Service Navigation Tabs -->
+      <!-- ================= ALL 16 OPTIONS FLOATING PILL NAVBAR ================= -->
       <div class="mmt-nav-pill-wrapper">
-        <nav class="px-2 py-1 flex items-center justify-start overflow-x-auto no-scrollbar gap-1">
-          <button onclick="switchTab('flights')" id="navFlights" class="mmt-nav-item">
+        <nav class="px-3 py-1 flex items-center justify-start overflow-x-auto no-scrollbar gap-1">
+          <!-- 1. Flights -->
+          <button type="button" onclick="switchTab('flights')" id="navFlights" class="mmt-nav-item">
             <i data-lucide="plane" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Flights</span>
           </button>
-          <button onclick="switchTab('hotels')" id="navHotels" class="mmt-nav-item active-pill">
+          <!-- 2. Hotels -->
+          <button type="button" onclick="switchTab('hotels')" id="navHotels" class="mmt-nav-item active-pill">
             <i data-lucide="hotel" class="w-5 h-5 mb-0.5 text-blue-600"></i>
             <span class="text-[11px]">Hotels</span>
           </button>
-          <button onclick="switchTab('homestays')" id="navHomestays" class="mmt-nav-item">
+          <!-- 3. Homestays -->
+          <button type="button" onclick="switchTab('homestays')" id="navHomestays" class="mmt-nav-item">
             <i data-lucide="home" class="w-5 h-5 mb-0.5"></i>
-            <span class="text-[11px]">Homestays & Villas</span>
+            <span class="text-[11px]">Villas & Homestays</span>
           </button>
-          <button onclick="switchTab('tours')" id="navTours" class="mmt-nav-item">
+          <!-- 4. Holiday Packages -->
+          <button type="button" onclick="switchTab('tours')" id="navTours" class="mmt-nav-item">
             <i data-lucide="palmtree" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Holiday Packages</span>
           </button>
-          <button onclick="switchTab('trains')" id="navTrains" class="mmt-nav-item">
+          <!-- 5. Trains -->
+          <button type="button" onclick="switchTab('trains')" id="navTrains" class="mmt-nav-item">
             <i data-lucide="train-track" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Trains</span>
           </button>
-          <button onclick="switchTab('buses')" id="navBuses" class="mmt-nav-item">
+          <!-- 6. Buses -->
+          <button type="button" onclick="switchTab('buses')" id="navBuses" class="mmt-nav-item">
             <i data-lucide="bus" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Buses</span>
           </button>
-          <button onclick="switchTab('cabs')" id="navCabs" class="mmt-nav-item">
+          <!-- 7. Airport Cabs -->
+          <button type="button" onclick="switchTab('cabs')" id="navAirportCabs" class="mmt-nav-item">
             <i data-lucide="car-taxi-front" class="w-5 h-5 mb-0.5"></i>
-            <span class="text-[11px]">Cabs</span>
+            <span class="text-[11px]">Airport Cabs</span>
           </button>
-          <button onclick="switchTab('tours')" id="navTours2" class="mmt-nav-item">
+          <!-- 8. Outstation Cabs -->
+          <button type="button" onclick="switchTab('cabs')" id="navCabs" class="mmt-nav-item">
+            <i data-lucide="car" class="w-5 h-5 mb-0.5"></i>
+            <span class="text-[11px]">Outstation Cabs</span>
+          </button>
+          <!-- 9. Hourly Stays -->
+          <button type="button" onclick="switchTab('hourly')" id="navHourly" class="mmt-nav-item">
+            <i data-lucide="clock" class="w-5 h-5 mb-0.5"></i>
+            <span class="text-[11px]">Hourly Stays</span>
+          </button>
+          <!-- 10. Tours & Attractions -->
+          <button type="button" onclick="switchTab('tours')" id="navTours2" class="mmt-nav-item">
             <i data-lucide="compass" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Tours & Attractions</span>
           </button>
-          <button onclick="switchTab('visa')" id="navVisa" class="mmt-nav-item">
+          <!-- 11. Visa -->
+          <button type="button" onclick="switchTab('visa')" id="navVisa" class="mmt-nav-item">
             <i data-lucide="stamp" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Visa</span>
           </button>
-          <button onclick="switchTab('forex')" id="navForex" class="mmt-nav-item">
+          <!-- 12. Forex Card -->
+          <button type="button" onclick="switchTab('forex')" id="navForex" class="mmt-nav-item">
             <i data-lucide="coins" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Forex Card & Currency</span>
           </button>
-          <button onclick="switchTab('insurance')" id="navInsurance" class="mmt-nav-item">
+          <!-- 13. Travel Insurance -->
+          <button type="button" onclick="switchTab('insurance')" id="navInsurance" class="mmt-nav-item">
             <i data-lucide="shield-check" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Travel Insurance</span>
+          </button>
+          <!-- 14. Nearby Getaways -->
+          <button type="button" onclick="switchTab('getaways')" id="navGetaways" class="mmt-nav-item">
+            <i data-lucide="map" class="w-5 h-5 mb-0.5"></i>
+            <span class="text-[11px]">Nearby Getaways</span>
+          </button>
+          <!-- 15. Gift Cards -->
+          <button type="button" onclick="switchTab('giftcards')" id="navGiftCards" class="mmt-nav-item">
+            <i data-lucide="gift" class="w-5 h-5 mb-0.5"></i>
+            <span class="text-[11px]">Gift Cards</span>
+          </button>
+          <!-- 16. PNR Status -->
+          <button type="button" onclick="switchTab('pnr')" id="navPnr" class="mmt-nav-item">
+            <i data-lucide="receipt" class="w-5 h-5 mb-0.5"></i>
+            <span class="text-[11px]">PNR Status</span>
           </button>
         </nav>
       </div>
 
-      <!-- Main Floating Search Container -->
-      <div id="mainSearchCard" class="max-w-7xl mx-auto mmt-search-card">
+      <!-- ================= MAIN SEARCH CONTAINER ================= -->
+      <div id="mainSearchCard" class="max-w-[1200px] mx-auto mmt-search-card">
         
-        <!-- 1. Stays / Hotels Form -->
-        <form id="hotelsSearchPanel" action="{% url 'index' %}" method="GET">
+        <!-- 1. HOTELS / HOMESTAYS FORM (DEFAULT DISPLAY: BLOCK) -->
+        <form id="hotelsSearchPanel" action="{% url 'index' %}" method="GET" class="block">
+          
+          <!-- Category Indicator Heading -->
+          <div class="mb-4 pb-2 border-b border-slate-100 flex items-center justify-between">
+            <span id="searchFormHeading" class="text-xs font-black uppercase text-blue-600 tracking-wider">
+              Book Verified Hotels in Himachal Pradesh
+            </span>
+            <span class="text-[11px] text-slate-400 font-medium hidden sm:inline">
+              Instant pass confirmation • 100% verified local stays
+            </span>
+          </div>
+
           <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4">
             
-            <!-- Auto-Suggest City Destination -->
+            <!-- City Destination -->
             <div class="md:col-span-4 mmt-input-col relative cursor-pointer" onclick="document.getElementById('citySearchInput').focus(); showCitySuggestions();">
               <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">City, Property Name Or Location</span>
               <div class="relative mt-0.5">
@@ -290,13 +336,13 @@
                   onfocus="showCitySuggestions()"
                   oninput="filterCitySuggestions()"
                 >
-                <span class="block text-[11px] text-slate-400 truncate">Select district, valley or tourist destination</span>
+                <span class="block text-[11px] text-slate-400 truncate">Select district, valley or tourist spot</span>
               </div>
               
-              <!-- Dynamic Dropdown List with All 12 Districts and Famous Spots -->
+              <!-- Dropdown List with all 12 districts & tourist spots -->
               <div id="citySuggestionsDropdown" class="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 p-2.5 z-50 hidden max-h-80 overflow-y-auto">
                 <div class="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
-                  Himachal Pradesh All 12 Districts & Valleys
+                  Himachal Pradesh All 12 Districts & Top Spots
                 </div>
                 <ul id="citySuggestionsList" class="space-y-1">
                   <li onclick="selectCity('All')" class="p-2 hover:bg-blue-50 rounded-xl cursor-pointer flex items-center justify-between text-xs font-bold text-slate-700">
@@ -355,33 +401,32 @@
               </div>
             </div>
 
-            <!-- Check-In Date Card -->
+            <!-- Check-In -->
             <div class="md:col-span-2 mmt-input-col cursor-pointer">
               <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Check-In</span>
               <input type="date" name="check_in" id="searchCheckIn" class="w-full bg-transparent font-black text-sm text-slate-900 outline-none mt-1 cursor-pointer">
             </div>
 
-            <!-- Check-Out Date Card -->
+            <!-- Check-Out -->
             <div class="md:col-span-2 mmt-input-col cursor-pointer">
               <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Check-Out</span>
               <input type="date" name="check_out" id="searchCheckOut" class="w-full bg-transparent font-black text-sm text-slate-900 outline-none mt-1 cursor-pointer">
             </div>
 
-            <!-- Rooms & Guests (Interactive MMT Counter Trigger) -->
+            <!-- Rooms & Guests (MMT Interactive Counter Modal) -->
             <div class="md:col-span-2 mmt-input-col relative cursor-pointer" onclick="toggleGuestsModal(event)">
               <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Rooms & Guests</span>
               <div id="guestsDisplaySummary" class="font-black text-sm text-slate-900 mt-1 truncate">
                 1 Room, 2 Adults
               </div>
+              <input type="hidden" name="property_type" id="propertyTypeSelect" value="{% if request.GET.property_type %}{{ request.GET.property_type }}{% endif %}">
               <input type="hidden" name="rooms_count" id="roomsCountInput" value="1">
               <input type="hidden" name="adults_count" id="adultsCountInput" value="2">
               <input type="hidden" name="children_count" id="childrenCountInput" value="0">
               <input type="hidden" name="with_pets" id="withPetsInput" value="false">
 
-              <!-- ================= MMT EXACT GUESTS SELECTION POPUP ================= -->
+              <!-- Modal Popup -->
               <div id="guestsSelectionModal" onclick="event.stopPropagation();" class="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 p-5 z-50 hidden text-left">
-                
-                <!-- Room Row -->
                 <div class="flex items-center justify-between pb-3.5 border-b border-slate-100">
                   <span class="text-sm font-bold text-slate-800">Room</span>
                   <div class="flex items-center gap-3">
@@ -391,7 +436,6 @@
                   </div>
                 </div>
 
-                <!-- Adults Row -->
                 <div class="flex items-center justify-between py-3.5 border-b border-slate-100">
                   <span class="text-sm font-bold text-slate-800">Adults</span>
                   <div class="flex items-center gap-3">
@@ -401,7 +445,6 @@
                   </div>
                 </div>
 
-                <!-- Children Row -->
                 <div class="flex items-center justify-between py-3.5">
                   <div>
                     <span class="block text-sm font-bold text-slate-800">Children</span>
@@ -414,12 +457,10 @@
                   </div>
                 </div>
 
-                <!-- Help Note -->
                 <p class="text-[10px] text-slate-400 leading-tight pb-3">
                   Please provide right number of children along with their right age for best options and prices.
                 </p>
 
-                <!-- Travelling With Pets Box -->
                 <div class="border border-slate-200 rounded-xl p-3 bg-slate-50/50 flex items-center justify-between gap-2.5 mb-4">
                   <label class="flex items-start gap-2.5 cursor-pointer">
                     <input type="checkbox" id="petsCheckbox" onchange="document.getElementById('withPetsInput').value = this.checked;" class="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
@@ -431,14 +472,13 @@
                   <span class="text-xl">🐾</span>
                 </div>
 
-                <!-- Blue APPLY Button -->
                 <button type="button" onclick="applyGuestsSelection()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-xs uppercase py-2.5 rounded-full transition shadow">
                   APPLY
                 </button>
               </div>
             </div>
 
-            <!-- Price Per Night Dropdown Filter -->
+            <!-- Price Per Night Dropdown -->
             <div class="md:col-span-2 mmt-input-col cursor-pointer">
               <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Price Per Night</span>
               <select name="price_range" id="priceRangeSelect" class="w-full bg-transparent font-black text-xs text-slate-900 outline-none mt-1 cursor-pointer">
@@ -452,7 +492,7 @@
 
           </div>
 
-          <!-- Bottom Trending Searches Strip -->
+          <!-- Trending Searches -->
           <div class="flex flex-wrap items-center gap-2 text-xs text-slate-400 pt-1 pb-4">
             <span class="font-bold text-slate-600">Trending Searches:</span>
             <span onclick="selectCity('Manali')" class="cursor-pointer hover:text-blue-600">Manali, Kullu</span> •
@@ -462,17 +502,18 @@
             <span onclick="selectCity('Hamirpur')" class="cursor-pointer hover:text-blue-600">Hamirpur, Barsar</span>
           </div>
 
-          <!-- BIG CENTER SEARCH BUTTON -->
-          <button type="submit" class="mmt-search-btn text-base uppercase">
-            SEARCH
-          </button>
+          <div class="text-center pt-2">
+            <button type="submit" class="mmt-search-btn text-base uppercase">
+              SEARCH
+            </button>
+          </div>
         </form>
 
-        <!-- 2. Outstation Cabs Panel -->
+        <!-- 2. OUTSTATION & AIRPORT CABS PANEL -->
         <div id="cabsSearchPanel" class="hidden py-8 text-center">
           <div class="max-w-md mx-auto space-y-3">
             <div class="w-14 h-14 bg-amber-500/10 text-amber-600 rounded-2xl flex items-center justify-center mx-auto border border-amber-200 shadow-sm">
-              <i data-lucide="car" class="w-7 h-7"></i>
+              <i data-lucide="car-taxi-front" class="w-7 h-7"></i>
             </div>
             <h3 class="text-lg font-black text-slate-900">Himachal Outstation & Intercity Cabs</h3>
             <p class="text-xs text-slate-500">Shimla, Manali, Dharamshala, Una and local sightseeing verified mountain chauffeurs.</p>
@@ -485,7 +526,7 @@
           </div>
         </div>
 
-        <!-- 3. Tour Packages Panel -->
+        <!-- 3. TOUR PACKAGES PANEL -->
         <div id="toursSearchPanel" class="hidden py-8 text-center">
           <div class="max-w-md mx-auto space-y-3">
             <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto border border-blue-200 shadow-sm text-2xl">
@@ -501,17 +542,24 @@
           </div>
         </div>
 
-        <!-- 4. Extra Services Panel -->
+        <!-- 4. OTHER SERVICES PANEL (COMING SOON) -->
         <div id="dummySearchPanel" class="hidden py-8 text-center">
-          <div class="max-w-md mx-auto space-y-2">
-            <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-2">
-              <i data-lucide="sparkles" class="w-6 h-6"></i>
+          <div class="max-w-md mx-auto space-y-3">
+            <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto border border-indigo-200 shadow-sm">
+              <i data-lucide="sparkles" class="w-7 h-7"></i>
             </div>
-            <h3 id="dummyTitle" class="text-lg font-black text-slate-900">Service Integration</h3>
-            <p class="text-xs text-slate-500">This feature is currently being integrated for Himachal travel routes.</p>
-            <button onclick="switchTab('hotels')" class="text-xs font-bold text-blue-600 hover:underline pt-2 block mx-auto">
-              ← Go back to Hotels & Stays
-            </button>
+            <h3 id="dummyTitle" class="text-lg font-black text-slate-900">Himachal Service Desk</h3>
+            <p id="dummyDesc" class="text-xs text-slate-500">This feature is currently being integrated for Himachal travelers.</p>
+            <div>
+              <span class="inline-block px-3.5 py-1.5 bg-amber-50 text-amber-800 text-[11px] font-bold rounded-lg border border-amber-200">
+                🚀 Coming Soon in Next Phase
+              </span>
+            </div>
+            <div class="pt-2">
+              <button type="button" onclick="switchTab('hotels')" class="text-xs font-bold text-blue-600 hover:underline">
+                ← Go back to Hotels & Stays
+              </button>
+            </div>
           </div>
         </div>
 
@@ -520,7 +568,7 @@
   </header>
 
   <!-- ================= MMT OFFERS COMPONENT WITH FILTER PILLS ================= -->
-  <div class="max-w-7xl mx-auto px-4 mt-8 mb-6">
+  <div class="max-w-[1200px] mx-auto px-4 mt-8 mb-6">
     <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
       
       <!-- Offers Header Row -->
@@ -528,12 +576,12 @@
         <div class="flex items-center gap-6">
           <h3 class="text-2xl font-black text-slate-900">Offers</h3>
           <div class="flex items-center gap-2 overflow-x-auto no-scrollbar text-xs font-bold">
-            <button class="px-3 py-1 rounded-full bg-slate-900 text-white">All Offers</button>
-            <button class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Flights</button>
-            <button class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Hotels</button>
-            <button class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Trains</button>
-            <button class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Cabs</button>
-            <button class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Bank Offers</button>
+            <button type="button" class="px-3 py-1 rounded-full bg-slate-900 text-white">All Offers</button>
+            <button type="button" onclick="switchTab('flights')" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Flights</button>
+            <button type="button" onclick="switchTab('hotels')" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Hotels</button>
+            <button type="button" onclick="switchTab('trains')" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Trains</button>
+            <button type="button" onclick="switchTab('cabs')" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Cabs</button>
+            <button type="button" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Bank Offers</button>
           </div>
         </div>
         <a href="javascript:void(0)" class="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1">
@@ -574,7 +622,7 @@
     </div>
   </div>
 
-  <main class="max-w-7xl mx-auto px-4 py-4 w-full flex-1">
+  <main class="max-w-[1200px] mx-auto px-4 py-4 w-full flex-1">
     <!-- Flash Messages Container -->
     {% if messages %}
     <div class="mb-6 space-y-2">
@@ -590,7 +638,7 @@
     </div>
     {% endif %}
 
-    <!-- Inventory Filter & Counts Header -->
+    <!-- Inventory Header -->
     <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 border-b border-slate-200 pb-4">
       <div>
         <span class="text-[11px] font-black uppercase tracking-wider text-blue-600">Verified Accommodations</span>
@@ -617,7 +665,6 @@
       {% for hotel in hotels %}
       <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group">
         
-        <!-- Cover & Badge Tags -->
         <div class="relative h-56 bg-slate-100 overflow-hidden">
           <img src="{{ hotel.cover_image|default:'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80' }}" 
                alt="{{ hotel.name }}" 
@@ -633,7 +680,7 @@
             <i data-lucide="shield-check" class="w-3 h-3 text-emerald-600"></i> Verified Stay
           </div>
         </div>
-        <!-- Body Details -->
+
         <div class="p-5 flex-1 flex flex-col justify-between">
           <div>
             <span class="uppercase tracking-wider font-bold text-[10px] text-blue-600">{{ hotel.category }}</span>
@@ -648,7 +695,7 @@
               <span class="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md">Pay @ Hotel</span>
             </div>
           </div>
-          <!-- MMT Pricing Box -->
+
           {% with first_room=hotel.room_types.all.0 %}
           {% with live_price=first_room.base_price|default:1850 %}
           <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
@@ -682,7 +729,7 @@
     </div>
   </main>
 
-  <!-- ================= DYNAMIC 2-STEP BOOKING MODAL WITH PROMO ENGINE ================= -->
+  <!-- ================= BOOKING MODAL WITH PROMO ENGINE ================= -->
   <div id="bookingModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl border border-slate-200 relative max-h-[90vh] overflow-y-auto">
       <button onclick="closeBookingModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
@@ -721,7 +768,6 @@
             <input type="date" name="check_out" id="modalCheckOut" required onchange="calculateBookingTotal()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500">
           </div>
         </div>
-        <!-- Promo Code Input Strip -->
         <div class="p-3 bg-amber-50/60 border border-amber-200 rounded-2xl">
           <label class="block text-[10px] font-black uppercase tracking-wider text-amber-800 mb-1">Apply Coupon Code</label>
           <div class="flex gap-2">
@@ -734,7 +780,6 @@
             ✓ 20% discount applied successfully!
           </span>
         </div>
-        <!-- Transparent Bill Breakdown -->
         <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 space-y-1.5">
           <div class="flex items-center justify-between text-xs text-slate-600">
             <span id="modalStayDuration">Stay Duration: 1 Night</span>
@@ -767,9 +812,9 @@
     </div>
   </div>
 
-  <!-- ================= COMPREHENSIVE FOOTER ================= -->
+  <!-- ================= FOOTER ================= -->
   <footer class="bg-[#030d17] text-slate-400 text-xs pt-12 pb-8 border-t border-slate-800 mt-16">
-    <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+    <div class="max-w-[1200px] mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
       <div>
         <h4 class="text-white font-black uppercase tracking-wider text-[11px] mb-3">Popular Valleys</h4>
         <ul class="space-y-1.5 text-slate-400">
@@ -801,7 +846,7 @@
         <span class="text-white font-bold block">📞 +91 98160 XXXXX</span>
       </div>
     </div>
-    <div class="max-w-7xl mx-auto px-4 mt-8 pt-6 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-slate-600 text-[11px]">
+    <div class="max-w-[1200px] mx-auto px-4 mt-8 pt-6 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-slate-600 text-[11px]">
       <p>© 2026 MakesMyYatra. All rights reserved.</p>
       <div class="flex items-center gap-4">
         <a href="{% url 'partner_login' %}" class="hover:text-slate-400">Partner Desk</a>
@@ -816,7 +861,6 @@
     lucide.createIcons();
     let appliedDiscountPercentage = 0;
 
-    // Helper: Date format YYYY-MM-DD
     function formatDateStr(dateObj) {
       const year = dateObj.getFullYear();
       const month = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -824,7 +868,6 @@
       return `${year}-${month}-${day}`;
     }
 
-    // Dropdown controls for City/District
     function showCitySuggestions() {
       document.getElementById('citySuggestionsDropdown').classList.remove('hidden');
     }
@@ -882,7 +925,7 @@
     document.addEventListener('click', function(e) {
       const cityInput = document.getElementById('citySearchInput');
       const cityDropdown = document.getElementById('citySuggestionsDropdown');
-      if (cityInput && cityDropdown && !cityInput.contains(e.target) && !cityDropdown.contains(e.target)) {
+      if (cityInput && cityDropdown && !cityInput.contains(e.target) && !dropdownContains(cityDropdown, e.target)) {
         cityDropdown.classList.add('hidden');
       }
 
@@ -892,7 +935,10 @@
       }
     });
 
-    // Real-Time Total & Nights Calculation
+    function dropdownContains(dropdown, target) {
+      return dropdown.contains(target);
+    }
+
     function calculateBookingTotal() {
       const checkInInput = document.getElementById('modalCheckIn');
       const checkOutInput = document.getElementById('modalCheckOut');
@@ -1013,26 +1059,29 @@
       }
     }
 
-    // Unified Service Tabs Switcher
+    // Unified Service Tabs Switcher for All 16 Options
     function switchTab(tab) {
       const hotelsPanel = document.getElementById('hotelsSearchPanel');
       const cabsPanel = document.getElementById('cabsSearchPanel');
       const toursPanel = document.getElementById('toursSearchPanel');
       const dummyPanel = document.getElementById('dummySearchPanel');
+      const propInput = document.getElementById('propertyTypeSelect');
+      const heading = document.getElementById('searchFormHeading');
 
-      // Update main pill nav
+      // Reset all main nav items
       document.querySelectorAll('.mmt-nav-item').forEach(btn => {
         btn.classList.remove('active-pill');
         const icon = btn.querySelector('i');
         if (icon) icon.classList.remove('text-blue-600');
       });
 
-      // Update sticky mini-nav
+      // Reset all sticky mini-nav items
       document.querySelectorAll('.sticky-tab-btn').forEach(btn => {
         btn.classList.remove('bg-blue-50', 'text-blue-600');
         btn.classList.add('text-slate-600');
       });
 
+      // Hide all panels first
       hotelsPanel.classList.add('hidden');
       cabsPanel.classList.add('hidden');
       toursPanel.classList.add('hidden');
@@ -1041,22 +1090,62 @@
       if (tab === 'hotels') {
         const nav = document.getElementById('navHotels');
         if (nav) { nav.classList.add('active-pill'); nav.querySelector('i').classList.add('text-blue-600'); }
+        const sNav = document.getElementById('stickyNavHotels');
+        if (sNav) { sNav.classList.add('bg-blue-50', 'text-blue-600'); sNav.classList.remove('text-slate-600'); }
+        if (heading) heading.innerText = "Book Verified Hotels in Himachal Pradesh";
         hotelsPanel.classList.remove('hidden');
-      } else if (tab === 'homestays') {
+        if (propInput) propInput.value = '';
+      } 
+      else if (tab === 'homestays') {
         const nav = document.getElementById('navHomestays');
         if (nav) { nav.classList.add('active-pill'); nav.querySelector('i').classList.add('text-blue-600'); }
+        const sNav = document.getElementById('stickyNavHomestays');
+        if (sNav) { sNav.classList.add('bg-blue-50', 'text-blue-600'); sNav.classList.remove('text-slate-600'); }
+        if (heading) heading.innerText = "Authentic Village Homestays & Apple Orchard Villas";
         hotelsPanel.classList.remove('hidden');
-      } else if (tab === 'cabs') {
+        if (propInput) propInput.value = 'Homestay';
+      } 
+      else if (tab === 'cabs') {
         const nav = document.getElementById('navCabs');
         if (nav) { nav.classList.add('active-pill'); nav.querySelector('i').classList.add('text-blue-600'); }
+        const sNav = document.getElementById('stickyNavCabs');
+        if (sNav) { sNav.classList.add('bg-blue-50', 'text-blue-600'); sNav.classList.remove('text-slate-600'); }
         cabsPanel.classList.remove('hidden');
-      } else if (tab === 'tours') {
+      } 
+      else if (tab === 'tours') {
         const nav = document.getElementById('navTours');
         if (nav) { nav.classList.add('active-pill'); nav.querySelector('i').classList.add('text-blue-600'); }
+        const sNav = document.getElementById('stickyNavTours');
+        if (sNav) { sNav.classList.add('bg-blue-50', 'text-blue-600'); sNav.classList.remove('text-slate-600'); }
         toursPanel.classList.remove('hidden');
-      } else {
+      } 
+      else {
+        // Handlers for Flights, Trains, Buses, Hourly Stays, Visa, Forex, Insurance, Getaways, Gift Cards, PNR
+        const titles = {
+          'flights': { title: 'Himachal Flights Booking', desc: 'Domestic flights connecting Dharamshala (Gaggal), Shimla (Jubbarhatti) and Kullu (Bhuntar).' },
+          'trains': { title: 'Kalka-Shimla & Rail Bookings', desc: 'Heritage toy train reservations and express railway connectivity to Himachal.' },
+          'buses': { title: 'HRTC & Volvo Bus Bookings', desc: 'Direct state and luxury private Volvo buses connecting Delhi, Chandigarh and Himachal.' },
+          'hourly': { title: 'Hourly Stays & Day Rooms', desc: 'Short-duration transit stays and hourly mountain rooms across key transit hubs.' },
+          'visa': { title: 'Mountain Permits & Visa Desk', desc: 'Inner Line Permits for Spiti/Kinnaur and international documentation support.' },
+          'forex': { title: 'Forex Card & Currency Exchange', desc: 'Competitive currency exchange and prepaid international cards for mountain travelers.' },
+          'insurance': { title: 'Mountain Travel Insurance', desc: 'Trek protection, extreme weather coverage, and medical assistance in high altitudes.' },
+          'getaways': { title: 'Curated Nearby Getaways', desc: 'Weekend retreats and offbeat trails near Shimla, Kullu, and Dharamshala.' },
+          'giftcards': { title: 'MakesMyYatra Gift Cards', desc: 'Gift mountain vacations and homestay experiences to your family and friends.' },
+          'pnr': { title: 'Railway PNR Status Tracker', desc: 'Check real-time confirmation probability and coach position for your train tickets.' }
+        };
+
+        const navId = 'nav' + tab.charAt(0).toUpperCase() + tab.slice(1);
+        const sNavId = 'stickyNav' + tab.charAt(0).toUpperCase() + tab.slice(1);
+        const nav = document.getElementById(navId);
+        const sNav = document.getElementById(sNavId);
+
+        if (nav) { nav.classList.add('active-pill'); const i = nav.querySelector('i'); if (i) i.classList.add('text-blue-600'); }
+        if (sNav) { sNav.classList.add('bg-blue-50', 'text-blue-600'); sNav.classList.remove('text-slate-600'); }
+
+        const data = titles[tab] || { title: tab.toUpperCase() + ' Services', desc: 'This service is currently being integrated for Himachal travelers.' };
+        document.getElementById('dummyTitle').innerText = data.title;
+        document.getElementById('dummyDesc').innerText = data.desc;
         dummyPanel.classList.remove('hidden');
-        document.getElementById('dummyTitle').innerText = tab.toUpperCase() + ' Services';
       }
     }
   </script>
