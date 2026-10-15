@@ -56,9 +56,10 @@
       border-radius: 20px;
       box-shadow: 0 8px 35px 0 rgba(0, 0, 0, 0.16);
       border: 1px solid #e2e8f0;
-      padding: 50px 32px 32px 32px;
+      padding: 44px 32px 32px 32px;
       position: relative;
       z-index: 10;
+      min-height: 280px;
     }
 
     .mmt-input-col {
@@ -144,14 +145,20 @@
       <div class="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
         <button type="button" onclick="switchTab('flights')" id="stickyNavFlights" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Flights</button>
         <button type="button" onclick="switchTab('hotels')" id="stickyNavHotels" class="sticky-tab-btn active-sticky px-3 py-1.5 rounded-full text-xs font-bold bg-blue-50 text-blue-600 whitespace-nowrap">Hotels</button>
-        <button type="button" onclick="switchTab('homestays')" id="stickyNavHomestays" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Homestays</button>
-        <button type="button" onclick="switchTab('tours')" id="stickyNavTours" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Holidays</button>
+        <button type="button" onclick="switchTab('villas')" id="stickyNavVillas" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Homestays</button>
+        <button type="button" onclick="switchTab('packages')" id="stickyNavPackages" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Holidays</button>
         <button type="button" onclick="switchTab('trains')" id="stickyNavTrains" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Trains</button>
         <button type="button" onclick="switchTab('buses')" id="stickyNavBuses" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Buses</button>
-        <button type="button" onclick="switchTab('cabs')" id="stickyNavCabs" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Cabs</button>
+        <button type="button" onclick="switchTab('airport-cabs')" id="stickyNavAirportCabs" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Airport Cabs</button>
+        <button type="button" onclick="switchTab('outstation-cabs')" id="stickyNavOutstationCabs" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Outstation Cabs</button>
         <button type="button" onclick="switchTab('hourly')" id="stickyNavHourly" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Hourly Stays</button>
+        <button type="button" onclick="switchTab('tours')" id="stickyNavTours" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Tours</button>
+        <button type="button" onclick="switchTab('visa')" id="stickyNavVisa" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Visa</button>
         <button type="button" onclick="switchTab('forex')" id="stickyNavForex" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Forex</button>
         <button type="button" onclick="switchTab('insurance')" id="stickyNavInsurance" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Insurance</button>
+        <button type="button" onclick="switchTab('getaways')" id="stickyNavGetaways" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Getaways</button>
+        <button type="button" onclick="switchTab('giftcards')" id="stickyNavGiftcards" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">Gift Cards</button>
+        <button type="button" onclick="switchTab('pnr')" id="stickyNavPnr" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">PNR Status</button>
       </div>
 
       <button type="button" onclick="scrollToSearchCard()" class="flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs px-4 py-2 rounded-xl transition shadow">
@@ -179,7 +186,7 @@
   <header class="hero-bg relative pt-6 pb-28 px-4">
     <div class="max-w-[1200px] mx-auto">
       
-      <!-- Brand & Top-Right Header Actions (Parallel Grid Alignment) -->
+      <!-- Brand & Top-Right Header Actions -->
       <div class="flex items-center justify-between mb-4">
         <a href="{% url 'index' %}" class="flex items-center gap-2.5">
           <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 text-2xl font-black">
@@ -220,82 +227,66 @@
       <!-- ================= ALL 16 OPTIONS FLOATING PILL NAVBAR ================= -->
       <div class="mmt-nav-pill-wrapper">
         <nav class="px-3 py-1 flex items-center justify-start overflow-x-auto no-scrollbar gap-1">
-          <!-- 1. Flights -->
           <button type="button" onclick="switchTab('flights')" id="navFlights" class="mmt-nav-item">
             <i data-lucide="plane" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Flights</span>
           </button>
-          <!-- 2. Hotels -->
           <button type="button" onclick="switchTab('hotels')" id="navHotels" class="mmt-nav-item active-pill">
             <i data-lucide="hotel" class="w-5 h-5 mb-0.5 text-blue-600"></i>
             <span class="text-[11px]">Hotels</span>
           </button>
-          <!-- 3. Homestays -->
-          <button type="button" onclick="switchTab('homestays')" id="navHomestays" class="mmt-nav-item">
+          <button type="button" onclick="switchTab('villas')" id="navVillas" class="mmt-nav-item">
             <i data-lucide="home" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Villas & Homestays</span>
           </button>
-          <!-- 4. Holiday Packages -->
-          <button type="button" onclick="switchTab('tours')" id="navTours" class="mmt-nav-item">
+          <button type="button" onclick="switchTab('packages')" id="navPackages" class="mmt-nav-item">
             <i data-lucide="palmtree" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Holiday Packages</span>
           </button>
-          <!-- 5. Trains -->
           <button type="button" onclick="switchTab('trains')" id="navTrains" class="mmt-nav-item">
             <i data-lucide="train-track" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Trains</span>
           </button>
-          <!-- 6. Buses -->
           <button type="button" onclick="switchTab('buses')" id="navBuses" class="mmt-nav-item">
             <i data-lucide="bus" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Buses</span>
           </button>
-          <!-- 7. Airport Cabs -->
-          <button type="button" onclick="switchTab('cabs')" id="navAirportCabs" class="mmt-nav-item">
+          <button type="button" onclick="switchTab('airport-cabs')" id="navAirportCabs" class="mmt-nav-item">
             <i data-lucide="car-taxi-front" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Airport Cabs</span>
           </button>
-          <!-- 8. Outstation Cabs -->
-          <button type="button" onclick="switchTab('cabs')" id="navCabs" class="mmt-nav-item">
+          <button type="button" onclick="switchTab('outstation-cabs')" id="navOutstationCabs" class="mmt-nav-item">
             <i data-lucide="car" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Outstation Cabs</span>
           </button>
-          <!-- 9. Hourly Stays -->
           <button type="button" onclick="switchTab('hourly')" id="navHourly" class="mmt-nav-item">
             <i data-lucide="clock" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Hourly Stays</span>
           </button>
-          <!-- 10. Tours & Attractions -->
-          <button type="button" onclick="switchTab('tours')" id="navTours2" class="mmt-nav-item">
+          <button type="button" onclick="switchTab('tours')" id="navTours" class="mmt-nav-item">
             <i data-lucide="compass" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Tours & Attractions</span>
           </button>
-          <!-- 11. Visa -->
           <button type="button" onclick="switchTab('visa')" id="navVisa" class="mmt-nav-item">
             <i data-lucide="stamp" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Visa</span>
           </button>
-          <!-- 12. Forex Card -->
           <button type="button" onclick="switchTab('forex')" id="navForex" class="mmt-nav-item">
             <i data-lucide="coins" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Forex Card & Currency</span>
           </button>
-          <!-- 13. Travel Insurance -->
           <button type="button" onclick="switchTab('insurance')" id="navInsurance" class="mmt-nav-item">
             <i data-lucide="shield-check" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Travel Insurance</span>
           </button>
-          <!-- 14. Nearby Getaways -->
           <button type="button" onclick="switchTab('getaways')" id="navGetaways" class="mmt-nav-item">
             <i data-lucide="map" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Nearby Getaways</span>
           </button>
-          <!-- 15. Gift Cards -->
-          <button type="button" onclick="switchTab('giftcards')" id="navGiftCards" class="mmt-nav-item">
+          <button type="button" onclick="switchTab('giftcards')" id="navGiftcards" class="mmt-nav-item">
             <i data-lucide="gift" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">Gift Cards</span>
           </button>
-          <!-- 16. PNR Status -->
           <button type="button" onclick="switchTab('pnr')" id="navPnr" class="mmt-nav-item">
             <i data-lucide="receipt" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[11px]">PNR Status</span>
@@ -306,16 +297,21 @@
       <!-- ================= MAIN SEARCH CONTAINER ================= -->
       <div id="mainSearchCard" class="max-w-[1200px] mx-auto mmt-search-card">
         
-        <!-- 1. HOTELS / HOMESTAYS FORM (DEFAULT DISPLAY: BLOCK) -->
+        <!-- 1. HOTELS / VILLAS SEARCH FORM -->
         <form id="hotelsSearchPanel" action="{% url 'index' %}" method="GET" class="block">
           
           <!-- Category Indicator Heading -->
           <div class="mb-4 pb-2 border-b border-slate-100 flex items-center justify-between">
-            <span id="searchFormHeading" class="text-xs font-black uppercase text-blue-600 tracking-wider">
-              Book Verified Hotels in Himachal Pradesh
-            </span>
-            <span class="text-[11px] text-slate-400 font-medium hidden sm:inline">
-              Instant pass confirmation • 100% verified local stays
+            <div>
+              <span id="searchFormHeading" class="text-xs font-black uppercase text-blue-600 tracking-wider block">
+                Hotels & Mountain Stays
+              </span>
+              <p id="searchFormDesc" class="text-[11px] text-slate-500 font-medium mt-0.5">
+                Discover and book comfortable hotels, resorts and budget-friendly stays across Himachal Pradesh.
+              </p>
+            </div>
+            <span class="text-[11px] text-slate-400 font-medium hidden sm:inline flex-shrink-0">
+              Instant confirmation • 100% verified local stays
             </span>
           </div>
 
@@ -413,7 +409,7 @@
               <input type="date" name="check_out" id="searchCheckOut" class="w-full bg-transparent font-black text-sm text-slate-900 outline-none mt-1 cursor-pointer">
             </div>
 
-            <!-- Rooms & Guests (MMT Interactive Counter Modal) -->
+            <!-- Rooms & Guests (Counter Modal Trigger) -->
             <div class="md:col-span-2 mmt-input-col relative cursor-pointer" onclick="toggleGuestsModal(event)">
               <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Rooms & Guests</span>
               <div id="guestsDisplaySummary" class="font-black text-sm text-slate-900 mt-1 truncate">
@@ -509,14 +505,14 @@
           </div>
         </form>
 
-        <!-- 2. OUTSTATION & AIRPORT CABS PANEL -->
+        <!-- 2. CABS PANEL (AIRPORT & OUTSTATION) -->
         <div id="cabsSearchPanel" class="hidden py-8 text-center">
           <div class="max-w-md mx-auto space-y-3">
             <div class="w-14 h-14 bg-amber-500/10 text-amber-600 rounded-2xl flex items-center justify-center mx-auto border border-amber-200 shadow-sm">
               <i data-lucide="car-taxi-front" class="w-7 h-7"></i>
             </div>
-            <h3 class="text-lg font-black text-slate-900">Himachal Outstation & Intercity Cabs</h3>
-            <p class="text-xs text-slate-500">Shimla, Manali, Dharamshala, Una and local sightseeing verified mountain chauffeurs.</p>
+            <h3 id="cabsHeading" class="text-lg font-black text-slate-900">Outstation Taxi Services</h3>
+            <p id="cabsDesc" class="text-xs text-slate-500">Book reliable one-way and round-trip cabs for intercity travel, sightseeing and mountain journeys.</p>
             <div class="pt-2">
               <a href="{% url 'taxi' %}" class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-xs px-6 py-3 rounded-xl transition shadow-lg shadow-blue-500/25">
                 <span>Check Available Cabs & Tariffs</span>
@@ -526,14 +522,14 @@
           </div>
         </div>
 
-        <!-- 3. TOUR PACKAGES PANEL -->
+        <!-- 3. TOUR & HOLIDAY PACKAGES PANEL -->
         <div id="toursSearchPanel" class="hidden py-8 text-center">
           <div class="max-w-md mx-auto space-y-3">
             <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto border border-blue-200 shadow-sm text-2xl">
               🏔️
             </div>
-            <h3 class="text-lg font-black text-slate-900">Curated Himachal Tour Packages</h3>
-            <p class="text-xs text-slate-500">Spiti Valley circuit, Parvati Valley treks, Kinnaur expeditions aur honeymoon packages coming soon.</p>
+            <h3 id="packagesHeading" class="text-lg font-black text-slate-900">Himachal Holiday Packages</h3>
+            <p id="packagesDesc" class="text-xs text-slate-500">Explore curated holiday packages, sightseeing tours and customizable trips for families, couples and friends.</p>
             <div>
               <span class="inline-block px-3.5 py-1.5 bg-blue-50 text-blue-800 text-[11px] font-bold rounded-lg border border-blue-200">
                 🚀 Coming Soon in Next Phase
@@ -542,7 +538,7 @@
           </div>
         </div>
 
-        <!-- 4. OTHER SERVICES PANEL (COMING SOON) -->
+        <!-- 4. OTHER SERVICES PANEL (DYNAMIC DICTIONARY MAPPED) -->
         <div id="dummySearchPanel" class="hidden py-8 text-center">
           <div class="max-w-md mx-auto space-y-3">
             <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto border border-indigo-200 shadow-sm">
@@ -580,7 +576,7 @@
             <button type="button" onclick="switchTab('flights')" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Flights</button>
             <button type="button" onclick="switchTab('hotels')" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Hotels</button>
             <button type="button" onclick="switchTab('trains')" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Trains</button>
-            <button type="button" onclick="switchTab('cabs')" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Cabs</button>
+            <button type="button" onclick="switchTab('outstation-cabs')" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Cabs</button>
             <button type="button" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Bank Offers</button>
           </div>
         </div>
@@ -861,6 +857,74 @@
     lucide.createIcons();
     let appliedDiscountPercentage = 0;
 
+    // Aapka exact 16 categories dictionary
+    const titles = {
+      'flights': {
+        title: 'Himachal Flights Booking',
+        desc: 'Domestic flights connecting Dharamshala (Gaggal), Shimla (Jubbarhatti) and Kullu (Bhuntar).'
+      },
+      'hotels': {
+        title: 'Hotels & Mountain Stays',
+        desc: 'Discover and book comfortable hotels, resorts and budget-friendly stays across Himachal Pradesh.'
+      },
+      'villas': {
+        title: 'Villas & Homestays in Himachal',
+        desc: 'Explore private villas, cozy homestays and scenic mountain retreats for a memorable stay.'
+      },
+      'packages': {
+        title: 'Himachal Holiday Packages',
+        desc: 'Explore curated holiday packages, sightseeing tours and customizable trips for families, couples and friends.'
+      },
+      'trains': {
+        title: 'Kalka-Shimla & Rail Bookings',
+        desc: 'Heritage toy train reservations and express railway connectivity to Himachal.'
+      },
+      'buses': {
+        title: 'HRTC & Volvo Bus Bookings',
+        desc: 'Direct state and luxury private Volvo buses connecting Delhi, Chandigarh and Himachal.'
+      },
+      'airport-cabs': {
+        title: 'Airport Pickup & Drop Cabs',
+        desc: 'Book convenient airport transfers to hotels, tourist destinations and major cities across Himachal.'
+      },
+      'outstation-cabs': {
+        title: 'Outstation Taxi Services',
+        desc: 'Book reliable one-way and round-trip cabs for intercity travel, sightseeing and mountain journeys.'
+      },
+      'hourly': {
+        title: 'Hourly Stays & Day Rooms',
+        desc: 'Short-duration transit stays and hourly mountain rooms across key transit hubs.'
+      },
+      'tours': {
+        title: 'Tours & Local Attractions',
+        desc: 'Discover sightseeing tours, adventure activities, cultural experiences and popular attractions across Himachal.'
+      },
+      'visa': {
+        title: 'Mountain Permits & Visa Desk',
+        desc: 'Get guidance on applicable Inner Line Permits for Spiti and Kinnaur, along with international travel documentation.'
+      },
+      'forex': {
+        title: 'Forex Card & Currency Exchange',
+        desc: 'Explore foreign currency exchange options and prepaid forex cards for international travelers.'
+      },
+      'insurance': {
+        title: 'Mountain Travel Insurance',
+        desc: 'Explore travel insurance options for trip interruptions, medical emergencies and eligible adventure activities.'
+      },
+      'getaways': {
+        title: 'Curated Nearby Getaways',
+        desc: 'Plan refreshing weekend retreats, scenic escapes and offbeat adventures near Shimla, Kullu and Dharamshala.'
+      },
+      'giftcards': {
+        title: 'MakesMyYatra Gift Cards',
+        desc: 'Gift memorable holidays, hotel stays and travel experiences to your family and friends.'
+      },
+      'pnr': {
+        title: 'Railway PNR Status Tracker',
+        desc: 'Check your railway ticket booking status and access available train journey information.'
+      }
+    };
+
     function formatDateStr(dateObj) {
       const year = dateObj.getFullYear();
       const month = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -1059,14 +1123,15 @@
       }
     }
 
-    // Unified Service Tabs Switcher for All 16 Options
+    // Complete Functional Service Switcher for All 16 Options
     function switchTab(tab) {
       const hotelsPanel = document.getElementById('hotelsSearchPanel');
       const cabsPanel = document.getElementById('cabsSearchPanel');
       const toursPanel = document.getElementById('toursSearchPanel');
       const dummyPanel = document.getElementById('dummySearchPanel');
       const propInput = document.getElementById('propertyTypeSelect');
-      const heading = document.getElementById('searchFormHeading');
+      const formHeading = document.getElementById('searchFormHeading');
+      const formDesc = document.getElementById('searchFormDesc');
 
       // Reset all main nav items
       document.querySelectorAll('.mmt-nav-item').forEach(btn => {
@@ -1087,65 +1152,95 @@
       toursPanel.classList.add('hidden');
       dummyPanel.classList.add('hidden');
 
+      // Map tab id to navbar id
+      const navIdMap = {
+        'flights': 'navFlights',
+        'hotels': 'navHotels',
+        'villas': 'navVillas',
+        'packages': 'navPackages',
+        'trains': 'navTrains',
+        'buses': 'navBuses',
+        'airport-cabs': 'navAirportCabs',
+        'outstation-cabs': 'navOutstationCabs',
+        'hourly': 'navHourly',
+        'tours': 'navTours',
+        'visa': 'navVisa',
+        'forex': 'navForex',
+        'insurance': 'navInsurance',
+        'getaways': 'navGetaways',
+        'giftcards': 'navGiftcards',
+        'pnr': 'navPnr'
+      };
+
+      const stickyIdMap = {
+        'flights': 'stickyNavFlights',
+        'hotels': 'stickyNavHotels',
+        'villas': 'stickyNavVillas',
+        'packages': 'stickyNavPackages',
+        'trains': 'stickyNavTrains',
+        'buses': 'stickyNavBuses',
+        'airport-cabs': 'stickyNavAirportCabs',
+        'outstation-cabs': 'stickyNavOutstationCabs',
+        'hourly': 'stickyNavHourly',
+        'tours': 'stickyNavTours',
+        'visa': 'stickyNavVisa',
+        'forex': 'stickyNavForex',
+        'insurance': 'stickyNavInsurance',
+        'getaways': 'stickyNavGetaways',
+        'giftcards': 'stickyNavGiftcards',
+        'pnr': 'stickyNavPnr'
+      };
+
+      // Set active nav styling
+      const activeNavId = navIdMap[tab];
+      const activeStickyId = stickyIdMap[tab];
+      if (activeNavId && document.getElementById(activeNavId)) {
+        const navEl = document.getElementById(activeNavId);
+        navEl.classList.add('active-pill');
+        const icon = navEl.querySelector('i');
+        if (icon) icon.classList.add('text-blue-600');
+      }
+      if (activeStickyId && document.getElementById(activeStickyId)) {
+        const stickyEl = document.getElementById(activeStickyId);
+        stickyEl.classList.add('bg-blue-50', 'text-blue-600');
+        stickyEl.classList.remove('text-slate-600');
+      }
+
+      // Panel Display Logic
       if (tab === 'hotels') {
-        const nav = document.getElementById('navHotels');
-        if (nav) { nav.classList.add('active-pill'); nav.querySelector('i').classList.add('text-blue-600'); }
-        const sNav = document.getElementById('stickyNavHotels');
-        if (sNav) { sNav.classList.add('bg-blue-50', 'text-blue-600'); sNav.classList.remove('text-slate-600'); }
-        if (heading) heading.innerText = "Book Verified Hotels in Himachal Pradesh";
         hotelsPanel.classList.remove('hidden');
         if (propInput) propInput.value = '';
-      } 
-      else if (tab === 'homestays') {
-        const nav = document.getElementById('navHomestays');
-        if (nav) { nav.classList.add('active-pill'); nav.querySelector('i').classList.add('text-blue-600'); }
-        const sNav = document.getElementById('stickyNavHomestays');
-        if (sNav) { sNav.classList.add('bg-blue-50', 'text-blue-600'); sNav.classList.remove('text-slate-600'); }
-        if (heading) heading.innerText = "Authentic Village Homestays & Apple Orchard Villas";
+        if (formHeading && titles['hotels']) formHeading.innerText = titles['hotels'].title;
+        if (formDesc && titles['hotels']) formDesc.innerText = titles['hotels'].desc;
+      }
+      else if (tab === 'villas') {
         hotelsPanel.classList.remove('hidden');
         if (propInput) propInput.value = 'Homestay';
-      } 
-      else if (tab === 'cabs') {
-        const nav = document.getElementById('navCabs');
-        if (nav) { nav.classList.add('active-pill'); nav.querySelector('i').classList.add('text-blue-600'); }
-        const sNav = document.getElementById('stickyNavCabs');
-        if (sNav) { sNav.classList.add('bg-blue-50', 'text-blue-600'); sNav.classList.remove('text-slate-600'); }
+        if (formHeading && titles['villas']) formHeading.innerText = titles['villas'].title;
+        if (formDesc && titles['villas']) formDesc.innerText = titles['villas'].desc;
+      }
+      else if (tab === 'airport-cabs' || tab === 'outstation-cabs') {
         cabsPanel.classList.remove('hidden');
-      } 
-      else if (tab === 'tours') {
-        const nav = document.getElementById('navTours');
-        if (nav) { nav.classList.add('active-pill'); nav.querySelector('i').classList.add('text-blue-600'); }
-        const sNav = document.getElementById('stickyNavTours');
-        if (sNav) { sNav.classList.add('bg-blue-50', 'text-blue-600'); sNav.classList.remove('text-slate-600'); }
+        const cabData = titles[tab];
+        if (cabData) {
+          document.getElementById('cabsHeading').innerText = cabData.title;
+          document.getElementById('cabsDesc').innerText = cabData.desc;
+        }
+      }
+      else if (tab === 'packages' || tab === 'tours') {
         toursPanel.classList.remove('hidden');
-      } 
+        const packageData = titles[tab];
+        if (packageData) {
+          document.getElementById('packagesHeading').innerText = packageData.title;
+          document.getElementById('packagesDesc').innerText = packageData.desc;
+        }
+      }
       else {
-        // Handlers for Flights, Trains, Buses, Hourly Stays, Visa, Forex, Insurance, Getaways, Gift Cards, PNR
-        const titles = {
-          'flights': { title: 'Himachal Flights Booking', desc: 'Domestic flights connecting Dharamshala (Gaggal), Shimla (Jubbarhatti) and Kullu (Bhuntar).' },
-          'trains': { title: 'Kalka-Shimla & Rail Bookings', desc: 'Heritage toy train reservations and express railway connectivity to Himachal.' },
-          'buses': { title: 'HRTC & Volvo Bus Bookings', desc: 'Direct state and luxury private Volvo buses connecting Delhi, Chandigarh and Himachal.' },
-          'hourly': { title: 'Hourly Stays & Day Rooms', desc: 'Short-duration transit stays and hourly mountain rooms across key transit hubs.' },
-          'visa': { title: 'Mountain Permits & Visa Desk', desc: 'Inner Line Permits for Spiti/Kinnaur and international documentation support.' },
-          'forex': { title: 'Forex Card & Currency Exchange', desc: 'Competitive currency exchange and prepaid international cards for mountain travelers.' },
-          'insurance': { title: 'Mountain Travel Insurance', desc: 'Trek protection, extreme weather coverage, and medical assistance in high altitudes.' },
-          'getaways': { title: 'Curated Nearby Getaways', desc: 'Weekend retreats and offbeat trails near Shimla, Kullu, and Dharamshala.' },
-          'giftcards': { title: 'MakesMyYatra Gift Cards', desc: 'Gift mountain vacations and homestay experiences to your family and friends.' },
-          'pnr': { title: 'Railway PNR Status Tracker', desc: 'Check real-time confirmation probability and coach position for your train tickets.' }
-        };
-
-        const navId = 'nav' + tab.charAt(0).toUpperCase() + tab.slice(1);
-        const sNavId = 'stickyNav' + tab.charAt(0).toUpperCase() + tab.slice(1);
-        const nav = document.getElementById(navId);
-        const sNav = document.getElementById(sNavId);
-
-        if (nav) { nav.classList.add('active-pill'); const i = nav.querySelector('i'); if (i) i.classList.add('text-blue-600'); }
-        if (sNav) { sNav.classList.add('bg-blue-50', 'text-blue-600'); sNav.classList.remove('text-slate-600'); }
-
-        const data = titles[tab] || { title: tab.toUpperCase() + ' Services', desc: 'This service is currently being integrated for Himachal travelers.' };
-        document.getElementById('dummyTitle').innerText = data.title;
-        document.getElementById('dummyDesc').innerText = data.desc;
+        // flights, trains, buses, hourly, visa, forex, insurance, getaways, giftcards, pnr
         dummyPanel.classList.remove('hidden');
+        const serviceData = titles[tab] || { title: tab.toUpperCase() + ' Services', desc: 'This service is currently being integrated for Himachal travelers.' };
+        document.getElementById('dummyTitle').innerText = serviceData.title;
+        document.getElementById('dummyDesc').innerText = serviceData.desc;
       }
     }
   </script>
