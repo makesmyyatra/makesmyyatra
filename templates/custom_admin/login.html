@@ -1,221 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | MAKES MY YATRA</title>
-    <style>
-        :root {
-            --primary: #0f2e24;
-            --primary-light: #164234;
-            --accent: #c5a880;
-            --sand: #f4efe6;
-            --background: #faf8f5;
-            --card: #ffffff;
-            --border: #e2d9cc;
-            --text-dark: #1a2e22;
-            --muted: #64748b;
-            --danger-bg: #fef2f2;
-            --danger-border: #fecaca;
-            --danger-text: #991b1b;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Portal Login | MakesMyYatra</title>
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        }
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 
-        body {
-            background-color: var(--background);
-            color: var(--text-dark);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-        }
-
-        .login-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            width: 100%;
-            max-width: 440px;
-            padding: 40px;
-            box-shadow: 0 10px 30px rgba(15, 46, 36, 0.06);
-        }
-
-        .brand-header {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .brand-title {
-            font-family: Georgia, serif;
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            color: var(--primary);
-        }
-
-        .brand-badge {
-            display: inline-block;
-            margin-top: 8px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--accent);
-            background: rgba(197, 168, 128, 0.15);
-            padding: 4px 12px;
-            border-radius: 9999px;
-        }
-
-        .brand-desc {
-            margin-top: 10px;
-            font-size: 13px;
-            color: var(--muted);
-        }
-
-        .alert-error {
-            background: var(--danger-bg);
-            border: 1px solid var(--danger-border);
-            color: var(--danger-text);
-            padding: 12px 14px;
-            border-radius: 12px;
-            font-size: 13px;
-            margin-bottom: 20px;
-            line-height: 1.4;
-        }
-
-        .form-group {
-            margin-bottom: 18px;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            background: var(--background);
-            color: var(--text-dark);
-            font-size: 14px;
-            font-weight: 500;
-            outline: none;
-            transition: all 0.2s ease;
-        }
-
-        .form-control:focus {
-            border-color: var(--primary);
-            background: #ffffff;
-            box-shadow: 0 0 0 3px rgba(15, 46, 36, 0.12);
-        }
-
-        .btn-submit {
-            width: 100%;
-            padding: 14px 20px;
-            border-radius: 14px;
-            background: var(--primary);
-            color: #ffffff;
-            font-size: 14px;
-            font-weight: 700;
-            border: none;
-            cursor: pointer;
-            transition: transform 0.15s ease, background-color 0.15s ease;
-            margin-top: 10px;
-        }
-
-        .btn-submit:hover {
-            background: var(--primary-light);
-            transform: translateY(-1px);
-        }
-
-        .footer-note {
-            margin-top: 24px;
-            text-align: center;
-            font-size: 12px;
-            color: var(--muted);
-        }
-
-        .footer-note a {
-            color: var(--primary);
-            font-weight: 700;
-            text-decoration: none;
-        }
-
-        .footer-note a:hover {
-            text-decoration: underline;
-        }
-    </style>
-    
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+  </style>
 </head>
-<body>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4 antialiased text-slate-800">
 
-    <div class="login-card">
-        <div class="brand-header">
-            <h1 class="brand-title">MAKES MY YATRA</h1>
-            <span class="brand-badge">Operations Desk</span>
-            <p class="brand-desc">Authorized Admin Access</p>
-        </div>
-
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert-error">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-
-        <form method="POST" action="{% url 'portal_login' %}">
-            {% csrf_token %}
-
-            <div class="form-group">
-                <label class="form-label" for="username">Username</label>
-                <input 
-                    type="text" 
-                    id="username" 
-                    name="username" 
-                    class="form-control" 
-                    placeholder="e.g. Enter your username" 
-                    required 
-                    autocomplete="username"
-                >
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="password">Password</label>
-                <input 
-                    type="password" 
-                    id="password" 
-                    name="password" 
-                    class="form-control" 
-                    placeholder="e.g. Enter your password" 
-                    required 
-                    autocomplete="current-password"
-                >
-            </div>
-
-            <button type="submit" class="btn-submit">
-                Sign In to Dashboard
-            </button>
-        </form>
-
-        <div class="footer-note">
-            Return to <a href="{% url 'index' %}">Main Website</a>
-        </div>
+  <div class="max-w-md w-full space-y-6">
+    
+    <!-- Branding Logo Header -->
+    <div class="text-center space-y-2">
+      <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-600 text-white shadow-xl shadow-blue-500/25 mb-1">
+        <i data-lucide="compass" class="w-8 h-8"></i>
+      </div>
+      <h1 class="text-2xl font-black text-slate-900 tracking-tight">MAKES<span class="text-blue-600">MY</span>YATRA</h1>
+      <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Operations & Fleet Portal</p>
     </div>
 
+    <!-- Login Card -->
+    <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-xl shadow-slate-200/50 space-y-6">
+      
+      <div>
+        <h2 class="text-base font-black text-slate-900">Sign In to Console</h2>
+        <p class="text-xs text-slate-500 mt-0.5">Enter authorized staff credentials to continue.</p>
+      </div>
+
+      <!-- Flash Messages -->
+      {% if messages %}
+        <div class="space-y-2">
+          {% for message in messages %}
+            <div class="p-3.5 rounded-2xl text-xs font-bold flex items-center justify-between border {% if message.tags == 'error' %}bg-rose-50 text-rose-800 border-rose-200{% else %}bg-blue-50 text-blue-800 border-blue-200{% endif %}">
+              <span>{{ message }}</span>
+              <button type="button" onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">✕</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <!-- Login Form -->
+      <form method="POST" action="{% url 'portal_login' %}" class="space-y-4">
+        {% csrf_token %}
+        <!-- Username -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Username</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-3 text-slate-400">
+              <i data-lucide="user" class="w-4 h-4"></i>
+            </span>
+            <input type="text" 
+                   name="username" 
+                   required 
+                   placeholder="Admin username" 
+                   class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition">
+          </div>
+        </div>
+        <!-- Password -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Password</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-3 text-slate-400">
+              <i data-lucide="lock" class="w-4 h-4"></i>
+            </span>
+            <input type="password" 
+                   name="password" 
+                   required 
+                   placeholder="••••••••" 
+                   class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition">
+          </div>
+        </div>
+        <!-- Submit Button -->
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase tracking-wider py-3 rounded-xl shadow-lg shadow-blue-500/25 transition flex items-center justify-center gap-2 cursor-pointer mt-2">
+          <span>Authorize & Enter</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </form>
+      <!-- Bottom Help Note -->
+      <div class="pt-4 border-t border-slate-100 text-center">
+        <a href="{% url 'index' %}" class="text-[11px] font-bold text-slate-400 hover:text-blue-600 transition flex items-center justify-center gap-1">
+          <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+          <span>Back to MakesMyYatra Home</span>
+        </a>
+      </div>
+    </div>
+  </div>
+  <script>
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+  </script>
 </body>
 </html>

@@ -1,360 +1,280 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ALL BOOKINGS - MakesMyYatra Operations</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
-  </style>
-</head>
-<body class="text-slate-800 antialiased min-h-screen flex bg-slate-50">
+{% extends 'custom_admin/base.html' %}
 
-  <!-- ================= SIDEBAR NAVIGATION ================= -->
-  <aside class="w-64 bg-[#051322] text-slate-300 flex flex-col justify-between hidden md:flex min-h-screen border-r border-slate-800 shrink-0">
-    <div>
-      <!-- Brand Logo -->
-      <div class="p-6 border-b border-slate-800 flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-black text-white shadow-md shadow-blue-500/30">
-          <i data-lucide="compass" class="w-5 h-5"></i>
-        </div>
-        <div>
-          <span class="text-sm font-black tracking-tight text-white block">MAKES<span class="text-blue-500">MY</span>YATRA</span>
-          <span class="text-[9px] uppercase font-bold tracking-widest text-slate-400">Operations Portal</span>
-        </div>
+{% block title %}ALL BOOKINGS - MakesMyYatra{% endblock %}
+{% block header_title %}ALL BOOKINGS{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Flash Messages -->
+  {% if messages %}
+  <div class="space-y-2">
+    {% for message in messages %}
+    <div class="p-3.5 rounded-2xl {% if message.tags == 'success' %}bg-emerald-50 border border-emerald-200 text-emerald-800{% else %}bg-amber-50 border border-amber-200 text-amber-800{% endif %} text-xs font-bold flex items-center justify-between shadow-sm">
+      <span>{{ message }}</span>
+      <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">✕</button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Bulk Actions Form Wrapper -->
+  <form id="bookingsBulkForm" action="{% url 'portal_booking_actions' %}" method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="action" id="bulkActionInput" value="delete_selected">
+
+    <!-- Top Filter & Action Bar with 3-Dots Menu -->
+    <div class="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+      <div>
+        <h2 class="text-sm font-black text-slate-900 uppercase tracking-wider">All Reservations</h2>
+        <p class="text-xs text-slate-500 font-medium mt-0.5">Total Bookings Logged: <span class="font-bold text-slate-800">{{ bookings|length }}</span></p>
       </div>
 
-      <!-- Navigation Links -->
-      <nav class="p-4 space-y-1.5 text-xs font-bold">
-        <a href="{% url 'portal_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition">
-          <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+      <div class="flex items-center gap-2.5">
+        <!-- Excel Export -->
+        <a href="{% url 'export_bookings_excel' %}" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+          <i data-lucide="sheet" class="w-4 h-4"></i> Export to Excel
         </a>
-        <a href="{% url 'portal_hotels' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition">
-          <i data-lucide="building-2" class="w-4 h-4"></i> All Stays
-        </a>
-        <a href="{% url 'portal_hotel_add' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition">
-          <i data-lucide="plus-circle" class="w-4 h-4"></i> Add New Stay
-        </a>
-        <a href="{% url 'portal_bookings' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/30 transition">
-          <i data-lucide="calendar-check" class="w-4 h-4"></i> Bookings
-        </a>
-        <a href="{% url 'portal_customers' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition">
-          <i data-lucide="users" class="w-4 h-4"></i> Travelers Directory
-        </a>
-        <a href="{% url 'portal_urgent_help' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition">
-          <i data-lucide="phone-call" class="w-4 h-4"></i> Urgent Desk
-        </a>
-      </nav>
+
+        <!-- Three-Dots Button (⋮) -->
+        <div class="relative">
+          <button type="button" onclick="toggleTopMenu()" class="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+            <i data-lucide="more-vertical" class="w-4 h-4"></i>
+          </button>
+
+          <!-- Three-Dots Dropdown Menu -->
+          <div id="topDropdownMenu" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50">
+            <button type="button" onclick="enableSelectionMode()" class="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+              <i data-lucide="check-square" class="w-4 h-4 text-blue-600"></i> Select Bookings
+            </button>
+            <button type="button" onclick="triggerDeleteAll()" class="w-full text-left px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-slate-100">
+              <i data-lucide="trash-2" class="w-4 h-4 text-red-600"></i> Delete All Bookings
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- User Info & Logout -->
-    <div class="p-4 border-t border-slate-800">
-      <div class="px-4 py-3 bg-slate-900/80 rounded-2xl border border-slate-800/80 mb-3">
-        <span class="text-[10px] uppercase font-bold text-slate-400 block">Signed in as:</span>
-        <span class="text-xs font-bold text-white truncate block">{{ request.user.username|default:"Operations Admin" }}</span>
+    <!-- Floating Selection Toolbar -->
+    <div id="selectionToolbar" class="hidden bg-blue-50 border border-blue-200 rounded-2xl p-3 mb-4 flex items-center justify-between">
+      <div class="flex items-center gap-3 text-xs font-bold text-blue-900">
+        <label class="flex items-center gap-2 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-blue-200">
+          <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" class="w-4 h-4 rounded text-blue-600 focus:ring-0">
+          <span>Select All</span>
+        </label>
+        <span id="selectedCountText" class="text-blue-600 font-normal">(0 selected)</span>
       </div>
       <div class="flex items-center gap-2">
-        <a href="{% url 'index' %}" target="_blank" class="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-center text-[11px] font-bold transition flex items-center justify-center gap-1.5">
-          <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Visit Website
-        </a>
-        <a href="{% url 'portal_logout' %}" class="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/20 transition">
-          <i data-lucide="log-out" class="w-4 h-4"></i>
-        </a>
+        <button type="button" onclick="disableSelectionMode()" class="px-3 py-1.5 bg-white text-slate-600 font-bold text-xs rounded-xl hover:bg-slate-100 border border-slate-200">
+          Cancel
+        </button>
+        <button type="button" onclick="triggerDeleteSelected()" class="px-3.5 py-1.5 bg-red-600 text-white font-bold text-xs rounded-xl hover:bg-red-700 shadow-sm flex items-center gap-1.5">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete Selected
+        </button>
       </div>
     </div>
-  </aside>
 
-  <!-- ================= MAIN CONTENT WRAPPER ================= -->
-  <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+    <!-- Reservations Table Card -->
+    <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-extrabold text-[10px]">
+              <th class="py-4 px-4 w-10 selectCol hidden text-center"></th>
+              <th class="py-4 px-4">Booking ID</th>
+              <th class="py-4 px-4">Guest Details</th>
+              <th class="py-4 px-4">Property & Meal</th>
+              <th class="py-4 px-4">Check-In / Out</th>
+              <th class="py-4 px-4">Amount</th>
+              <th class="py-4 px-4">Status</th>
+              <th class="py-4 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 font-medium">
+            {% for b in bookings %}
+            <tr class="hover:bg-slate-50/70 transition">
+              <!-- Checkbox Column -->
+              <td class="py-4 px-4 selectCol hidden text-center">
+                <input type="checkbox" name="selected_bookings" value="{{ b.id }}" onchange="updateSelectedCount()" class="bookingItemCheckbox w-4 h-4 rounded border-slate-300 text-blue-600 cursor-pointer">
+              </td>
 
-    <!-- Top Advisory Header -->
-    <header class="bg-white border-b border-slate-200/80 px-6 py-4 flex items-center justify-between">
-      <div>
-        <h1 class="text-lg font-black text-slate-900 tracking-tight">ALL BOOKINGS</h1>
-        <p class="text-xs text-slate-500 font-medium">MakesMyYatra Operations Desk</p>
+              <!-- Booking ID & Date -->
+              <td class="py-4 px-4">
+                <span class="font-mono font-bold text-blue-600 block text-xs">
+                  #{{ b.booking_id|default:b.id }}
+                </span>
+                <span class="text-[10px] text-slate-400">
+                  {{ b.created_at|date:"d M Y, h:i A" }}
+                </span>
+              </td>
+
+              <!-- Guest Details -->
+              <td class="py-4 px-4">
+                <p class="font-bold text-slate-900">{{ b.guest_name|default:"Guest" }}</p>
+                <p class="text-[11px] text-slate-600 font-mono">{{ b.guest_phone|default:"-" }}</p>
+                {% if b.guest_email %}
+                  <p class="text-[10px] text-slate-400 truncate max-w-[150px]">{{ b.guest_email }}</p>
+                {% endif %}
+              </td>
+
+              <!-- Property & Meal Details -->
+              <td class="py-4 px-4">
+                <p class="font-bold text-slate-900">{{ b.hotel.name|default:"General Stay" }}</p>
+                <p class="text-[11px] text-slate-500">{{ b.hotel.city|default:"Himachal" }}</p>
+                <span class="inline-flex items-center px-2 py-0.5 mt-1 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                  <i data-lucide="utensils" class="w-2.5 h-2.5 mr-1 text-slate-500"></i>
+                  {{ b.meal_plan.get_plan_code_display|default:"Room Only (EP)" }}
+                </span>
+              </td>
+
+              <!-- Check-in / Check-out Dates -->
+              <td class="py-4 px-4 text-slate-700">
+                {% if b.check_in and b.check_out %}
+                  <p class="font-bold text-slate-900">{{ b.check_in|date:"d M Y" }}</p>
+                  <p class="text-[11px] text-slate-500">to {{ b.check_out|date:"d M Y" }}</p>
+                {% else %}
+                  <span class="text-slate-400 italic">Not specified</span>
+                {% endif %}
+              </td>
+
+              <!-- Amount & Payment Mode -->
+              <td class="py-4 px-4">
+                <span class="font-extrabold text-slate-900 text-sm">₹{{ b.total_amount|default:b.base_amount }}</span>
+                <span class="block text-[9px] uppercase tracking-wider text-slate-400">
+                  {{ b.get_payment_mode_display|default:b.payment_mode|default:"Pay at Hotel" }}
+                </span>
+              </td>
+
+              <!-- Status Badge -->
+              <td class="py-4 px-4">
+                {% if b.status == 'CONFIRMED' %}
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200">
+                    Confirmed
+                  </span>
+                {% elif b.status == 'CHECKED_IN' %}
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    Checked-In
+                  </span>
+                {% elif b.status == 'CHECKED_OUT' %}
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black bg-slate-100 text-slate-700 border border-slate-300">
+                    Checked-Out
+                  </span>
+                {% elif b.status == 'CANCELLED' %}
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-200">
+                    Cancelled
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-50 text-amber-700 border border-amber-200">
+                    Pending
+                  </span>
+                {% endif %}
+              </td>
+
+              <!-- Actions Column -->
+              <td class="py-4 px-4 text-right whitespace-nowrap">
+                <div class="flex items-center justify-end gap-1.5">
+                  <!-- Tax Invoice PDF/Print -->
+                  <a href="{% url 'portal_booking_invoice' b.booking_id|default:b.id %}" target="_blank" class="px-2 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl font-bold text-[11px] inline-flex items-center gap-1 transition shadow-sm" title="Print Tax Invoice">
+                    <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Invoice
+                  </a>
+
+                  <!-- Status Change Toggle -->
+                  {% if b.status != 'CONFIRMED' and b.status != 'CHECKED_IN' %}
+                    <a href="{% url 'portal_booking_status_change' b.booking_id|default:b.id 'CONFIRMED' %}" class="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-[11px] transition shadow-sm">
+                      Confirm
+                    </a>
+                  {% elif b.status == 'CONFIRMED' %}
+                    <a href="{% url 'portal_booking_status_change' b.booking_id|default:b.id 'CHECKED_IN' %}" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-[11px] transition shadow-sm">
+                      Check-In
+                    </a>
+                  {% elif b.status == 'CHECKED_IN' %}
+                    <a href="{% url 'portal_booking_status_change' b.booking_id|default:b.id 'CHECKED_OUT' %}" class="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-800 text-white rounded-xl font-bold text-[11px] transition shadow-sm">
+                      Check-Out
+                    </a>
+                  {% endif %}
+
+                  <!-- Row Single Delete (Trash Icon) -->
+                  <a href="{% url 'portal_booking_delete' b.id %}" onclick="return confirm('Kya aap is booking ko delete karna chahte hain?');" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete Booking">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="8" class="py-12 text-center text-slate-400">
+                <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                No reservations logged in system yet.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
+    </div>
 
-      <div class="flex items-center gap-3">
-        <a href="{% url 'portal_hotel_add' %}" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-md shadow-blue-500/20 transition flex items-center gap-1.5">
-          <i data-lucide="plus" class="w-4 h-4"></i> Add Property
-        </a>
-      </div>
-    </header>
+  </form>
+</div>
+{% endblock %}
 
-    <!-- Main Workspace -->
-    <main class="p-6 md:p-8 space-y-6">
+{% block extra_js %}
+<script>
+  function toggleTopMenu() {
+    const menu = document.getElementById('topDropdownMenu');
+    menu.classList.toggle('hidden');
+  }
 
-      <!-- Flash Messages -->
-      {% if messages %}
-      <div class="space-y-2">
-        {% for message in messages %}
-        <div class="p-3.5 rounded-2xl {% if message.tags == 'success' %}bg-emerald-50 border border-emerald-200 text-emerald-800{% else %}bg-amber-50 border border-amber-200 text-amber-800{% endif %} text-xs font-bold flex items-center justify-between shadow-sm">
-          <span>{{ message }}</span>
-          <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">✕</button>
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-
-      <!-- Bulk Actions Form Wrapper -->
-      <form id="bookingsBulkForm" action="{% url 'portal_booking_actions' %}" method="POST">
-        {% csrf_token %}
-        <input type="hidden" name="action" id="bulkActionInput" value="delete_selected">
-
-        <!-- Top Filter & Action Bar with 3-Dots Menu -->
-        <div class="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-          <div>
-            <h2 class="text-sm font-black text-slate-900 uppercase tracking-wider">All Reservations</h2>
-            <p class="text-xs text-slate-500 font-medium mt-0.5">Total Bookings Logged: <span class="font-bold text-slate-800">{{ bookings|length }}</span></p>
-          </div>
-
-          <div class="flex items-center gap-2.5">
-            <!-- Excel Export -->
-            <a href="{% url 'export_bookings_excel' %}" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
-              <i data-lucide="sheet" class="w-4 h-4"></i> Export to Excel
-            </a>
-
-            <!-- Three-Dots Button (⋮) -->
-            <div class="relative">
-              <button type="button" onclick="toggleTopMenu()" class="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
-                <i data-lucide="more-vertical" class="w-4 h-4"></i>
-              </button>
-
-              <!-- Three-Dots Dropdown Menu -->
-              <div id="topDropdownMenu" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50">
-                <button type="button" onclick="enableSelectionMode()" class="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
-                  <i data-lucide="check-square" class="w-4 h-4 text-blue-600"></i> Select Bookings
-                </button>
-                <button type="button" onclick="triggerDeleteAll()" class="w-full text-left px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-slate-100">
-                  <i data-lucide="trash-2" class="w-4 h-4 text-red-600"></i> Delete All Bookings
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Floating Selection Toolbar (Select Mode Active hone par dikhega) -->
-        <div id="selectionToolbar" class="hidden bg-blue-50 border border-blue-200 rounded-2xl p-3 mb-4 flex items-center justify-between">
-          <div class="flex items-center gap-3 text-xs font-bold text-blue-900">
-            <label class="flex items-center gap-2 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-blue-200">
-              <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" class="w-4 h-4 rounded text-blue-600 focus:ring-0">
-              <span>Select All</span>
-            </label>
-            <span id="selectedCountText" class="text-blue-600 font-normal">(0 selected)</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <button type="button" onclick="disableSelectionMode()" class="px-3 py-1.5 bg-white text-slate-600 font-bold text-xs rounded-xl hover:bg-slate-100 border border-slate-200">
-              Cancel
-            </button>
-            <button type="button" onclick="triggerDeleteSelected()" class="px-3.5 py-1.5 bg-red-600 text-white font-bold text-xs rounded-xl hover:bg-red-700 shadow-sm flex items-center gap-1.5">
-              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete Selected
-            </button>
-          </div>
-        </div>
-
-        <!-- Reservations Table Card -->
-        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-extrabold text-[10px]">
-                  <th class="py-4 px-4 w-10 selectCol hidden text-center"></th>
-                  <th class="py-4 px-4">Booking ID</th>
-                  <th class="py-4 px-4">Guest Details</th>
-                  <th class="py-4 px-4">Property</th>
-                  <th class="py-4 px-4">Check-In / Out</th>
-                  <th class="py-4 px-4">Amount</th>
-                  <th class="py-4 px-4">Status</th>
-                  <th class="py-4 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100 font-medium">
-                {% for b in bookings %}
-                <tr class="hover:bg-slate-50/70 transition">
-                  
-                  <!-- Checkbox Column -->
-                  <td class="py-4 px-4 selectCol hidden text-center">
-                    <input type="checkbox" name="selected_bookings" value="{{ b.id }}" onchange="updateSelectedCount()" class="bookingItemCheckbox w-4 h-4 rounded border-slate-300 text-blue-600 cursor-pointer">
-                  </td>
-
-                  <!-- Booking ID & Date -->
-                  <td class="py-4 px-4">
-                    <span class="font-mono font-bold text-blue-600 block text-xs">
-                      #{{ b.booking_id|default:b.id }}
-                    </span>
-                    <span class="text-[10px] text-slate-400">
-                      {{ b.created_at|date:"d M Y, h:i A" }}
-                    </span>
-                  </td>
-
-                  <!-- Guest Details -->
-                  <td class="py-4 px-4">
-                    <p class="font-bold text-slate-900">{{ b.guest_name|default:"Guest" }}</p>
-                    <p class="text-[11px] text-slate-600 font-mono">{{ b.guest_phone|default:"-" }}</p>
-                    {% if b.guest_email %}
-                      <p class="text-[10px] text-slate-400 truncate max-w-[150px]">{{ b.guest_email }}</p>
-                    {% endif %}
-                  </td>
-
-                  <!-- Property Details -->
-                  <td class="py-4 px-4">
-                    <p class="font-bold text-slate-900">{{ b.hotel.name|default:"General Stay" }}</p>
-                    <p class="text-[11px] text-slate-500">{{ b.hotel.city|default:"Himachal" }}</p>
-                  </td>
-
-                  <!-- Check-in / Check-out Dates -->
-                  <td class="py-4 px-4 text-slate-700">
-                    {% if b.check_in and b.check_out %}
-                      <p class="font-bold text-slate-900">{{ b.check_in|date:"d M Y" }}</p>
-                      <p class="text-[11px] text-slate-500">to {{ b.check_out|date:"d M Y" }}</p>
-                    {% else %}
-                      <span class="text-slate-400 italic">Not specified</span>
-                    {% endif %}
-                  </td>
-
-                  <!-- Amount -->
-                  <td class="py-4 px-4">
-                    <span class="font-extrabold text-slate-900 text-sm">₹{{ b.total_amount|default:b.base_amount }}</span>
-                    <span class="block text-[9px] uppercase tracking-wider text-slate-400">Pay at Hotel</span>
-                  </td>
-
-                  <!-- Status Badge -->
-                  <td class="py-4 px-4">
-                    {% if b.status == 'CONFIRMED' %}
-                      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200">
-                        Confirmed
-                      </span>
-                    {% elif b.status == 'CHECKED_IN' %}
-                      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        Checked-In
-                      </span>
-                    {% elif b.status == 'CHECKED_OUT' %}
-                      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black bg-slate-100 text-slate-700 border border-slate-300">
-                        Checked-Out
-                      </span>
-                    {% elif b.status == 'CANCELLED' %}
-                      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-200">
-                        Cancelled
-                      </span>
-                    {% else %}
-                      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-50 text-amber-700 border border-amber-200">
-                        Pending
-                      </span>
-                    {% endif %}
-                  </td>
-
-                  <!-- Actions Column -->
-                  <td class="py-4 px-4 text-right whitespace-nowrap">
-                    <div class="flex items-center justify-end gap-1.5">
-                      <!-- Voucher Link -->
-                      <a href="{% url 'booking_detail' b.booking_id|default:b.id %}" target="_blank" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-[11px] inline-flex items-center gap-1 transition shadow-sm">
-                        <i data-lucide="printer" class="w-3.5 h-3.5"></i> Voucher
-                      </a>
-
-                      <!-- Status Change Toggle -->
-                      {% if b.status != 'CONFIRMED' and b.status != 'CHECKED_IN' %}
-                        <a href="{% url 'portal_booking_status_change' b.booking_id|default:b.id 'CONFIRMED' %}" class="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-[11px] transition shadow-sm">
-                          Confirm
-                        </a>
-                      {% elif b.status == 'CONFIRMED' %}
-                        <a href="{% url 'portal_booking_status_change' b.booking_id|default:b.id 'CHECKED_IN' %}" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-[11px] transition shadow-sm">
-                          Check-In
-                        </a>
-                      {% elif b.status == 'CHECKED_IN' %}
-                        <a href="{% url 'portal_booking_status_change' b.booking_id|default:b.id 'CHECKED_OUT' %}" class="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-800 text-white rounded-xl font-bold text-[11px] transition shadow-sm">
-                          Check-Out
-                        </a>
-                      {% endif %}
-
-                      <!-- Row Single Delete (Trash Icon) -->
-                      <a href="{% url 'portal_booking_delete' b.id %}" onclick="return confirm('Kya aap is booking ko delete karna chahte hain?');" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete Booking">
-                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                      </a>
-                    </div>
-                  </td>
-                </tr>
-                {% empty %}
-                <tr>
-                  <td colspan="8" class="py-12 text-center text-slate-400">
-                    <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
-                    No reservations logged in system yet.
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </form>
-
-    </main>
-  </div>
-
-  <!-- UI JavaScript -->
-  <script>
-    lucide.createIcons();
-
-    function toggleTopMenu() {
-      const menu = document.getElementById('topDropdownMenu');
-      menu.classList.toggle('hidden');
+  // Outside click to close top menu
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#topDropdownMenu') && !e.target.closest('button[onclick="toggleTopMenu()"]')) {
+      const tm = document.getElementById('topDropdownMenu');
+      if (tm) tm.classList.add('hidden');
     }
+  });
 
-    // Outside click to close top menu
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('#topDropdownMenu') && !e.target.closest('button[onclick="toggleTopMenu()"]')) {
-        const tm = document.getElementById('topDropdownMenu');
-        if (tm) tm.classList.add('hidden');
-      }
-    });
+  function enableSelectionMode() {
+    document.getElementById('topDropdownMenu').classList.add('hidden');
+    document.getElementById('selectionToolbar').classList.remove('hidden');
+    document.querySelectorAll('.selectCol').forEach(col => col.classList.remove('hidden'));
+  }
 
-    function enableSelectionMode() {
-      document.getElementById('topDropdownMenu').classList.add('hidden');
-      document.getElementById('selectionToolbar').classList.remove('hidden');
-      document.querySelectorAll('.selectCol').forEach(col => col.classList.remove('hidden'));
+  function disableSelectionMode() {
+    document.getElementById('selectionToolbar').classList.add('hidden');
+    document.querySelectorAll('.selectCol').forEach(col => col.classList.add('hidden'));
+    document.getElementById('selectAllCheckbox').checked = false;
+    document.querySelectorAll('.bookingItemCheckbox').forEach(cb => cb.checked = false);
+    updateSelectedCount();
+  }
+
+  function toggleSelectAll(masterCb) {
+    const checkboxes = document.querySelectorAll('.bookingItemCheckbox');
+    checkboxes.forEach(cb => cb.checked = masterCb.checked);
+    updateSelectedCount();
+  }
+
+  function updateSelectedCount() {
+    const totalSelected = document.querySelectorAll('.bookingItemCheckbox:checked').length;
+    document.getElementById('selectedCountText').innerText = `(${totalSelected} selected)`;
+  }
+
+  function triggerDeleteSelected() {
+    const totalSelected = document.querySelectorAll('.bookingItemCheckbox:checked').length;
+    if (totalSelected === 0) {
+      alert('Kripya pehle delete karne ke liye bookings select karein.');
+      return;
     }
-
-    function disableSelectionMode() {
-      document.getElementById('selectionToolbar').classList.add('hidden');
-      document.querySelectorAll('.selectCol').forEach(col => col.classList.add('hidden'));
-      document.getElementById('selectAllCheckbox').checked = false;
-      document.querySelectorAll('.bookingItemCheckbox').forEach(cb => cb.checked = false);
-      updateSelectedCount();
+    if (confirm(`Kya aap in ${totalSelected} bookings ko delete karna chahte hain?`)) {
+      document.getElementById('bulkActionInput').value = 'delete_selected';
+      document.getElementById('bookingsBulkForm').submit();
     }
+  }
 
-    function toggleSelectAll(masterCb) {
-      const checkboxes = document.querySelectorAll('.bookingItemCheckbox');
-      checkboxes.forEach(cb => cb.checked = masterCb.checked);
-      updateSelectedCount();
+  function triggerDeleteAll() {
+    document.getElementById('topDropdownMenu').classList.add('hidden');
+    if (confirm('CAUTION: Kya aap SAARI bookings ek sath delete karna chahte hain?')) {
+      document.getElementById('bulkActionInput').value = 'delete_all';
+      document.getElementById('bookingsBulkForm').submit();
     }
-
-    function updateSelectedCount() {
-      const totalSelected = document.querySelectorAll('.bookingItemCheckbox:checked').length;
-      document.getElementById('selectedCountText').innerText = `(${totalSelected} selected)`;
-    }
-
-    function triggerDeleteSelected() {
-      const totalSelected = document.querySelectorAll('.bookingItemCheckbox:checked').length;
-      if (totalSelected === 0) {
-        alert('Kripya pehle delete karne ke liye bookings select karein.');
-        return;
-      }
-      if (confirm(`Kya aap in ${totalSelected} bookings ko delete karna chahte hain?`)) {
-        document.getElementById('bulkActionInput').value = 'delete_selected';
-        document.getElementById('bookingsBulkForm').submit();
-      }
-    }
-
-    function triggerDeleteAll() {
-      document.getElementById('topDropdownMenu').classList.add('hidden');
-      if (confirm('CAUTION: Kya aap SAARI bookings ek sath delete karna chahte hain?')) {
-        document.getElementById('bulkActionInput').value = 'delete_all';
-        document.getElementById('bookingsBulkForm').submit();
-      }
-    }
-  </script>
-</body>
-</html>
+  }
+</script>
+{% endblock %}

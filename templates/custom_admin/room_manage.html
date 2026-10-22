@@ -1,0 +1,105 @@
+{% extends 'custom_admin/base.html' %}
+
+{% block title %}Manage Rooms - {{ hotel.name }}{% endblock %}
+{% block header_title %}ROOM TIERS & INVENTORY{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+    <div>
+      <span class="text-xs font-bold text-blue-600 uppercase tracking-widest block">{{ hotel.city }} FLEET</span>
+      <h1 class="text-2xl font-black text-slate-900 tracking-tight">{{ hotel.name }} - Room Categories</h1>
+      <p class="text-xs text-slate-500 font-medium mt-0.5">Control base pricing, extra bed rates, and live booking availability.</p>
+    </div>
+    <div>
+      <a href="{% url 'portal_hotels' %}" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+        <span>Back to Stays</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Flash Messages -->
+  {% if messages %}
+  <div class="space-y-2">
+    {% for message in messages %}
+    <div class="p-3.5 rounded-2xl text-xs font-bold flex items-center justify-between border bg-blue-50 text-blue-800 border-blue-200">
+      <span>{{ message }}</span>
+      <button type="button" onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">✕</button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Room Inventory Table -->
+  <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs text-slate-600">
+        <thead class="bg-slate-50 border-b border-slate-200 text-[11px] font-black uppercase text-slate-700">
+          <tr>
+            <th class="p-4">Room Type</th>
+            <th class="p-4">Occupancy</th>
+            <th class="p-4">Base Tariff</th>
+            <th class="p-4">Weekend Tariff</th>
+            <th class="p-4">Total Inventory</th>
+            <th class="p-4">Booking Status</th>
+            <th class="p-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for r in rooms %}
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="p-4 font-bold text-slate-900">
+              {{ r.name }}
+            </td>
+            <td class="p-4">
+              <span>{{ r.max_adults }} Adults, {{ r.max_children }} Child</span>
+            </td>
+            <td class="p-4 font-black text-slate-900">
+              ₹{{ r.base_price }}
+            </td>
+            <td class="p-4 font-bold text-slate-700">
+              ₹{{ r.weekend_price }}
+            </td>
+            <td class="p-4 font-bold">
+              {{ r.total_inventory }} Units
+            </td>
+            <td class="p-4">
+              {% if r.is_open %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                ACTIVE / OPEN
+              </span>
+              {% else %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-200">
+                BLOCKED / CLOSED
+              </span>
+              {% endif %}
+            </td>
+            <td class="p-4 text-right">
+              <div class="inline-flex items-center gap-1.5">
+                <!-- 1-Click Status Toggle -->
+                <a href="{% url 'portal_room_toggle_status' r.id %}" class="px-3 py-1.5 rounded-xl font-bold text-xs transition {% if r.is_open %}bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200{% else %}bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200{% endif %}">
+                  {% if r.is_open %}Block Room{% else %}Open Room{% endif %}
+                </a>
+
+                <!-- Delete Room -->
+                <a href="{% url 'portal_room_delete' hotel.id r.id %}" onclick="return confirm('Delete this room category?')" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition" title="Delete">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="p-10 text-center text-slate-400">No room categories configured yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

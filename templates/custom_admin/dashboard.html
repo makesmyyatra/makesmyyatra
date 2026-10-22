@@ -1,83 +1,191 @@
 {% extends 'custom_admin/base.html' %}
-{% block title %}Dashboard | Makes My Yatra Admin{% endblock %}
-{% block page_title %}Operations Overview{% endblock %}
+
+{% block title %}Operations Dashboard | MakesMyYatra{% endblock %}
+{% block page_title %}Realtime Operations Desk{% endblock %}
 
 {% block content %}
-<!-- Metric Cards -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-  <div class="bg-white p-6 rounded-3xl border border-[#e2d9cc] shadow-sm flex items-center justify-between">
-    <div>
-      <p class="text-xs font-bold text-[#64748b] uppercase tracking-wider">Active Stays</p>
-      <h3 class="text-3xl font-serif font-bold text-[#0f2e24] mt-1">{{ total_hotels }}</h3>
-    </div>
-    <div class="h-12 w-12 rounded-2xl bg-[#f4efe6] flex items-center justify-center text-[#0f2e24]">
-      <i data-lucide="hotel" class="h-6 w-6"></i>
-    </div>
-  </div>
+<div class="space-y-6">
 
-  <div class="bg-white p-6 rounded-3xl border border-[#e2d9cc] shadow-sm flex items-center justify-between">
-    <div>
-      <p class="text-xs font-bold text-[#64748b] uppercase tracking-wider">Total Bookings</p>
-      <h3 class="text-3xl font-serif font-bold text-[#0f2e24] mt-1">{{ total_bookings }}</h3>
+  <!-- Flash Messages -->
+  {% if messages %}
+  <div class="space-y-2">
+    {% for message in messages %}
+    <div class="p-3.5 rounded-2xl text-xs font-bold flex items-center justify-between border {% if message.tags == 'error' %}bg-rose-50 text-rose-800 border-rose-200{% else %}bg-blue-50 text-blue-800 border-blue-200{% endif %}">
+      <span>{{ message }}</span>
+      <button type="button" onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">✕</button>
     </div>
-    <div class="h-12 w-12 rounded-2xl bg-[#f4efe6] flex items-center justify-center text-[#0f2e24]">
-      <i data-lucide="calendar-check" class="h-6 w-6"></i>
-    </div>
+    {% endfor %}
   </div>
+  {% endif %}
 
-  <div class="bg-white p-6 rounded-3xl border border-[#e2d9cc] shadow-sm flex items-center justify-between">
-    <div>
-      <p class="text-xs font-bold text-[#64748b] uppercase tracking-wider">Pending Support Requests</p>
-      <h3 class="text-3xl font-serif font-bold text-[#0f2e24] mt-1">{{ active_supports|default:0 }}</h3>
-    </div>
-    <div class="h-12 w-12 rounded-2xl bg-[#f4efe6] flex items-center justify-center text-[#0f2e24]">
-      <i data-lucide="phone-call" class="h-6 w-6"></i>
-    </div>
-  </div>
-</div>
-
-<!-- Two-column Tables -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-  <!-- Recent Properties -->
-  <div class="bg-white p-6 rounded-3xl border border-[#e2d9cc] shadow-sm">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="font-serif text-lg font-bold text-[#0f2e24]">Recently Added Hotels</h3>
-      <a href="{% url 'portal_hotels' %}" class="text-xs font-bold text-[#0f2e24] hover:underline">View All →</a>
-    </div>
-    <div class="divide-y divide-[#e2d9cc]">
-      {% for hotel in hotels %}
-      <div class="py-3 flex justify-between items-center text-sm">
-        <div>
-          <p class="font-bold text-[#0f2e24]">{{ hotel.name }}</p>
-          <p class="text-xs text-[#64748b]">{{ hotel.city }}</p>
-        </div>
-        <span class="text-xs bg-[#f4efe6] text-[#0f2e24] px-2.5 py-1 rounded-full font-bold">★ {{ hotel.star_rating }}.0</span>
+  <!-- Top Metric Stat Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Total Revenue -->
+    <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+      <div>
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Confirmed Revenue</span>
+        <span class="text-2xl font-black text-slate-900 mt-1 block">₹{{ revenue|floatformat:2 }}</span>
+        <span class="text-[11px] text-blue-600 font-semibold mt-1 inline-block">Settled Stays</span>
       </div>
-      {% empty %}
-      <p class="text-xs text-[#64748b] py-4 text-center">No properties on record.</p>
-      {% endfor %}
+      <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+        <i data-lucide="indian-rupee" class="w-6 h-6"></i>
+      </div>
+    </div>
+
+    <!-- Total Bookings -->
+    <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+      <div>
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Bookings</span>
+        <span class="text-2xl font-black text-slate-900 mt-1 block">{{ total_bookings }}</span>
+        <span class="text-[11px] text-emerald-600 font-semibold mt-1 inline-block">+{{ new_bookings_today }} Booked Today</span>
+      </div>
+      <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
+        <i data-lucide="calendar-check-2" class="w-6 h-6"></i>
+      </div>
+    </div>
+
+    <!-- Active Stays / Fleet -->
+    <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+      <div>
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Active Fleet</span>
+        <span class="text-2xl font-black text-slate-900 mt-1 block">{{ total_hotels }}</span>
+        <span class="text-[11px] text-slate-500 font-semibold mt-1 inline-block">Across HP & PB</span>
+      </div>
+      <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
+        <i data-lucide="hotel" class="w-6 h-6"></i>
+      </div>
+    </div>
+
+    <!-- Urgent SOS Tickets -->
+    <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+      <div>
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Urgent Support</span>
+        <span class="text-2xl font-black {% if active_supports > 0 %}text-rose-600{% else %}text-slate-900{% endif %} mt-1 block">{{ active_supports }}</span>
+        <span class="text-[11px] {% if active_supports > 0 %}text-rose-500 font-bold{% else %}text-slate-400{% endif %} mt-1 inline-block">Action Required</span>
+      </div>
+      <div class="w-12 h-12 rounded-2xl {% if active_supports > 0 %}bg-rose-50 text-rose-600 border-rose-200 animate-pulse{% else %}bg-slate-50 text-slate-400 border-slate-200{% endif %} flex items-center justify-center border">
+        <i data-lucide="life-buoy" class="w-6 h-6"></i>
+      </div>
     </div>
   </div>
 
-  <!-- Recent Queries -->
-  <div class="bg-white p-6 rounded-3xl border border-[#e2d9cc] shadow-sm">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="font-serif text-lg font-bold text-[#0f2e24]">Urgent Help Logs</h3>
-      <a href="{% url 'portal_urgent_help' %}" class="text-xs font-bold text-red-600 hover:underline">Open Desk →</a>
-    </div>
-    <div class="space-y-3">
-      {% for item in supports %}
-      <div class="p-3 rounded-2xl bg-[#faf8f5] border border-[#e2d9cc] text-xs">
-        <div class="flex justify-between items-center font-bold text-[#0f2e24]">
-          <span>{{ item.name }} ({{ item.phone }})</span>
-          <span class="text-[10px] font-normal text-[#64748b]">{{ item.created_at|timesince }} ago</span>
+  <!-- Operational Flow Strips: Today Check-in/Out & Pipeline -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Today Daily Operations -->
+    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+      <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+        <i data-lucide="clock" class="w-4 h-4 text-blue-600"></i> Today's Schedule ({{ today_date|date:"d M Y" }})
+      </h3>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center">
+          <span class="text-[11px] font-bold text-slate-400 uppercase block">Expected Check-Ins</span>
+          <span class="text-2xl font-black text-blue-600 mt-1 block">{{ today_checkins }}</span>
         </div>
-        <p class="text-[#64748b] mt-1">{{ item.message|truncatewords:15 }}</p>
+        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center">
+          <span class="text-[11px] font-bold text-slate-400 uppercase block">Scheduled Check-Outs</span>
+          <span class="text-2xl font-black text-indigo-600 mt-1 block">{{ today_checkouts }}</span>
+        </div>
       </div>
-      {% empty %}
-      <p class="text-xs text-[#64748b] py-4 text-center">No active urgent messages.</p>
-      {% endfor %}
+      <div class="pt-2">
+        <a href="{% url 'portal_bookings' %}" class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center justify-center gap-1.5">
+          <span>Manage Today's Arrivals</span>
+          <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- Booking Pipeline Distribution -->
+    <div class="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+      <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+        <i data-lucide="git-commit" class="w-4 h-4 text-blue-600"></i> Booking Lifecycle Pipeline
+      </h3>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-center">
+          <span class="text-[10px] font-black text-amber-700 uppercase block">Pending</span>
+          <span class="text-xl font-black text-amber-900 mt-1 block">{{ pipeline.pending }}</span>
+        </div>
+        <div class="p-3.5 rounded-2xl bg-blue-50 border border-blue-200 text-center">
+          <span class="text-[10px] font-black text-blue-700 uppercase block">Confirmed</span>
+          <span class="text-xl font-black text-blue-900 mt-1 block">{{ pipeline.confirmed }}</span>
+        </div>
+        <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-center">
+          <span class="text-[10px] font-black text-emerald-700 uppercase block">Checked-In</span>
+          <span class="text-xl font-black text-emerald-900 mt-1 block">{{ pipeline.checked_in }}</span>
+        </div>
+        <div class="p-3.5 rounded-2xl bg-slate-100 border border-slate-200 text-center">
+          <span class="text-[10px] font-black text-slate-600 uppercase block">Checked-Out</span>
+          <span class="text-xl font-black text-slate-800 mt-1 block">{{ pipeline.checked_out }}</span>
+        </div>
+      </div>
+      <div class="flex items-center justify-between text-xs font-semibold text-slate-500 pt-1">
+        <span>Cancellations logged: <b class="text-rose-600">{{ cancellations_count }}</b></span>
+        <a href="{% url 'export_bookings_excel' %}" class="text-blue-600 hover:underline flex items-center gap-1 font-bold">
+          <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+          <span>Export Excel Report</span>
+        </a>
+      </div>
     </div>
   </div>
+
+  <!-- Recent Bookings Table -->
+  <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+      <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+        <i data-lucide="receipt" class="w-4 h-4 text-blue-600"></i> Recent Guest Reservations
+      </h3>
+      <a href="{% url 'portal_bookings' %}" class="text-xs font-bold text-blue-600 hover:underline">View All &rarr;</a>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs text-slate-600">
+        <thead class="bg-slate-50 border-b border-slate-200 text-[11px] font-black uppercase text-slate-700">
+          <tr>
+            <th class="p-4">Booking ID</th>
+            <th class="p-4">Guest Information</th>
+            <th class="p-4">Hotel / Property</th>
+            <th class="p-4">Stay Dates</th>
+            <th class="p-4">Total Amount</th>
+            <th class="p-4">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for b in bookings %}
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="p-4 font-black text-slate-900">
+              #{{ b.booking_id }}
+            </td>
+            <td class="p-4">
+              <span class="font-bold text-slate-900 block">{{ b.guest_name }}</span>
+              <span class="text-[11px] text-slate-400">{{ b.guest_phone }}</span>
+            </td>
+            <td class="p-4 font-medium text-slate-800">
+              {{ b.hotel.name|default:"Direct Stay" }}
+            </td>
+            <td class="p-4 text-slate-600">
+              {{ b.check_in|date:"d M" }} - {{ b.check_out|date:"d M Y" }}
+            </td>
+            <td class="p-4 font-black text-slate-900">
+              ₹{{ b.total_amount }}
+            </td>
+            <td class="p-4">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black 
+                {% if b.status == 'CONFIRMED' %}bg-blue-50 text-blue-700 border border-blue-200
+                {% elif b.status == 'CHECKED_IN' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+                {% elif b.status == 'PENDING' %}bg-amber-50 text-amber-700 border border-amber-200
+                {% else %}bg-slate-100 text-slate-600 border border-slate-200{% endif %}">
+                {{ b.status }}
+              </span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="p-8 text-center text-slate-400">No recent reservations found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 </div>
 {% endblock %}

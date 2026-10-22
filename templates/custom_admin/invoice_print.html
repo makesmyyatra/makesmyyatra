@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TAX INVOICE - {{ invoice_number }} | MakesMyYatra</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; padding: 0 !important; }
+      .invoice-card { border: none !important; box-shadow: none !important; padding: 0 !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen p-4 sm:p-8 text-slate-800">
+
+  <!-- Top Action Bar (Print / PDF Download) -->
+  <div class="max-w-4xl mx-auto mb-6 flex items-center justify-between no-print">
+    <a href="{% url 'portal_bookings' %}" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm transition">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i>
+      <span>Back to Bookings</span>
+    </a>
+    <button onclick="window.print()" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-xl shadow-md shadow-blue-500/20 transition cursor-pointer">
+      <i data-lucide="printer" class="w-4 h-4"></i>
+      <span>Print / Save as PDF</span>
+    </button>
+  </div>
+
+  <!-- Main Invoice Document -->
+  <div class="invoice-card max-w-4xl mx-auto bg-white rounded-3xl border border-slate-200 shadow-xl p-8 sm:p-12 space-y-8">
+    
+    <!-- Invoice Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start gap-6 border-b border-slate-200 pb-8">
+      <div>
+        <div class="inline-flex items-center gap-2 mb-2">
+          <div class="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center font-black text-white text-xs">
+            MMY
+          </div>
+          <span class="text-xl font-black text-slate-900 tracking-tight">MAKES<span class="text-blue-600">MY</span>YATRA</span>
+        </div>
+        <p class="text-xs text-slate-500 font-medium">MakesMyYatra Travel & Hospitality Services Pvt. Ltd.</p>
+        <p class="text-xs text-slate-500">Mall Road, Shimla, Himachal Pradesh - 171001</p>
+        <p class="text-xs text-slate-500 font-semibold mt-1">GSTIN: <span class="text-slate-800 font-mono font-bold">02AAACM5542K1ZY</span></p>
+      </div>
+
+      <div class="sm:text-right">
+        <span class="inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase bg-blue-50 text-blue-700 border border-blue-200 tracking-wider mb-2">
+          Official Tax Invoice
+        </span>
+        <h2 class="text-base font-black text-slate-900">{{ invoice_number }}</h2>
+        <p class="text-xs text-slate-500 mt-0.5">Booking Ref: <b class="text-slate-800 font-mono">#{{ booking.booking_id }}</b></p>
+        <p class="text-xs text-slate-500">Issued Date: {{ invoice_date|date:"d M Y" }}</p>
+      </div>
+    </div>
+
+    <!-- Billed To & Stay Destination Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 text-xs">
+      <!-- Guest Details -->
+      <div class="space-y-1.5 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+        <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Customer / Guest (Billed To)</span>
+        <p class="text-sm font-black text-slate-900">{{ booking.guest_name }}</p>
+        <p class="text-slate-600 font-mono font-medium">{{ booking.guest_phone }}</p>
+        {% if booking.guest_email %}
+        <p class="text-slate-500">{{ booking.guest_email }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Hotel / Property Destination -->
+      <div class="space-y-1.5 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+        <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Reserved Stay & Location</span>
+        <p class="text-sm font-black text-slate-900">{{ hotel.name }}</p>
+        <p class="text-slate-600">{{ hotel.address|default:hotel.city }}</p>
+        <p class="text-slate-500">Destination: <b class="text-slate-800">{{ hotel.city }}, Himachal Pradesh</b></p>
+      </div>
+    </div>
+
+    <!-- Booking Stay Schedule -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-2xl border border-slate-200 text-center text-xs">
+      <div>
+        <span class="text-[10px] font-bold text-slate-400 uppercase block">Check-In</span>
+        <span class="font-black text-slate-900 mt-0.5 block">{{ booking.check_in|date:"d M Y" }}</span>
+      </div>
+      <div>
+        <span class="text-[10px] font-bold text-slate-400 uppercase block">Check-Out</span>
+        <span class="font-black text-slate-900 mt-0.5 block">{{ booking.check_out|date:"d M Y" }}</span>
+      </div>
+      <div>
+        <span class="text-[10px] font-bold text-slate-400 uppercase block">Stay Duration</span>
+        <span class="font-black text-blue-600 mt-0.5 block">{{ nights }} Night(s)</span>
+      </div>
+      <div>
+        <span class="text-[10px] font-bold text-slate-400 uppercase block">Payment Mode</span>
+        <span class="font-black text-slate-900 mt-0.5 block">{{ booking.get_payment_mode_display|default:booking.payment_mode }}</span>
+      </div>
+    </div>
+
+    <!-- Tariff & Taxes Table -->
+    <div class="overflow-hidden rounded-2xl border border-slate-200">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-50 border-b border-slate-200 text-[11px] font-black uppercase text-slate-700">
+          <tr>
+            <th class="p-3.5">Item Description</th>
+            <th class="p-3.5 text-center">Plan</th>
+            <th class="p-3.5 text-center">Nights</th>
+            <th class="p-3.5 text-right">Taxable Total</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 font-medium">
+          <tr>
+            <td class="p-3.5">
+              <span class="font-bold text-slate-900 block">{{ booking.room_type.name|default:"Standard Suite" }}</span>
+              <span class="text-[11px] text-slate-500">Base Accommodation at {{ hotel.name }}</span>
+            </td>
+            <td class="p-3.5 text-center">
+              <span class="inline-block px-2 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-700">
+                {{ booking.meal_plan.get_plan_code_display|default:"EP (Room Only)" }}
+              </span>
+            </td>
+            <td class="p-3.5 text-center font-bold">{{ nights }}</td>
+            <td class="p-3.5 text-right font-black text-slate-900">₹{{ booking.base_amount }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Billing Calculation Summary -->
+    <div class="flex justify-end">
+      <div class="w-full sm:w-80 space-y-2 text-xs">
+        <div class="flex justify-between text-slate-600">
+          <span>Taxable Value:</span>
+          <span class="font-bold text-slate-800">₹{{ booking.base_amount }}</span>
+        </div>
+        <div class="flex justify-between text-slate-600">
+          <span>CGST:</span>
+          <span class="font-bold text-slate-800">₹{{ booking.cgst_amount|default:"0.00" }}</span>
+        </div>
+        <div class="flex justify-between text-slate-600">
+          <span>SGST:</span>
+          <span class="font-bold text-slate-800">₹{{ booking.sgst_amount|default:"0.00" }}</span>
+        </div>
+        <div class="flex justify-between text-slate-600">
+          <span>Total GST (Integrated):</span>
+          <span class="font-bold text-slate-800">₹{{ booking.gst_amount|default:"0.00" }}</span>
+        </div>
+        <div class="border-t-2 border-slate-900 pt-2 flex justify-between text-sm font-black text-slate-900">
+          <span>Grand Total Payable:</span>
+          <span class="text-blue-600">₹{{ booking.total_amount }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Terms & Official Seal -->
+    <div class="border-t border-slate-200 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] text-slate-400">
+      <div>
+        <p class="font-bold text-slate-600">Computer Generated Tax Invoice</p>
+        <p>No physical signature required. Valid for travel records and corporate input tax credit.</p>
+      </div>
+      <div class="text-right">
+        <span class="font-bold text-slate-700 block">MakesMyYatra Operations Desk</span>
+        <span>Helpline: +91 98160 00000 | support@makesmyyatra.com</span>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+  </script>
+</body>
+</html>

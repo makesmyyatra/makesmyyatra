@@ -18,15 +18,18 @@
     </div>
   {% endif %}
 
-  <!-- Main Form Card (Fixed: Removed the premature closing tag) -->
-  <form action="{% if is_edit %}{% url 'portal_hotel_edit' hotel.id %}{% else %}{% url 'portal_hotel_add' %}{% endif %}" method="POST" class="space-y-6">
+  <!-- Main Form Card (enctype enabled for file uploads) -->
+  <form action="{% if is_edit %}{% url 'portal_hotel_edit' hotel.id %}{% else %}{% url 'portal_hotel_add' %}{% endif %}" 
+        method="POST" 
+        enctype="multipart/form-data" 
+        class="space-y-6">
     {% csrf_token %}
 
     <!-- Section 1: Property Identity & Type -->
     <div class="bg-white rounded-3xl p-6 sm:p-8 border border-[#e2d9cc]/70 shadow-sm space-y-5">
       <div class="border-b border-slate-100 pb-4">
         <h3 class="text-base font-black text-[#0f2e24] flex items-center gap-2">
-          <i data-lucide="building-2" class="w-5 h-5 text-blue-600"></i> Property Identity
+          <i data-lucide="building-2" class="w-5 h-5 text-emerald-700"></i> Property Identity
         </h3>
         <p class="text-xs text-slate-500 mt-0.5">Enter official registered property information.</p>
       </div>
@@ -35,24 +38,25 @@
         <!-- Property Name -->
         <div class="sm:col-span-2">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">Property / Hotel Name *</label>
-          <input type="text" name="name" required value="{{ hotel.name|default:'' }}" placeholder="e.g. Pine View Heritage Resort & Spa" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+          <input type="text" name="name" required value="{{ hotel.name|default:'' }}" placeholder="e.g. Pine View Heritage Resort & Spa" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-emerald-700 focus:bg-white transition">
         </div>
 
-        <!-- Property Type (Matches your Model CATEGORY_CHOICES: luxury, boutique, budget, homestay) -->
+        <!-- Property Category -->
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1.5">Property Category</label>
-          <select name="property_type" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+          <select name="category" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-emerald-700 focus:bg-white transition">
             <option value="budget" {% if hotel.category == 'budget' %}selected{% endif %}>Budget Stay</option>
             <option value="luxury" {% if hotel.category == 'luxury' %}selected{% endif %}>Luxury Resort</option>
             <option value="boutique" {% if hotel.category == 'boutique' %}selected{% endif %}>Boutique Hotel</option>
             <option value="homestay" {% if hotel.category == 'homestay' %}selected{% endif %}>Cozy Homestay</option>
+            <option value="camp" {% if hotel.category == 'camp' %}selected{% endif %}>Camping & Glamping</option>
           </select>
         </div>
 
         <!-- Star Rating -->
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1.5">Star Rating</label>
-          <select name="star_rating" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+          <select name="star_rating" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-emerald-700 focus:bg-white transition">
             <option value="3" {% if hotel.star_rating == 3 %}selected{% endif %}>★★★☆☆ (3 Star Standard)</option>
             <option value="4" {% if hotel.star_rating == 4 %}selected{% endif %}>★★★★☆ (4 Star Premium)</option>
             <option value="5" {% if hotel.star_rating == 5 %}selected{% endif %}>★★★★★ (5 Star Luxury)</option>
@@ -75,7 +79,7 @@
         <!-- City / District Dropdown -->
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1.5">Destination / District *</label>
-          <select name="city" required class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+          <select name="city" required class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-700 focus:bg-white transition">
             <option value="Hamirpur" {% if hotel.city == 'Hamirpur' %}selected{% endif %}>Hamirpur</option>
             <option value="Una" {% if hotel.city == 'Una' %}selected{% endif %}>Una</option>
             <option value="Kangra" {% if hotel.city == 'Kangra' %}selected{% endif %}>Kangra</option>
@@ -100,49 +104,187 @@
             <span class="absolute left-3.5 top-3 text-slate-400 font-bold text-xs">₹</span>
             <input type="number" 
                    name="base_price" 
-                   value="{{ current_price }}" 
+                   value="{{ current_price|default:'1800.00' }}" 
                    placeholder="e.g. 1800" 
                    step="0.01" 
                    required 
-                   class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl pl-8 pr-4 py-3 text-xs font-black text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+                   class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl pl-8 pr-4 py-3 text-xs font-black text-slate-800 outline-none focus:ring-2 focus:ring-emerald-700 focus:bg-white transition">
           </div>
+        </div>
+
+        <!-- Google Maps URL -->
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Google Maps Pin Link (Optional)</label>
+          <input type="url" name="google_maps_url" value="{{ hotel.google_maps_url|default:'' }}" placeholder="https://maps.app.goo.gl/..." class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-emerald-700 focus:bg-white transition">
         </div>
 
         <!-- Detailed Address -->
         <div class="sm:col-span-2">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">Detailed Address / Landmark *</label>
-          <textarea name="address" rows="2" required placeholder="e.g. Near Mall Road, The Ridge, Shimla, Himachal Pradesh - 171001" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl p-3.5 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">{{ hotel.address|default:'' }}</textarea>
+          <textarea name="address" rows="2" required placeholder="e.g. Near Mall Road, The Ridge, Shimla, Himachal Pradesh - 171001" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl p-3.5 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-emerald-700 focus:bg-white transition">{{ hotel.address|default:'' }}</textarea>
         </div>
       </div>
     </div>
 
-    <!-- Section 3: Cover Image URL -->
+    <!-- Section 3: Amenities Checklist (Connected directly to Hotel Boolean fields) -->
     <div class="bg-white rounded-3xl p-6 sm:p-8 border border-[#e2d9cc]/70 shadow-sm space-y-5">
       <div class="border-b border-slate-100 pb-4">
         <h3 class="text-base font-black text-[#0f2e24] flex items-center gap-2">
-          <i data-lucide="image" class="w-5 h-5 text-indigo-600"></i> Property Cover Photo URL
+          <i data-lucide="check-square" class="w-5 h-5 text-emerald-700"></i> Property Amenities
         </h3>
-        <p class="text-xs text-slate-500 mt-0.5">Paste an image web URL for the cover photo.</p>
+        <p class="text-xs text-slate-500 mt-0.5">Select all facilities available for guests at this stay.</p>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 items-center">
-        <div class="sm:col-span-2 space-y-3">
-          <label class="block text-xs font-bold text-slate-700">Image Web Link (URL)</label>
-          <input type="url" 
-                 id="coverImageUrlInput" 
-                 name="cover_image" 
-                 value="{{ hotel.cover_image|default:'' }}" 
-                 placeholder="https://images.unsplash.com/photo-..." 
-                 class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
-                 oninput="previewUrlImage(this.value)">
-          <p class="text-[11px] text-slate-400">Provide direct image link (JPG, PNG, or Unsplash URL).</p>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <!-- WiFi -->
+        <label class="flex items-center gap-2.5 p-3 rounded-2xl bg-[#faf8f5] border border-slate-200 cursor-pointer hover:border-emerald-700 transition">
+          <input type="checkbox" name="has_wifi" {% if hotel.has_wifi or not hotel %}checked{% endif %} class="w-4 h-4 text-emerald-700 rounded focus:ring-emerald-600">
+          <span class="font-bold text-slate-700 flex items-center gap-1.5">
+            <i data-lucide="wifi" class="w-4 h-4 text-emerald-700"></i> Free WiFi
+          </span>
+        </label>
+
+        <!-- AC -->
+        <label class="flex items-center gap-2.5 p-3 rounded-2xl bg-[#faf8f5] border border-slate-200 cursor-pointer hover:border-emerald-700 transition">
+          <input type="checkbox" name="has_ac" {% if hotel.has_ac or not hotel %}checked{% endif %} class="w-4 h-4 text-emerald-700 rounded focus:ring-emerald-600">
+          <span class="font-bold text-slate-700 flex items-center gap-1.5">
+            <i data-lucide="wind" class="w-4 h-4 text-emerald-700"></i> Air Conditioning
+          </span>
+        </label>
+
+        <!-- Parking -->
+        <label class="flex items-center gap-2.5 p-3 rounded-2xl bg-[#faf8f5] border border-slate-200 cursor-pointer hover:border-emerald-700 transition">
+          <input type="checkbox" name="has_parking" {% if hotel.has_parking or not hotel %}checked{% endif %} class="w-4 h-4 text-emerald-700 rounded focus:ring-emerald-600">
+          <span class="font-bold text-slate-700 flex items-center gap-1.5">
+            <i data-lucide="car" class="w-4 h-4 text-emerald-700"></i> Free Parking
+          </span>
+        </label>
+
+        <!-- Restaurant -->
+        <label class="flex items-center gap-2.5 p-3 rounded-2xl bg-[#faf8f5] border border-slate-200 cursor-pointer hover:border-emerald-700 transition">
+          <input type="checkbox" name="has_restaurant" {% if hotel.has_restaurant or not hotel %}checked{% endif %} class="w-4 h-4 text-emerald-700 rounded focus:ring-emerald-600">
+          <span class="font-bold text-slate-700 flex items-center gap-1.5">
+            <i data-lucide="utensils" class="w-4 h-4 text-emerald-700"></i> Restaurant
+          </span>
+        </label>
+
+        <!-- Breakfast -->
+        <label class="flex items-center gap-2.5 p-3 rounded-2xl bg-[#faf8f5] border border-slate-200 cursor-pointer hover:border-emerald-700 transition">
+          <input type="checkbox" name="has_breakfast" {% if hotel.has_breakfast or not hotel %}checked{% endif %} class="w-4 h-4 text-emerald-700 rounded focus:ring-emerald-600">
+          <span class="font-bold text-slate-700 flex items-center gap-1.5">
+            <i data-lucide="coffee" class="w-4 h-4 text-emerald-700"></i> Breakfast
+          </span>
+        </label>
+
+        <!-- Room Heater -->
+        <label class="flex items-center gap-2.5 p-3 rounded-2xl bg-[#faf8f5] border border-slate-200 cursor-pointer hover:border-emerald-700 transition">
+          <input type="checkbox" name="has_heater" {% if hotel.has_heater %}checked{% endif %} class="w-4 h-4 text-emerald-700 rounded focus:ring-emerald-600">
+          <span class="font-bold text-slate-700 flex items-center gap-1.5">
+            <i data-lucide="flame" class="w-4 h-4 text-emerald-700"></i> Room Heater
+          </span>
+        </label>
+
+        <!-- Swimming Pool -->
+        <label class="flex items-center gap-2.5 p-3 rounded-2xl bg-[#faf8f5] border border-slate-200 cursor-pointer hover:border-emerald-700 transition">
+          <input type="checkbox" name="has_pool" {% if hotel.has_pool %}checked{% endif %} class="w-4 h-4 text-emerald-700 rounded focus:ring-emerald-600">
+          <span class="font-bold text-slate-700 flex items-center gap-1.5">
+            <i data-lucide="waves" class="w-4 h-4 text-emerald-700"></i> Swimming Pool
+          </span>
+        </label>
+
+        <!-- Active Status -->
+        <label class="flex items-center gap-2.5 p-3 rounded-2xl bg-[#faf8f5] border border-slate-200 cursor-pointer hover:border-emerald-700 transition">
+          <input type="checkbox" name="is_active" {% if hotel.is_active or not hotel %}checked{% endif %} class="w-4 h-4 text-emerald-700 rounded focus:ring-emerald-600">
+          <span class="font-bold text-slate-700 flex items-center gap-1.5">
+            <i data-lucide="badge-check" class="w-4 h-4 text-emerald-700"></i> Live on Site
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Section 4: Owner Details & Commission -->
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-[#e2d9cc]/70 shadow-sm space-y-5">
+      <div class="border-b border-slate-100 pb-4">
+        <h3 class="text-base font-black text-[#0f2e24] flex items-center gap-2">
+          <i data-lucide="user-check" class="w-5 h-5 text-emerald-700"></i> Owner & Operations Contact
+        </h3>
+        <p class="text-xs text-slate-500 mt-0.5">Point of contact for room confirmations and commission settlements.</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Owner / Manager Name</label>
+          <input type="text" name="owner_name" value="{{ hotel.owner_name|default:'' }}" placeholder="e.g. Ramesh Thakur" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-emerald-700 focus:bg-white transition">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Contact Phone Number</label>
+          <input type="tel" name="owner_phone" value="{{ hotel.owner_phone|default:'' }}" placeholder="e.g. +91 98160 00000" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-emerald-700 focus:bg-white transition">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Owner Email Address</label>
+          <input type="email" name="owner_email" value="{{ hotel.owner_email|default:'' }}" placeholder="e.g. contact@pineviewshimla.com" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-emerald-700 focus:bg-white transition">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Platform Commission (%)</label>
+          <input type="number" step="0.01" name="commission_percentage" value="{{ hotel.commission_percentage|default:'15.00' }}" placeholder="15.00" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-700 focus:bg-white transition">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 5: Media & Photos Upload -->
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-[#e2d9cc]/70 shadow-sm space-y-6">
+      <div class="border-b border-slate-100 pb-4">
+        <h3 class="text-base font-black text-[#0f2e24] flex items-center gap-2">
+          <i data-lucide="images" class="w-5 h-5 text-emerald-700"></i> Property Media & Photos
+        </h3>
+        <p class="text-xs text-slate-500 mt-0.5">Upload cover photo and multiple gallery images directly from your device.</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 items-start">
+        <!-- Direct File Cover Photo -->
+        <div class="sm:col-span-2 space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Primary Cover Photo (Device Upload)</label>
+            <input type="file" 
+                   name="cover_image" 
+                   id="coverImageFileInput"
+                   accept="image/*" 
+                   class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#0f2e24] file:text-white hover:file:bg-[#1a4a3a] file:cursor-pointer border border-[#e2d9cc] rounded-2xl p-2 bg-[#faf8f5]/50"
+                   onchange="previewLocalImage(this)">
+            <span class="block text-[11px] text-slate-400 mt-1">Direct upload from phone or computer.</span>
+          </div>
+
+          <!-- WhatsApp-Style Bulk Gallery Upload -->
+          <div class="pt-2">
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Bulk Gallery Photos (Multi-select)</label>
+            <input type="file" 
+                   name="gallery_photos" 
+                   id="bulkGalleryInput"
+                   multiple 
+                   accept="image/*" 
+                   class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-700 file:text-white hover:file:bg-emerald-800 file:cursor-pointer border border-[#e2d9cc] rounded-2xl p-2 bg-[#faf8f5]/50"
+                   onchange="handleGalleryCount(this)">
+            <span id="galleryCountBadge" class="block text-[11px] font-bold text-emerald-700 mt-1.5">Select multiple images at once (Ctrl + Click or multi-select).</span>
+          </div>
+
+          <!-- Optional URL Fallback -->
+          <div class="pt-2 border-t border-slate-100">
+            <label class="block text-[11px] font-bold text-slate-500 mb-1">Or Paste Web URL (Optional)</label>
+            <input type="url" 
+                   name="cover_image_url" 
+                   id="coverImageUrlInput"
+                   placeholder="https://images.unsplash.com/..." 
+                   class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-700 outline-none focus:ring-1 focus:ring-emerald-700 transition"
+                   oninput="previewUrlImage(this.value)">
+          </div>
         </div>
 
+        <!-- Live Cover Preview Box -->
         <div>
-          <span class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Live Preview</span>
-          <div class="w-full h-32 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center relative shadow-inner">
+          <span class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Cover Preview</span>
+          <div class="w-full h-40 rounded-2xl border-2 border-dashed border-[#e2d9cc] bg-slate-50 overflow-hidden flex items-center justify-center relative shadow-inner">
             <img id="imagePreview" 
-                 src="{% if hotel.cover_image %}{{ hotel.cover_image }}{% else %}https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80{% endif %}" 
+                 src="{% if hotel.cover_image %}{% if hotel.cover_image.url %}{{ hotel.cover_image.url }}{% else %}{{ hotel.cover_image }}{% endif %}{% else %}https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80{% endif %}" 
                  alt="Preview" 
                  class="w-full h-full object-cover">
           </div>
@@ -165,11 +307,38 @@
 </div>
 
 <script>
-  function previewUrlImage(url) {
-    const preview = document.getElementById('imagePreview');
-    if (url && url.trim() !== '') {
-      preview.src = url;
+  // Preview for local device file upload
+  function previewLocalImage(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('imagePreview').src = e.target.result;
+      };
+      reader.readAsDataURL(input.files[0]);
     }
+  }
+
+  // Preview for URL paste
+  function previewUrlImage(url) {
+    if (url && url.trim() !== '') {
+      document.getElementById('imagePreview').src = url;
+    }
+  }
+
+  // Multi-file selection counter badge
+  function handleGalleryCount(input) {
+    const badge = document.getElementById('galleryCountBadge');
+    if (input.files && input.files.length > 0) {
+      badge.textContent = `✓ ${input.files.length} gallery image(s) selected for bulk upload!`;
+      badge.className = 'block text-[11px] font-bold text-emerald-800 mt-1.5';
+    } else {
+      badge.textContent = 'Select multiple images at once (Ctrl + Click or multi-select).';
+      badge.className = 'block text-[11px] font-bold text-slate-400 mt-1.5';
+    }
+  }
+
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
   }
 </script>
 {% endblock %}

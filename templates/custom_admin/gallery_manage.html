@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Gallery Manager - {{ hotel.name }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f172a; color: #f8fafc; }</style>
+</head>
+<body class="p-6">
+  <div class="max-w-5xl mx-auto">
+    
+    <!-- Top Header -->
+    <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-6">
+      <div>
+        <a href="{% url 'portal_hotels' %}" class="text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1 mb-1">
+          ← Back to Hotels List
+        </a>
+        <h1 class="text-2xl font-black text-white">Manage Photos: {{ hotel.name }}</h1>
+        <p class="text-xs text-slate-400">Directly upload multiple photos from your device gallery without any external links.</p>
+      </div>
+      <span class="text-xs bg-blue-600/20 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-xl font-bold">
+        Total Photos: {{ media_items.count }}
+      </span>
+    </div>
+
+    <!-- Flash Messages -->
+    {% if messages %}
+    <div class="mb-6 space-y-2">
+      {% for m in messages %}
+      <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+        {{ m }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Multi-File Upload Form (WhatsApp Style) -->
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 mb-8 shadow-xl">
+      <h3 class="text-sm font-black text-slate-200 uppercase tracking-wider mb-3 flex items-center gap-2">
+        <i data-lucide="upload-cloud" class="w-4 h-4 text-blue-400"></i> Upload New Photos
+      </h3>
+      
+      <form action="" method="POST" enctype="multipart/form-data" class="space-y-4">
+        {% csrf_token %}
+        <div class="border-2 border-dashed border-slate-700 hover:border-blue-500 rounded-2xl p-8 text-center transition cursor-pointer bg-slate-800/40" onclick="document.getElementById('galleryInput').click()">
+          <i data-lucide="images" class="w-10 h-10 text-blue-400 mx-auto mb-2"></i>
+          <span class="block text-sm font-bold text-slate-200">Click to Select Photos or Drag & Drop</span>
+          <span class="block text-xs text-slate-500 mt-1">Select one or multiple photos at once (JPG, PNG, WEBP)</span>
+          <!-- multiple attribute se multiple files select ho sakti hain -->
+          <input type="file" name="gallery_photos" id="galleryInput" multiple accept="image/*" class="hidden" onchange="previewFiles(this)">
+        </div>
+
+        <!-- Selected files count indicator -->
+        <div id="fileSelectionNote" class="text-xs font-bold text-blue-400 hidden"></div>
+
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-black text-xs uppercase tracking-wider px-6 py-3 rounded-xl transition shadow flex items-center gap-2">
+          <i data-lucide="upload" class="w-4 h-4"></i>
+          <span>Upload Selected Photos</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Current Photos Grid with Delete Option -->
+    <h3 class="text-sm font-black text-slate-200 uppercase tracking-wider mb-4">Current Gallery Photos</h3>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+      {% for item in media_items %}
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden group relative shadow-md">
+        {% if item.image_file %}
+        <img src="{{ item.image_file.url }}" alt="Gallery Image" class="w-full h-40 object-cover group-hover:scale-105 transition duration-300">
+        {% endif %}
+        <div class="p-2.5 flex items-center justify-between bg-slate-900/90 border-t border-slate-800">
+          <span class="text-[10px] text-slate-400">#{{ forloop.counter }}</span>
+          <a href="{% url 'portal_gallery_image_delete' item.id %}" onclick="return confirm('Delete this image?')" class="text-red-400 hover:text-red-300 text-xs flex items-center gap-1 font-bold">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete
+          </a>
+        </div>
+      </div>
+      {% empty %}
+      <div class="col-span-full py-12 text-center text-slate-500 text-xs">
+        No photos have been uploaded for this property yet. Use the form above to add new photos to the gallery.
+      </div>
+      {% endfor %}
+
+    </div>
+
+  </div>
+
+  <script>
+    lucide.createIcons();
+    function previewFiles(input) {
+      const note = document.getElementById('fileSelectionNote');
+      if (input.files.length > 0) {
+        note.innerText = `✓ ${input.files.length} photo(s) selected. Click 'Upload Selected Photos' to save them.`;
+        note.classList.remove('hidden');
+      } else {
+        note.classList.add('hidden');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,146 +1,163 @@
 {% extends 'custom_admin/base.html' %}
 
-{% block title %}Manage Stays | MakesMyYatra Portal{% endblock %}
-{% block page_title %}Hotel Properties Directory{% endblock %}
+{% block title %}Stays & Hotel Directory | MakesMyYatra Portal{% endblock %}
+{% block page_title %}Stays & Properties Management{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
 
-  <!-- Header Section with Stats & Action -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-3xl border border-[#e2d9cc]/70 shadow-sm">
+  <!-- Header Section with Action Buttons -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
     <div>
-      <h2 class="text-xl font-black text-[#0f2e24] tracking-tight">Active Properties Directory</h2>
-      <p class="text-xs text-slate-500 mt-1">Manage listings, tariffs, availability, and regional stay details.</p>
+      <span class="text-xs font-bold text-blue-600 uppercase tracking-widest block">Fleet Operations</span>
+      <h1 class="text-2xl font-black text-slate-900 tracking-tight">Onboarded Stays Directory</h1>
+      <p class="text-xs text-slate-500 font-medium mt-0.5">Manage property profiles, amenities, room configurations, and photo galleries.</p>
     </div>
+
     <div class="flex items-center gap-3">
-      <div class="bg-[#faf8f5] px-4 py-2.5 rounded-2xl border border-[#e2d9cc] text-xs font-bold text-[#0f2e24]">
-        Total: <span class="text-emerald-700 font-black">{{ hotels|length }}</span> Listed
-      </div>
-      <a href="{% url 'portal_hotel_add' %}" class="bg-[#0f2e24] hover:bg-[#1a4a3a] text-white text-xs font-black uppercase tracking-wider px-5 py-3 rounded-2xl shadow-lg transition flex items-center gap-2">
-        <i data-lucide="plus-circle" class="w-4 h-4"></i> Add New Stay
+      <a href="{% url 'portal_hotel_add' %}" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase tracking-wider px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow-sm">
+        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+        <span>Add New Stay</span>
       </a>
     </div>
   </div>
 
   <!-- Flash Messages -->
   {% if messages %}
-    <div class="space-y-2">
-      {% for message in messages %}
-        <div class="p-4 rounded-2xl text-xs font-bold {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% else %}bg-rose-50 text-rose-800 border border-rose-200{% endif %} flex items-center justify-between shadow-sm">
-          <span>{{ message }}</span>
-          <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">✕</button>
-        </div>
-      {% endfor %}
+  <div class="space-y-2">
+    {% for message in messages %}
+    <div class="p-3.5 rounded-2xl text-xs font-bold flex items-center justify-between border {% if message.tags == 'error' %}bg-rose-50 text-rose-800 border-rose-200{% else %}bg-blue-50 text-blue-800 border-blue-200{% endif %}">
+      <div class="flex items-center gap-2.5">
+        <i data-lucide="info" class="w-4 h-4"></i>
+        <span>{{ message }}</span>
+      </div>
+      <button type="button" onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">✕</button>
     </div>
+    {% endfor %}
+  </div>
   {% endif %}
 
-  <!-- Table Card -->
-  <div class="bg-white rounded-3xl border border-[#e2d9cc]/70 shadow-sm overflow-hidden">
+  <!-- Stays Table Card -->
+  <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse">
-        <thead>
-          <tr class="bg-[#faf8f5] border-b border-[#e2d9cc]/80 text-[11px] font-black uppercase tracking-wider text-slate-500">
-            <th class="py-4 px-6">Property / Stay</th>
-            <th class="py-4 px-6">Category</th>
-            <th class="py-4 px-6">Destination</th>
-            <th class="py-4 px-6 text-center">Rating</th>
-            <th class="py-4 px-6 text-center">Base Tariff</th>
-            <th class="py-4 px-6 text-center">Status</th>
-            <th class="py-4 px-6 text-right">Actions</th>
+      <table class="w-full text-left text-xs text-slate-600">
+        <thead class="bg-slate-50 border-b border-slate-200 text-[11px] font-black uppercase tracking-wider text-slate-700">
+          <tr>
+            <th class="p-4">Property & City</th>
+            <th class="p-4">Category</th>
+            <th class="p-4">Room Types</th>
+            <th class="p-4">Amenities</th>
+            <th class="p-4">Commission</th>
+            <th class="p-4">Status</th>
+            <th class="p-4 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-[#e2d9cc]/50 text-xs">
+        <tbody class="divide-y divide-slate-100">
           {% for hotel in hotels %}
-          <tr class="hover:bg-[#faf8f5]/60 transition-colors">
-            
-            <!-- Property Name & Photo -->
-            <td class="py-4 px-6">
+          <tr class="hover:bg-slate-50/80 transition">
+            <!-- Property Name & Location -->
+            <td class="p-4">
               <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200">
-                  {% if hotel.cover_image %}
-                    <img src="{{ hotel.cover_image.url }}" alt="{{ hotel.name }}" class="w-full h-full object-cover">
-                  {% else %}
-                    <div class="w-full h-full flex items-center justify-center text-slate-400">
-                      <i data-lucide="hotel" class="w-5 h-5"></i>
-                    </div>
-                  {% endif %}
+                <div class="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-700 flex-shrink-0 font-black text-sm">
+                  {{ hotel.name|slice:":1" }}
                 </div>
                 <div>
-                  <h4 class="font-bold text-[#0f2e24] text-sm leading-tight">{{ hotel.name }}</h4>
-                  <p class="text-[11px] text-slate-400 mt-0.5 line-clamp-1">{{ hotel.address|default:"Himachal Pradesh" }}</p>
+                  <span class="font-bold text-slate-900 block text-xs">{{ hotel.name }}</span>
+                  <div class="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
+                    <i data-lucide="map-pin" class="w-3 h-3 text-slate-400"></i>
+                    <span>{{ hotel.city }}</span>
+                    <span>&bull;</span>
+                    <span class="text-amber-500 font-bold">{{ hotel.star_rating }}★</span>
+                  </div>
                 </div>
               </div>
             </td>
 
             <!-- Category -->
-            <td class="py-4 px-6">
-              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#f4efe6] text-[#0f2e24] border border-[#e2d9cc]">
-                {{ hotel.get_category_display|default:hotel.category|default:"Hotel" }}
+            <td class="p-4">
+              <span class="inline-block px-2.5 py-1 rounded-xl bg-slate-100 font-bold text-slate-700 text-[11px]">
+                {{ hotel.get_category_display }}
               </span>
             </td>
 
-            <!-- Destination -->
-            <td class="py-4 px-6 font-semibold text-slate-700">
-              <div class="flex items-center gap-1.5">
-                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-600"></i>
-                {{ hotel.city|default:"Himachal" }}
+            <!-- Room Tiers -->
+            <td class="p-4">
+              <div class="flex items-center gap-1.5 font-bold text-slate-700">
+                <i data-lucide="bed-double" class="w-3.5 h-3.5 text-blue-600"></i>
+                <span>{{ hotel.room_types.count }} Types</span>
               </div>
             </td>
 
-            <!-- Rating -->
-            <td class="py-4 px-6 text-center">
-              <span class="inline-flex items-center gap-1 text-amber-500 font-black">
-                ★ {{ hotel.star_rating }}.0
+            <!-- Amenities Badges -->
+            <td class="p-4">
+              <div class="flex items-center gap-2 text-slate-400">
+                {% if hotel.has_wifi %}
+                <span title="Free WiFi" class="text-blue-600"><i data-lucide="wifi" class="w-3.5 h-3.5"></i></span>
+                {% endif %}
+                {% if hotel.has_ac %}
+                <span title="Air Conditioning" class="text-blue-600"><i data-lucide="wind" class="w-3.5 h-3.5"></i></span>
+                {% endif %}
+                {% if hotel.has_parking %}
+                <span title="Free Parking" class="text-blue-600"><i data-lucide="car" class="w-3.5 h-3.5"></i></span>
+                {% endif %}
+                {% if hotel.has_restaurant %}
+                <span title="In-House Restaurant" class="text-blue-600"><i data-lucide="utensils" class="w-3.5 h-3.5"></i></span>
+                {% endif %}
+                {% if hotel.has_pool %}
+                <span title="Swimming Pool" class="text-blue-600"><i data-lucide="waves" class="w-3.5 h-3.5"></i></span>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- Commission -->
+            <td class="p-4 font-bold text-slate-800">
+              {{ hotel.commission_percentage }}%
+            </td>
+
+            <!-- Status -->
+            <td class="p-4">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black {% if hotel.is_active %}bg-blue-50 text-blue-700 border border-blue-200{% else %}bg-slate-100 text-slate-500 border border-slate-200{% endif %}">
+                {% if hotel.is_active %}ACTIVE{% else %}PAUSED{% endif %}
               </span>
             </td>
 
-            <!-- Base Tariff -->
-            <td class="py-4 px-6 text-center font-bold text-slate-800">
-              ₹{{ hotel.room_types.all.0.base_price }}
-            </td>
-
-            <!-- Status Badge -->
-            <td class="py-4 px-6 text-center">
-              {% if hotel.is_active %}
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  ● ACTIVE
-                </span>
-              {% else %}
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-200">
-                  ● INACTIVE
-                </span>
-              {% endif %}
-            </td>
-
             <!-- Actions -->
-            <td class="py-4 px-6 text-right">
-              <div class="flex items-center justify-end gap-2">
-                <a href="{% url 'portal_hotel_edit' hotel.id %}" 
-                   class="p-2 rounded-xl text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100 transition" 
-                   title="Edit Stay">
+            <td class="p-4 text-right">
+              <div class="inline-flex items-center gap-1">
+                <!-- Manage Rooms -->
+                <a href="{% url 'portal_room_manage' hotel.id %}" class="p-2 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition" title="Manage Rooms & Inventory">
+                  <i data-lucide="bed-double" class="w-4 h-4"></i>
+                </a>
+
+                <!-- Edit Stay Details -->
+                <a href="{% url 'portal_hotel_edit' hotel.id %}" class="p-2 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition" title="Edit Stay Profile">
                   <i data-lucide="edit-3" class="w-4 h-4"></i>
                 </a>
-                <a href="{% url 'portal_hotel_delete' hotel.id %}" 
-                   onclick="return confirm('Are you sure you want to remove \'{{ hotel.name }}\'?');" 
-                   class="p-2 rounded-xl text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100 transition" 
-                   title="Delete Stay">
+
+                <!-- Gallery Management -->
+                <a href="{% url 'portal_hotel_gallery_manage' hotel.id %}" class="p-2 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition" title="Manage Photo Gallery">
+                  <i data-lucide="images" class="w-4 h-4"></i>
+                </a>
+
+                <!-- Delete Stay -->
+                <a href="{% url 'portal_hotel_delete' hotel.id %}" onclick="return confirm('Delete this property and all linked rooms?')" class="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition" title="Delete Hotel">
                   <i data-lucide="trash-2" class="w-4 h-4"></i>
                 </a>
               </div>
             </td>
-
           </tr>
           {% empty %}
           <tr>
-            <td colspan="7" class="py-12 text-center">
-              <div class="max-w-xs mx-auto space-y-3">
-                <div class="w-12 h-12 rounded-2xl bg-[#faf8f5] text-slate-400 mx-auto flex items-center justify-center">
-                  <i data-lucide="inbox" class="w-6 h-6"></i>
-                </div>
-                <h5 class="text-sm font-bold text-[#0f2e24]">No properties listed yet</h5>
-                <p class="text-xs text-slate-500">Get started by onboarding your first hotel or cottage in the portal.</p>
-                <a href="{% url 'portal_hotel_add' %}" class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:underline pt-2">
-                  <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add First Stay
+            <td colspan="7" class="p-12 text-center text-slate-400 font-medium">
+              <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3 border border-slate-200">
+                <i data-lucide="hotel" class="w-6 h-6"></i>
+              </div>
+              <p class="font-bold text-slate-700 text-sm">No properties onboarded yet</p>
+              <p class="text-xs text-slate-400 mt-1">Get started by onboarding your first hotel or homestay.</p>
+              <div class="mt-4">
+                <a href="{% url 'portal_hotel_add' %}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                  <span>Add First Stay</span>
                 </a>
               </div>
             </td>
@@ -152,4 +169,10 @@
   </div>
 
 </div>
+
+<script>
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  }
+</script>
 {% endblock %}
