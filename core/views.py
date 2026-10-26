@@ -3,6 +3,10 @@ from xhtml2pdf import pisa
 import uuid
 import openpyxl
 import urllib.parse
+from django.db.models import Sum
+from django.contrib.admin.models import LogEntry 
+from django.contrib.auth.models import Group, User
+from core.models import Booking, Coupon, EmergencySupport, Hotel, MealPlan, RoomType
 from decimal import Decimal
 from datetime import datetime, date
 from openpyxl.styles import Font, PatternFill, Alignment
@@ -290,52 +294,73 @@ def portal_logout(request):
 
 
 # Admin operations dashboard
-@user_passes_test(is_admin, login_url='portal_login')
+@user_passes_test(is_admin, login_url="portal_login")
 def portal_dashboard(request):
-    today = timezone.localdate()
-    total_hotels = Hotel.objects.count()
-    total_bookings = Booking.objects.count()
-    active_supports = EmergencySupport.objects.filter(status='open').count()
-    revenue = Booking.objects.filter(payment_status='CONFIRMED').aggregate(
-        Sum('total_amount')
-    )['total_amount__sum'] or 0
+  # Metric Counts
+  total_revenue = (
+      Booking.objects.filter(status__in=["CONFIRMED", "CHECKED_OUT"]).aggregate(
+          Sum("total_amount")
+      )["total_amount__sum"]
+      or Decimal("0.00")
+  )
+  total_bookings = Booking.objects.count()
+  total_hotels = Hotel.objects.count()
+  total_coupons = Coupon.objects.filter(is_active=True).count()
+  active_supports = EmergencySupport.objects.filter(status='open').count()
 
-    today_checkins = Booking.objects.filter(check_in=today, status__in=['CONFIRMED', 'CHECKED_IN']).count()
-    today_checkouts = Booking.objects.filter(check_out=today, status='CHECKED_IN').count()
-    new_bookings_today = Booking.objects.filter(created_at__date=today).count()
-    cancellations_count = Booking.objects.filter(status__iexact='cancelled').count()
+  # Today's Traffic
+  today = timezone.localdate()
+  today_checkins = Booking.objects.filter(check_in=today).count()
+  today_checkouts = Booking.objects.filter(check_out=today).count()
+  new_bookings_today = Booking.objects.filter(created_at__date=today).count()
 
-    pipeline = {
-        'pending': Booking.objects.filter(status__iexact='pending').count(),
-        'confirmed': Booking.objects.filter(status__iexact='confirmed').count(),
-        'checked_in': Booking.objects.filter(status__iexact='checked_in').count(),
-        'checked_out': Booking.objects.filter(status__iexact='checked_out').count(),
-    }
+  # Pipeline
+  pipeline = {
+      "pending": Booking.objects.filter(status="PENDING").count(),
+      "confirmed": Booking.objects.filter(status="CONFIRMED").count(),
+      "checked_in": Booking.objects.filter(status="CHECKED_IN").count(),
+      "checked_out": Booking.objects.filter(status="CHECKED_OUT").count(),
+  }
 
-    hotels = Hotel.objects.all().order_by('-created_at')[:5]
-    supports = EmergencySupport.objects.all().order_by('-created_at')[:5]
-    recent_bookings = Booking.objects.select_related('user', 'hotel').order_by('-created_at')[:8]
-    total_coupons = Coupon.objects.filter(is_active=True).count()
+  # Recent Bookings Table
+  recent_bookings = Booking.objects.select_related(
+      "hotel", "room_type"
+  ).order_by("-id")[:6]
 
-    context = {
-        'total_hotels': total_hotels,
-        'total_bookings': total_bookings,
-        'active_supports': active_supports,
-        'total_supports': active_supports,
-        'revenue': revenue,
-        'today_checkins': today_checkins,
-        'today_checkouts': today_checkouts,
-        'new_bookings_today': new_bookings_today,
-        'cancellations_count': cancellations_count,
-        'pipeline': pipeline,
-        'hotels': hotels,
-        'supports': supports,
-        'bookings': recent_bookings,
-        'today_date': today,
-        'total_coupons': total_coupons,
-    }
-    return render(request, 'custom_admin/dashboard.html', context)
+  # 1. Quick Master Tables Inventory Summary (Jaise Django Admin me hota hai)
+  catalog_summary = {
+      "users": User.objects.count(),
+      "groups": Group.objects.count(),
+      "hotels": total_hotels,
+      "room_types": RoomType.objects.count(),
+      "meal_plans": MealPlan.objects.count(),
+      "bookings": total_bookings,
+      "coupons": Coupon.objects.count(),
+      "supports": EmergencySupport.objects.count(),
+  }
 
+  # 2. Django Built-in Audit Logs (Recent Actions History)
+  recent_actions = LogEntry.objects.select_related(
+      "content_type", "user"
+  ).order_by("-action_time")[:8]
+
+  context = {
+      "revenue": total_revenue,
+      "total_bookings": total_bookings,
+      "total_hotels": total_hotels,
+      "total_coupons": total_coupons,
+      "active_supports": active_supports,
+      "today_date": today,
+      "today_checkins": today_checkins,
+      "today_checkouts": today_checkouts,
+      "new_bookings_today": new_bookings_today,
+      "pipeline": pipeline,
+      "cancellations_count": Booking.objects.filter(status="CANCELLED").count(),
+      "bookings": recent_bookings,
+      "catalog": catalog_summary,
+      "recent_actions": recent_actions,
+  }
+  return render(request, "custom_admin/dashboard.html", context)
 
 # Bulk delete & clear actions
 def portal_booking_actions(request):

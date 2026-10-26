@@ -49,7 +49,7 @@
       <div>
         <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Active Fleet</span>
         <span class="text-2xl font-black text-slate-900 mt-1 block">{{ total_hotels }}</span>
-        <span class="text-[11px] text-slate-500 font-semibold mt-1 inline-block">Across HP </span>
+        <span class="text-[11px] text-slate-500 font-semibold mt-1 inline-block">Across HP</span>
       </div>
       <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
         <i data-lucide="hotel" class="w-6 h-6"></i>
@@ -135,6 +135,154 @@
           <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
           <span>Export Excel Report</span>
         </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Master Registry & Audit Log (Django Administration Section) -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Models Registry Grid -->
+    <div class="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <i data-lucide="layers" class="w-4 h-4 text-blue-600"></i> Core Business Registry & Models
+          </h3>
+          <p class="text-[11px] text-slate-400 mt-0.5">Quick access management shortcuts</p>
+        </div>
+        <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full uppercase">Registry</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <!-- Bookings -->
+        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
+              <i data-lucide="ticket" class="w-3.5 h-3.5"></i>
+            </div>
+            <div>
+              <span class="block text-xs font-bold text-slate-800">Bookings</span>
+              <span class="text-[10px] text-slate-400">{{ catalog.bookings|default:total_bookings }} items</span>
+            </div>
+          </div>
+          <a href="{% url 'portal_bookings' %}" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-blue-600 hover:border-blue-500 shadow-sm">View</a>
+        </div>
+
+        <!-- Coupons -->
+        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs">
+              <i data-lucide="tag" class="w-3.5 h-3.5"></i>
+            </div>
+            <div>
+              <span class="block text-xs font-bold text-slate-800">Coupons</span>
+              <span class="text-[10px] text-slate-400">{{ catalog.coupons|default:total_coupons }} items</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <a href="{% url 'portal_coupons' %}" class="px-2 py-1 rounded-lg bg-amber-500 text-white text-[10px] font-bold">+ Add</a>
+            <a href="{% url 'portal_coupons' %}" class="px-2 py-1 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-slate-600">View</a>
+          </div>
+        </div>
+
+        <!-- Hotels -->
+        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">
+              <i data-lucide="building-2" class="w-3.5 h-3.5"></i>
+            </div>
+            <div>
+              <span class="block text-xs font-bold text-slate-800">Hotels</span>
+              <span class="text-[10px] text-slate-400">{{ catalog.hotels|default:total_hotels }} properties</span>
+            </div>
+          </div>
+          <a href="/admin/core/hotel/" target="_blank" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-indigo-600">Manage</a>
+        </div>
+
+        <!-- Room Types -->
+        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs">
+              <i data-lucide="bed-double" class="w-3.5 h-3.5"></i>
+            </div>
+            <div>
+              <span class="block text-xs font-bold text-slate-800">Room Types</span>
+              <span class="text-[10px] text-slate-400">{{ catalog.room_types|default:0 }} categories</span>
+            </div>
+          </div>
+          <a href="/admin/core/roomtype/" target="_blank" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-purple-600">Manage</a>
+        </div>
+
+        <!-- Meal Plans -->
+        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
+              <i data-lucide="utensils" class="w-3.5 h-3.5"></i>
+            </div>
+            <div>
+              <span class="block text-xs font-bold text-slate-800">Meal Plans</span>
+              <span class="text-[10px] text-slate-400">{{ catalog.meal_plans|default:0 }} options</span>
+            </div>
+          </div>
+          <a href="/admin/core/mealplan/" target="_blank" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-emerald-600">Manage</a>
+        </div>
+
+        <!-- Support Tickets (fixed URL name) -->
+        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-xs">
+              <i data-lucide="life-buoy" class="w-3.5 h-3.5"></i>
+            </div>
+            <div>
+              <span class="block text-xs font-bold text-slate-800">SOS Support</span>
+              <span class="text-[10px] text-slate-400">{{ catalog.supports|default:active_supports }} open</span>
+            </div>
+          </div>
+          <a href="{% url 'portal_urgent_help' %}" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-rose-600">Review</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Actions Feed -->
+    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+      <div>
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <i data-lucide="history" class="w-4 h-4 text-emerald-600"></i> Recent Actions
+          </h3>
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        </div>
+
+        <div class="mt-4 space-y-3">
+          {% for action in recent_actions %}
+          <div class="flex items-start gap-2.5 text-xs">
+            <span class="w-5 h-5 rounded-lg flex items-center justify-center flex-shrink-0 text-[10px] font-bold mt-0.5
+              {% if action.is_addition %}bg-emerald-50 text-emerald-700 border border-emerald-200
+              {% elif action.is_change %}bg-blue-50 text-blue-700 border border-blue-200
+              {% else %}bg-rose-50 text-rose-700 border border-rose-200{% endif %}">
+              {% if action.is_addition %}+{% elif action.is_change %}✎{% else %}✕{% endif %}
+            </span>
+            <div class="flex-1 min-w-0">
+              <span class="font-bold text-slate-900 block truncate leading-tight">
+                {{ action.object_repr }}
+              </span>
+              <div class="flex items-center gap-1.5 text-[10px] text-slate-400 mt-0.5">
+                <span class="font-semibold text-slate-600">{{ action.content_type.name|title }}</span>
+                <span>•</span>
+                <span>{{ action.action_time|timesince }} ago</span>
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="py-8 text-center text-slate-400 text-xs">
+            No actions logged yet.
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 text-center">
+        <span class="text-[10px] font-bold text-slate-400">Activity Log Synced with Admin</span>
       </div>
     </div>
   </div>
