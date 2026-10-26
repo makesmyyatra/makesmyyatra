@@ -194,7 +194,7 @@
                   {% endif %}
 
                   <!-- Row Single Delete (Trash Icon) -->
-                  <a href="{% url 'portal_booking_delete' b.id %}" onclick="return confirm('Kya aap is booking ko delete karna chahte hain?');" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete Booking">
+                  <a href="{% url 'portal_booking_delete' b.id %}" onclick="return confirm('Are you sure you want to delete this booking?');" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete Booking">
                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                   </a>
                 </div>
@@ -260,10 +260,10 @@
   function triggerDeleteSelected() {
     const totalSelected = document.querySelectorAll('.bookingItemCheckbox:checked').length;
     if (totalSelected === 0) {
-      alert('Kripya pehle delete karne ke liye bookings select karein.');
+      alert('Please select bookings to delete.');
       return;
     }
-    if (confirm(`Kya aap in ${totalSelected} bookings ko delete karna chahte hain?`)) {
+    if (confirm(`Are you sure you want to delete these ${totalSelected} bookings?`)) {
       document.getElementById('bulkActionInput').value = 'delete_selected';
       document.getElementById('bookingsBulkForm').submit();
     }
@@ -271,7 +271,7 @@
 
   function triggerDeleteAll() {
     document.getElementById('topDropdownMenu').classList.add('hidden');
-    if (confirm('CAUTION: Kya aap SAARI bookings ek sath delete karna chahte hain?')) {
+    if (confirm('CAUTION: Deleting all bookings will remove every booking record from the system. Are you sure you want to proceed?')) {
       document.getElementById('bulkActionInput').value = 'delete_all';
       document.getElementById('bookingsBulkForm').submit();
     }

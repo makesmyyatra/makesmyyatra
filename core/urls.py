@@ -47,4 +47,10 @@ urlpatterns = [
     path('custom-admin/rooms/<int:room_id>/toggle/', views.portal_room_toggle_status, name='portal_room_toggle_status'),
     path('custom-admin/bookings/<str:booking_id>/send-whatsapp/', views.portal_booking_send_whatsapp, name='portal_booking_send_whatsapp'),
     path('api/apply-coupon/', views.apply_coupon_ajax, name='apply_coupon_ajax'),
+    path('portal/coupons/', views.portal_coupons, name='portal_coupons'),
+    path(
+        'portal/coupons/<int:coupon_id>/delete/',
+        views.portal_coupon_delete,
+        name='portal_coupon_delete',
+    ),
 ]

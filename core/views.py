@@ -315,6 +315,7 @@ def portal_dashboard(request):
     hotels = Hotel.objects.all().order_by('-created_at')[:5]
     supports = EmergencySupport.objects.all().order_by('-created_at')[:5]
     recent_bookings = Booking.objects.select_related('user', 'hotel').order_by('-created_at')[:8]
+    total_coupons = Coupon.objects.filter(is_active=True).count()
 
     context = {
         'total_hotels': total_hotels,
@@ -331,6 +332,7 @@ def portal_dashboard(request):
         'supports': supports,
         'bookings': recent_bookings,
         'today_date': today,
+        'total_coupons': total_coupons,
     }
     return render(request, 'custom_admin/dashboard.html', context)
 
@@ -1052,6 +1054,7 @@ def apply_coupon_ajax(request):
 
     coupon = Coupon.objects.filter(code__iexact=coupon_code, is_active=True).first()
     today = timezone.localdate()
+    
 
     if not coupon or (coupon.valid_till and coupon.valid_till < today):
         return JsonResponse({'success': False, 'message': 'Invalid or expired coupon.'}, status=400)
@@ -1078,3 +1081,38 @@ def apply_coupon_ajax(request):
         'total_gst': str(bill['total_gst']),
         'grand_total': str(bill['grand_total']),
     })
+
+# Custom Portal - Coupon Management
+@user_passes_test(is_admin, login_url='portal_login')
+def portal_coupons(request):
+  if request.method == 'POST':
+    code = request.POST.get('code', '').strip().upper()
+    discount_type = request.POST.get('discount_type', 'percentage')
+    discount_value = request.POST.get('discount_value', 0)
+    valid_till = request.POST.get('valid_till') or None
+    is_active = 'is_active' in request.POST
+
+    if code and discount_value:
+      Coupon.objects.create(
+          code=code,
+          discount_type=discount_type,
+          discount_value=Decimal(str(discount_value)),
+          valid_till=valid_till,
+          is_active=is_active,
+      )
+      messages.success(request, f"Coupon '{code}' created successfully!")
+    else:
+      messages.error(request, 'Please fill all required fields.')
+    return redirect('portal_coupons')
+
+  coupons = Coupon.objects.all().order_by('-id')
+  return render(request, 'custom_admin/coupons.html', {'coupons': coupons})
+
+
+@user_passes_test(is_admin, login_url='portal_login')
+def portal_coupon_delete(request, coupon_id):
+  coupon = get_object_or_404(Coupon, id=coupon_id)
+  code = coupon.code
+  coupon.delete()
+  messages.success(request, f"Coupon '{code}' deleted.")
+  return redirect('portal_coupons')

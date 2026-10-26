@@ -1,0 +1,107 @@
+{% extends 'custom_admin/base.html' %} <!-- ya jo bhi aapka admin base layout ho -->
+
+{% block content %}
+<div class="max-w-6xl mx-auto p-6">
+  
+  <!-- Flash Messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="p-3 mb-4 rounded-xl text-xs font-bold {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% else %}bg-rose-50 text-rose-800 border border-rose-200{% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h2 class="text-2xl font-black text-slate-900">Coupon & Discount Engine</h2>
+      <p class="text-xs text-slate-500">Manage promo codes, flat discounts and percentage offers</p>
+    </div>
+    <a href="{% url 'portal_dashboard' %}" class="text-xs font-bold text-blue-600 hover:underline">← Back to Dashboard</a>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Form: Create New Coupon -->
+    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+      <h3 class="text-sm font-black text-slate-900 mb-4">Create New Coupon</h3>
+      <form method="POST" class="space-y-3">
+        {% csrf_token %}
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">Coupon Code</label>
+          <input type="text" name="code" placeholder="e.g. DIWALI500" required class="w-full uppercase bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-blue-500">
+        </div>
+        
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">Discount Type</label>
+          <select name="discount_type" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium outline-none">
+            <option value="percentage">Percentage Discount (%)</option>
+            <option value="flat">Flat Amount Discount (₹)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">Discount Value</label>
+          <input type="number" step="0.01" name="discount_value" placeholder="e.g. 10 or 500" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">Valid Till (Optional)</label>
+          <input type="date" name="valid_till" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium outline-none">
+        </div>
+
+        <div class="flex items-center gap-2 pt-1">
+          <input type="checkbox" name="is_active" id="isActive" checked class="rounded text-blue-600">
+          <label for="isActive" class="text-xs font-bold text-slate-700">Activate Immediately</label>
+        </div>
+
+        <button type="submit" class="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-2.5 rounded-xl transition shadow">
+          Save & Publish Coupon
+        </button>
+      </form>
+    </div>
+
+    <!-- Table: Existing Coupons -->
+    <div class="md:col-span-2 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
+      <h3 class="text-sm font-black text-slate-900 mb-4">All Active & Expired Coupons</h3>
+      <table class="w-full text-left text-xs">
+        <thead>
+          <tr class="border-b border-slate-200 text-slate-400 font-bold uppercase text-[10px]">
+            <th class="pb-2">Code</th>
+            <th class="pb-2">Type</th>
+            <th class="pb-2">Value</th>
+            <th class="pb-2">Valid Till</th>
+            <th class="pb-2">Status</th>
+            <th class="pb-2 text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for c in coupons %}
+          <tr class="hover:bg-slate-50/50">
+            <td class="py-2.5 font-black text-slate-900">{{ c.code }}</td>
+            <td class="py-2.5 text-slate-600">{{ c.get_discount_type_display|default:c.discount_type }}</td>
+            <td class="py-2.5 font-bold text-blue-600">
+              {% if c.discount_type == 'flat' %}₹{{ c.discount_value }}{% else %}{{ c.discount_value }}%{% endif %}
+            </td>
+            <td class="py-2.5 text-slate-500">{{ c.valid_till|default:"No Expiry" }}</td>
+            <td class="py-2.5">
+              {% if c.is_active %}
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">ACTIVE</span>
+              {% else %}
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 text-slate-500">DISABLED</span>
+              {% endif %}
+            </td>
+            <td class="py-2.5 text-right">
+              <a href="{% url 'portal_coupon_delete' c.id %}" onclick="return confirm('Delete this coupon?')" class="text-rose-600 hover:underline font-bold text-[11px]">Delete</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="py-6 text-center text-slate-400">No coupons created yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

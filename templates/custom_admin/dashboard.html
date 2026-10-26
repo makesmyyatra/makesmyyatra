@@ -18,8 +18,8 @@
   </div>
   {% endif %}
 
-  <!-- Top Metric Stat Cards -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+  <!-- Top Metric Stat Cards (5 Cards Layout) -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
     <!-- Total Revenue -->
     <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
       <div>
@@ -49,12 +49,24 @@
       <div>
         <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Active Fleet</span>
         <span class="text-2xl font-black text-slate-900 mt-1 block">{{ total_hotels }}</span>
-        <span class="text-[11px] text-slate-500 font-semibold mt-1 inline-block">Across HP & PB</span>
+        <span class="text-[11px] text-slate-500 font-semibold mt-1 inline-block">Across HP </span>
       </div>
       <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
         <i data-lucide="hotel" class="w-6 h-6"></i>
       </div>
     </div>
+
+    <!-- Active Coupons (Clickable Card) -->
+    <a href="{% url 'portal_coupons' %}" class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between hover:border-amber-400 hover:shadow-md transition group">
+      <div>
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Active Coupons</span>
+        <span class="text-2xl font-black text-slate-900 mt-1 block">{{ total_coupons|default:0 }}</span>
+        <span class="text-[11px] text-amber-600 font-semibold mt-1 inline-block group-hover:underline">Manage Offers &rarr;</span>
+      </div>
+      <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100">
+        <i data-lucide="tag" class="w-6 h-6"></i>
+      </div>
+    </a>
 
     <!-- Urgent SOS Tickets -->
     <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
