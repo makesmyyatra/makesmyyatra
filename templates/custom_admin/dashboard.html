@@ -196,7 +196,9 @@
               <span class="text-[10px] text-slate-400">{{ catalog.hotels|default:total_hotels }} properties</span>
             </div>
           </div>
-          <a href="/admin/core/hotel/" target="_blank" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-indigo-600">Manage</a>
+          <a href="{% url 'portal_hotels' %}" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-indigo-600 hover:border-indigo-500 shadow-sm transition">
+            Manage
+          </a>
         </div>
 
         <!-- Room Types -->
@@ -210,7 +212,9 @@
               <span class="text-[10px] text-slate-400">{{ catalog.room_types|default:0 }} categories</span>
             </div>
           </div>
-          <a href="/admin/core/roomtype/" target="_blank" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-purple-600">Manage</a>
+          <a href="{% url 'portal_room_types' %}" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-indigo-600 hover:border-indigo-500 shadow-sm transition">
+            Manage
+          </a>
         </div>
 
         <!-- Meal Plans -->
@@ -224,7 +228,9 @@
               <span class="text-[10px] text-slate-400">{{ catalog.meal_plans|default:0 }} options</span>
             </div>
           </div>
-          <a href="/admin/core/mealplan/" target="_blank" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-emerald-600">Manage</a>
+          <a href="{% url 'portal_meal_plans' %}" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-emerald-600 hover:border-emerald-500 shadow-sm transition">
+            Manage
+          </a>
         </div>
 
         <!-- Support Tickets (fixed URL name) -->

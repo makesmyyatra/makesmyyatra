@@ -11,6 +11,7 @@ urlpatterns = [
     path('portal/login/', views.portal_login, name='portal_login'),
     path('portal/logout/', views.portal_logout, name='portal_logout'),
     path('portal/dashboard/', views.portal_dashboard, name='portal_dashboard'),
+    path('portal/room-types/', views.portal_all_rooms, name='portal_room_types'),
     path('portal/hotels/', views.portal_hotels, name='portal_hotels'),
     path('portal/hotels/add/', views.portal_hotel_add, name='portal_hotel_add'),
     path('portal/hotels/edit/<int:hotel_id>/', views.portal_hotel_edit, name='portal_hotel_edit'),
@@ -41,6 +42,7 @@ urlpatterns = [
     path('portal/reviews/', views.portal_reviews, name='portal_reviews'),
     path('portal/reviews/<int:review_id>/toggle/', views.portal_review_toggle, name='portal_review_toggle'),
     path('portal/reviews/<int:review_id>/delete/', views.portal_review_delete, name='portal_review_delete'),
+    path('portal/hotels/', views.portal_hotels, name='portal_hotels'),
     path('portal/hotel/<int:hotel_id>/gallery/', views.portal_hotel_gallery_manage, name='portal_hotel_gallery_manage'),
     path('portal/gallery/<int:media_id>/delete/', views.portal_gallery_image_delete, name='portal_gallery_image_delete'),
     path('custom-admin/bookings/<str:booking_id>/invoice/', views.portal_booking_invoice, name='portal_booking_invoice'),
@@ -53,4 +55,6 @@ urlpatterns = [
         views.portal_coupon_delete,
         name='portal_coupon_delete',
     ),
+    path('portal/meal-plans/', views.portal_meal_plans, name='portal_meal_plans'),
+    
 ]

@@ -402,9 +402,25 @@ def portal_customers(request):
 # Property listing
 @user_passes_test(is_admin, login_url='portal_login')
 def portal_hotels(request):
-    hotels = Hotel.objects.all().prefetch_related('room_types', 'media_gallery').order_by('-created_at')
+    hotels = Hotel.objects.all().order_by('-id')
     return render(request, 'custom_admin/hotel_list.html', {'hotels': hotels})
 
+
+@user_passes_test(is_admin, login_url='portal_login')
+def portal_all_rooms(request):
+    rooms = RoomType.objects.select_related('hotel').all().order_by('-id')
+    return render(request, 'custom_admin/room_types.html', {
+        'room_types': rooms,
+    })
+
+@user_passes_test(is_admin, login_url='portal_login')
+def portal_room_manage(request, hotel_id):
+    hotel = get_object_or_404(Hotel, id=hotel_id)
+    rooms = hotel.room_types.all().order_by('id')
+    return render(request, 'custom_admin/room_manage.html', {
+        'hotel': hotel,
+        'rooms': rooms,
+    })
 
 # Add new property
 # Add hotel
@@ -927,13 +943,6 @@ def portal_gallery_image_delete(request, media_id):
     messages.success(request, "Photo deleted successfully!")
     return redirect('portal_hotel_gallery_manage', hotel_id=hotel_id)
 
-def portal_room_manage(request, hotel_id):
-    hotel = get_object_or_404(Hotel, id=hotel_id)
-    rooms = hotel.room_types.all().order_by('id')
-    return render(request, 'custom_admin/room_manage.html', {
-        'hotel': hotel,
-        'rooms': rooms,
-    })
 
 def portal_room_create(request, hotel_id):
     hotel = get_object_or_404(Hotel, id=hotel_id)
@@ -1141,3 +1150,8 @@ def portal_coupon_delete(request, coupon_id):
   coupon.delete()
   messages.success(request, f"Coupon '{code}' deleted.")
   return redirect('portal_coupons')
+
+@user_passes_test(is_admin, login_url='portal_login')
+def portal_meal_plans(request):
+    meal_plans = MealPlan.objects.all().order_by('id')
+    return render(request, 'custom_admin/meal_plans.html', {'meal_plans': meal_plans})

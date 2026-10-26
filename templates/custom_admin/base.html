@@ -59,6 +59,10 @@
         <a href="{% url 'portal_urgent_help' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.url_name == 'portal_urgent_help' %}bg-blue-600 text-white shadow-lg shadow-blue-600/30{% else %}text-slate-400 hover:text-white hover:bg-slate-900{% endif %}">
           <i data-lucide="phone-call" class="w-4 h-4"></i> Urgent Desk
         </a>
+        <!-- Reviews -->
+        <a href="{% url 'portal_reviews' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.url_name == 'portal_reviews' %}bg-blue-600 text-white shadow-lg shadow-blue-600/30{% else %}text-slate-400 hover:text-white hover:bg-slate-900{% endif %}">
+          <i data-lucide="message-circle" class="w-4 h-4"></i> Reviews
+        </a>
       </nav>
     </div>
 

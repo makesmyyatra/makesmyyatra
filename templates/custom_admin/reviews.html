@@ -1,30 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Customer Reviews Moderation - MakesMyYatra Admin</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <style>body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f172a; color: #f8fafc; }</style>
-</head>
-<body class="p-6">
-  <div class="max-w-6xl mx-auto">
-    <!-- Navbar bar -->
-    <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-6">
-      <div class="flex items-center gap-3">
-        <a href="{% url 'portal_dashboard' %}" class="text-xs font-bold text-slate-400 hover:text-white transition">
-          ← Dashboard
-        </a>
-        <h1 class="text-xl font-black text-white">Review & Rating Moderation Desk</h1>
+{% extends 'custom_admin/base.html' %}
+
+{% block title %}Review Moderation | Operations Desk{% endblock %}
+{% block page_title %}Customer Reviews Moderation{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  {% if messages %}
+  <div class="space-y-2">
+    {% for msg in messages %}
+    <div class="p-3.5 rounded-2xl text-xs font-bold bg-blue-50 text-blue-800 border border-blue-200">
+      {{ msg }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+      <div>
+        <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider">All Customer Reviews</h3>
+        <p class="text-[11px] text-slate-400 mt-0.5">Approve, hide, or remove guest feedback</p>
       </div>
-      <span class="text-xs bg-slate-800 px-3 py-1.5 rounded-xl text-slate-300">Total: {{ reviews.count }}</span>
+      <span class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">{{ reviews.count }} Total</span>
     </div>
 
-    <!-- Review Moderation Table -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
-      <table class="w-full text-left text-xs">
-        <thead class="bg-slate-800/60 text-slate-400 uppercase text-[10px] tracking-wider">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs text-slate-600">
+        <thead class="bg-slate-50 border-b border-slate-200 text-[11px] font-black uppercase text-slate-700">
           <tr>
             <th class="p-4">Hotel</th>
             <th class="p-4">Guest</th>
@@ -34,38 +37,44 @@
             <th class="p-4 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-800">
+        <tbody class="divide-y divide-slate-100">
           {% for r in reviews %}
-          <tr class="hover:bg-slate-800/30 transition">
-            <td class="p-4 font-bold text-white">{{ r.hotel.name }}</td>
-            <td class="p-4 text-slate-300">{{ r.guest_name }}</td>
-            <td class="p-4 text-amber-400 font-bold">★ {{ r.rating }}/5</td>
-            <td class="p-4 text-slate-400 max-w-xs truncate">{{ r.comment }}</td>
+          <tr class="hover:bg-slate-50/70 transition">
+            <td class="p-4 font-bold text-slate-900">{{ r.hotel.name }}</td>
+            <td class="p-4">
+              <span class="font-bold text-slate-800 block">{{ r.guest_name }}</span>
+              <span class="text-[10px] text-slate-400">{{ r.created_at|date:"d M Y" }}</span>
+            </td>
+            <td class="p-4">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 font-bold border border-amber-200 text-[11px]">
+                {{ r.rating }} ★
+              </span>
+            </td>
+            <td class="p-4 max-w-xs truncate text-slate-700">{{ r.comment }}</td>
             <td class="p-4">
               {% if r.is_approved %}
-              <span class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Active</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Published</span>
               {% else %}
-              <span class="px-2 py-0.5 rounded text-[10px] font-black bg-red-500/10 text-red-400 border border-red-500/20">Hidden</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">Hidden</span>
               {% endif %}
             </td>
             <td class="p-4 text-right space-x-2">
-              <a href="{% url 'portal_review_toggle' r.id %}" class="px-2.5 py-1 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 font-bold">
-                {% if r.is_approved %}Hide{% else %}Approve{% endif %}
+              <a href="{% url 'portal_review_toggle' r.id %}" class="px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-100 text-[11px] font-bold text-slate-700 transition">
+                {% if r.is_approved %}Hide{% else %}Publish{% endif %}
               </a>
-              <a href="{% url 'portal_review_delete' r.id %}" onclick="return confirm('Delete this review permanently?')" class="px-2.5 py-1 rounded-lg bg-red-600/20 text-red-400 hover:bg-red-600/30 font-bold">
+              <a href="{% url 'portal_review_delete' r.id %}" onclick="return confirm('Delete this review permanently?')" class="px-2.5 py-1 rounded-lg bg-rose-50 border border-rose-200 hover:bg-rose-100 text-[11px] font-bold text-rose-600 transition">
                 Delete
               </a>
             </td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="6" class="p-8 text-center text-slate-500">No customer reviews recorded yet.</td>
+            <td colspan="6" class="p-8 text-center text-slate-400">No reviews found.</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
-  <script>lucide.createIcons();</script>
-</body>
-</html>
+</div>
+{% endblock %}
