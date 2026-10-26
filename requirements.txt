@@ -7,4 +7,5 @@ psycopg2-binary>=2.9.9
 openpyxl>=3.1.2
 dj-database-url>=2.1.0
 requests
-pip freeze > requirements.txt
+xhtml2pdf
+
