@@ -46,4 +46,5 @@ urlpatterns = [
     path('custom-admin/bookings/<str:booking_id>/invoice/', views.portal_booking_invoice, name='portal_booking_invoice'),
     path('custom-admin/rooms/<int:room_id>/toggle/', views.portal_room_toggle_status, name='portal_room_toggle_status'),
     path('custom-admin/bookings/<str:booking_id>/send-whatsapp/', views.portal_booking_send_whatsapp, name='portal_booking_send_whatsapp'),
+    path('api/apply-coupon/', views.apply_coupon_ajax, name='apply_coupon_ajax'),
 ]

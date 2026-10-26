@@ -129,6 +129,10 @@ class MealPlan(models.Model):
   def __str__(self):
     return f"{self.room_type.hotel.name} - {self.room_type.name} ({self.get_plan_code_display()})"
 
+from decimal import Decimal
+from django.db import models
+from django.utils import timezone
+
 
 # Discount coupons
 class Coupon(models.Model):
@@ -141,116 +145,146 @@ class Coupon(models.Model):
       max_length=20, choices=DISCOUNT_TYPES, default="flat"
   )
   discount_value = models.DecimalField(
-      max_digits=10, decimal_places=2, default=0.00
+      max_digits=10, decimal_places=2, default=Decimal("0.00")
   )
   valid_till = models.DateField(null=True, blank=True)
   is_active = models.BooleanField(default=True)
 
-  def __str__(self):
-    return self.code
+  def is_valid(self):
+    today = timezone.now().date()
+    if not self.is_active:
+      return False, "This coupon is inactive."
+    if self.valid_till and self.valid_till < today:
+      return False, "This coupon has expired."
+    return True, "Coupon is valid."
 
+  def calculate_discount(self, total_base_amount):
+    amount = Decimal(str(total_base_amount))
+    valid, msg = self.is_valid()
+    if not valid:
+      return Decimal("0.00"), msg
+
+    if self.discount_type == "flat":
+      discount = self.discount_value
+    else:
+      discount = (amount * self.discount_value) / Decimal("100.00")
+
+    # Discount can never exceed total base amount
+    discount = min(discount, amount)
+    return round(discount, 2), "Applied successfully."
+
+  def __str__(self):
+    return f"{self.code} ({self.get_discount_type_display()} - {self.discount_value})"
 
 # Booking records with auto MMY ID generation
 class Booking(models.Model):
-  STATUS_CHOICES = [
-      ("PENDING", "Pending Payment"),
-      ("CONFIRMED", "Confirmed"),
-      ("CHECKED_IN", "Checked-In"),
-      ("CHECKED_OUT", "Checked-Out"),
-      ("CANCELLED", "Cancelled"),
-  ]
-  PAYMENT_MODES = [
-      ("PREPAID", "Full Online Payment"),
-      ("PAY_AT_HOTEL", "Pay at Hotel"),
-      ("PARTIAL", "Partial Deposit"),
-  ]
+    STATUS_CHOICES = [
+        ("PENDING", "Pending Payment"),
+        ("CONFIRMED", "Confirmed"),
+        ("CHECKED_IN", "Checked-In"),
+        ("CHECKED_OUT", "Checked-Out"),
+        ("CANCELLED", "Cancelled"),
+    ]
+    PAYMENT_MODES = [
+        ("PREPAID", "Full Online Payment"),
+        ("PAY_AT_HOTEL", "Pay at Hotel"),
+        ("PARTIAL", "Partial Deposit"),
+    ]
 
-  # Editable=False taaki auto generate ho
-  booking_id = models.CharField(
-      max_length=50,
-      unique=True,
-      default=generate_mmy_booking_id,
-      editable=False,
-  )
-  hotel = models.ForeignKey(
-      Hotel,
-      on_delete=models.CASCADE,
-      related_name="bookings",
-      null=True,
-      blank=True,
-  )
-  room_type = models.ForeignKey(
-      RoomType, on_delete=models.SET_NULL, null=True, blank=True
-  )
-  meal_plan = models.ForeignKey(
-      MealPlan, on_delete=models.SET_NULL, null=True, blank=True
-  )
-  user = models.ForeignKey(
-      User,
-      on_delete=models.SET_NULL,
-      null=True,
-      blank=True,
-      related_name="bookings",
-  )
+    # Editable=False taaki auto generate ho
+    booking_id = models.CharField(
+        max_length=50,
+        unique=True,
+        default=generate_mmy_booking_id,
+        editable=False,
+    )
+    hotel = models.ForeignKey(
+        Hotel,
+        on_delete=models.CASCADE,
+        related_name="bookings",
+        null=True,
+        blank=True,
+    )
+    room_type = models.ForeignKey(
+        RoomType, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    meal_plan = models.ForeignKey(
+        MealPlan, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="bookings",
+    )
 
-  guest_name = models.CharField(max_length=150, blank=True, default="Guest")
-  guest_phone = models.CharField(max_length=20, blank=True, default="")
-  guest_email = models.EmailField(blank=True, default="")
+    # Coupon ForeignKey Link (Fixes TypeError in book_hotel)
+    coupon = models.ForeignKey(
+        Coupon,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="bookings",
+    )
 
-  check_in = models.DateField(null=True, blank=True)
-  check_out = models.DateField(null=True, blank=True)
+    guest_name = models.CharField(max_length=150, blank=True, default="Guest")
+    guest_phone = models.CharField(max_length=20, blank=True, default="")
+    guest_email = models.EmailField(blank=True, default="")
 
-  destination_title = models.CharField(max_length=200, blank=True, default="")
-  travel_date = models.DateField(null=True, blank=True)
-  guests_count = models.PositiveIntegerField(default=2)
+    check_in = models.DateField(null=True, blank=True)
+    check_out = models.DateField(null=True, blank=True)
 
-  adults_count = models.PositiveSmallIntegerField(default=2)
-  children_count = models.PositiveSmallIntegerField(default=0)
+    destination_title = models.CharField(max_length=200, blank=True, default="")
+    travel_date = models.DateField(null=True, blank=True)
+    guests_count = models.PositiveIntegerField(default=2)
 
-  base_amount = models.DecimalField(
-      max_digits=10, decimal_places=2, default=0.00
-  )
-  extra_bed_amount = models.DecimalField(
-      max_digits=10, decimal_places=2, default=0.00
-  )
-  discount_amount = models.DecimalField(
-      max_digits=10, decimal_places=2, default=0.00
-  )
-  cgst_amount = models.DecimalField(
-      max_digits=10, decimal_places=2, default=0.00
-  )
-  sgst_amount = models.DecimalField(
-      max_digits=10, decimal_places=2, default=0.00
-  )
-  gst_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-  total_amount = models.DecimalField(
-      max_digits=10, decimal_places=2, default=0.00
-  )
+    adults_count = models.PositiveSmallIntegerField(default=2)
+    children_count = models.PositiveSmallIntegerField(default=0)
 
-  payment_mode = models.CharField(
-      max_length=20, choices=PAYMENT_MODES, default="PAY_AT_HOTEL"
-  )
-  payment_status = models.CharField(max_length=20, default="CONFIRMED")
-  status = models.CharField(
-      max_length=20, choices=STATUS_CHOICES, default="CONFIRMED"
-  )
+    base_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00
+    )
+    extra_bed_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00
+    )
+    discount_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00
+    )
+    cgst_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00
+    )
+    sgst_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00
+    )
+    gst_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00
+    )
 
-  transaction_id = models.CharField(max_length=100, blank=True, null=True)
-  created_at = models.DateTimeField(auto_now_add=True)
+    payment_mode = models.CharField(
+        max_length=20, choices=PAYMENT_MODES, default="PAY_AT_HOTEL"
+    )
+    payment_status = models.CharField(max_length=20, default="CONFIRMED")
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="CONFIRMED"
+    )
 
-  def save(self, *args, **kwargs):
-    # Ensure ID uniqueness on save
-    if not self.booking_id:
-      while True:
-        new_id = generate_mmy_booking_id()
-        if not Booking.objects.filter(booking_id=new_id).exists():
-          self.booking_id = new_id
-          break
-    super().save(*args, **kwargs)
+    transaction_id = models.CharField(max_length=100, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
-  def __str__(self):
-    return f"{self.booking_id} - {self.guest_name} ({self.status})"
+    def save(self, *args, **kwargs):
+        # Ensure ID uniqueness on save
+        if not self.booking_id:
+            while True:
+                new_id = generate_mmy_booking_id()
+                if not Booking.objects.filter(booking_id=new_id).exists():
+                    self.booking_id = new_id
+                    break
+        super().save(*args, **kwargs)
 
+    def __str__(self):
+        return f"{self.booking_id} - {self.guest_name} ({self.status})"
 
 # Emergency support requests
 class EmergencySupport(models.Model):

@@ -155,6 +155,7 @@
       </button>
     </div>
   </div>
+
   <!-- ================= TOP TRAVEL ADVISORY ================= -->
   <div class="bg-[#030d17] text-slate-300 text-xs py-2.5 px-4 border-b border-slate-800">
     <div class="max-w-[1200px] mx-auto flex items-center justify-between">
@@ -169,6 +170,7 @@
       </div>
     </div>
   </div>
+
   <!-- ================= HERO & PERFECTLY ALIGNED HEADER ================= -->
   <header class="hero-bg relative pt-6 pb-28 px-4">
     <div class="max-w-[1200px] mx-auto">
@@ -207,6 +209,7 @@
           </a>
         </div>
       </div>
+
       <!-- ================= ALL 16 OPTIONS FLOATING PILL NAVBAR ================= -->
       <div class="mmt-nav-pill-wrapper">
         <nav class="px-3 py-1 flex items-center justify-start overflow-x-auto no-scrollbar gap-1">
@@ -276,6 +279,7 @@
           </button>
         </nav>
       </div>
+
       <!-- ================= MAIN SEARCH CONTAINER ================= -->
       <div id="mainSearchCard" class="max-w-[1200px] mx-auto mmt-search-card">
         
@@ -296,6 +300,7 @@
               Instant confirmation • 100% verified local stays
             </span>
           </div>
+
           <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4">
             
             <!-- City Destination -->
@@ -377,16 +382,19 @@
                 </ul>
               </div>
             </div>
+
             <!-- Check-In -->
             <div class="md:col-span-2 mmt-input-col cursor-pointer">
               <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Check-In</span>
               <input type="date" name="check_in" id="searchCheckIn" class="w-full bg-transparent font-black text-sm text-slate-900 outline-none mt-1 cursor-pointer">
             </div>
+
             <!-- Check-Out -->
             <div class="md:col-span-2 mmt-input-col cursor-pointer">
               <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Check-Out</span>
               <input type="date" name="check_out" id="searchCheckOut" class="w-full bg-transparent font-black text-sm text-slate-900 outline-none mt-1 cursor-pointer">
             </div>
+
             <!-- Rooms & Guests (Counter Modal Trigger) -->
             <div class="md:col-span-2 mmt-input-col relative cursor-pointer" onclick="toggleGuestsModal(event)">
               <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Rooms & Guests</span>
@@ -398,6 +406,7 @@
               <input type="hidden" name="adults_count" id="adultsCountInput" value="2">
               <input type="hidden" name="children_count" id="childrenCountInput" value="0">
               <input type="hidden" name="with_pets" id="withPetsInput" value="false">
+
               <!-- Modal Popup -->
               <div id="guestsSelectionModal" onclick="event.stopPropagation();" class="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 p-5 z-50 hidden text-left">
                 <div class="flex items-center justify-between pb-3.5 border-b border-slate-100">
@@ -445,6 +454,7 @@
                 </button>
               </div>
             </div>
+
             <!-- Price Per Night Dropdown -->
             <div class="md:col-span-2 mmt-input-col cursor-pointer">
               <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Price Per Night</span>
@@ -457,6 +467,7 @@
               </select>
             </div>
           </div>
+
           <!-- Trending Searches -->
           <div class="flex flex-wrap items-center gap-2 text-xs text-slate-400 pt-1 pb-4">
             <span class="font-bold text-slate-600">Trending Searches:</span>
@@ -466,12 +477,14 @@
             <span onclick="selectCity('Spiti')" class="cursor-pointer hover:text-blue-600">Spiti Valley</span> •
             <span onclick="selectCity('Hamirpur')" class="cursor-pointer hover:text-blue-600">Hamirpur, Barsar</span>
           </div>
+
           <div class="text-center pt-2">
             <button type="submit" class="mmt-search-btn text-base uppercase">
               SEARCH
             </button>
           </div>
         </form>
+
         <!-- 2. CABS PANEL (AIRPORT & OUTSTATION) -->
         <div id="cabsSearchPanel" class="hidden py-8 text-center">
           <div class="max-w-md mx-auto space-y-3">
@@ -488,6 +501,7 @@
             </div>
           </div>
         </div>
+
         <!-- 3. TOUR & HOLIDAY PACKAGES PANEL -->
         <div id="toursSearchPanel" class="hidden py-8 text-center">
           <div class="max-w-md mx-auto space-y-3">
@@ -503,6 +517,7 @@
             </div>
           </div>
         </div>
+
         <!-- 4. OTHER SERVICES PANEL (DYNAMIC DICTIONARY MAPPED) -->
         <div id="dummySearchPanel" class="hidden py-8 text-center">
           <div class="max-w-md mx-auto space-y-3">
@@ -526,6 +541,7 @@
       </div>
     </div>
   </header>
+
   <!-- ================= MMT OFFERS COMPONENT WITH FILTER PILLS ================= -->
   <div class="max-w-[1200px] mx-auto px-4 mt-8 mb-6">
     <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
@@ -548,14 +564,15 @@
           <i data-lucide="chevron-right" class="w-4 h-4"></i>
         </a>
       </div>
+
       <!-- Offers Grid -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-5">
         <div class="border border-slate-200 rounded-2xl p-4 flex gap-3 hover:shadow-md transition bg-gradient-to-tr from-amber-50/40 to-white">
           <span class="text-3xl">🎁</span>
           <div>
-            <span class="text-[10px] font-black uppercase text-amber-600 bg-amber-50 px-2 py-0.5 rounded">INAUGURAL DEAL</span>
-            <h4 class="text-sm font-bold text-slate-900 mt-1">FLAT 20% OFF* on First Mountain Stay!</h4>
-            <p class="text-xs text-slate-500 mt-0.5">Use Code: <b>WELCOMEYATRA</b></p>
+            <span class="text-[10px] font-black uppercase text-amber-600 bg-amber-50 px-2 py-0.5 rounded">COUPON DEAL</span>
+            <h4 class="text-sm font-bold text-slate-900 mt-1">Flat Discount / Special Offers</h4>
+            <p class="text-xs text-slate-500 mt-0.5">Use Active Code: <b>WELCOME10</b></p>
           </div>
         </div>
         <div class="border border-slate-200 rounded-2xl p-4 flex gap-3 hover:shadow-md transition bg-gradient-to-tr from-blue-50/40 to-white">
@@ -577,6 +594,7 @@
       </div>
     </div>
   </div>
+
   <main class="max-w-[1200px] mx-auto px-4 py-4 w-full flex-1">
     <!-- Flash Messages Container -->
     {% if messages %}
@@ -592,6 +610,7 @@
       {% endfor %}
     </div>
     {% endif %}
+
     <!-- Inventory Header -->
     <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 border-b border-slate-200 pb-4">
       <div>
@@ -613,6 +632,7 @@
         <a href="{% url 'index' %}?city=Dharamshala" class="px-3 py-1.5 rounded-xl border {% if selected_city == 'Dharamshala' %}bg-slate-900 text-white border-slate-900{% else %}bg-white text-slate-600 border-slate-200 hover:border-slate-400{% endif %} transition">Dharamshala</a>
       </div>
     </div>
+
     <!-- Properties Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {% for hotel in hotels %}
@@ -638,6 +658,7 @@
             <i data-lucide="image" class="w-3 h-3 text-blue-400"></i> Gallery
           </a>
         </div>
+
         <div class="p-5 flex-1 flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between mb-1">
@@ -672,6 +693,7 @@
             </div>
             {% endif %}
           </div>
+
           {% with first_room=hotel.room_types.all.0 %}
           {% with live_price=first_room.base_price|default:1850 %}
           <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
@@ -704,6 +726,7 @@
       {% endfor %}
     </div>
   </main>
+
   <!-- ================= BOOKING MODAL WITH DYNAMIC PROMO & AUTO OFFERS ================= -->
   <div id="bookingModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl border border-slate-200 relative max-h-[90vh] overflow-y-auto">
@@ -715,6 +738,7 @@
         <h3 id="modalHotelName" class="text-lg font-black text-slate-900 mt-2">Hotel Booking</h3>
         <p id="modalHotelCity" class="text-xs text-slate-500 font-medium">Himachal Pradesh</p>
       </div>
+
       <form action="{% url 'book_hotel' %}" method="POST" class="mt-5 space-y-3">
         {% csrf_token %}
         <input type="hidden" name="hotel_id" id="modalHotelId">
@@ -743,6 +767,7 @@
             <input type="date" name="check_out" id="modalCheckOut" required onchange="calculateBookingTotal()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500">
           </div>
         </div>
+
         <!-- Meal Plan Selector -->
         <div>
           <label class="block text-[11px] font-bold text-slate-600 mb-1">Meal Plan</label>
@@ -768,20 +793,20 @@
           </span>
         </div>
 
-        <!-- Coupon Code Box -->
+        <!-- Coupon Code Box (With Live AJAX Apply) -->
         <div class="p-3 bg-amber-50/60 border border-amber-200 rounded-2xl">
           <label class="block text-[10px] font-black uppercase tracking-wider text-amber-800 mb-1">Apply Coupon Code</label>
           <div class="flex gap-2">
-            <input type="text" name="coupon_code" id="couponCodeInput" placeholder="WELCOMEYATRA" class="w-full bg-white border border-amber-300 rounded-xl px-3 py-1.5 text-xs font-bold uppercase outline-none">
-            <button type="button" onclick="applyCouponManual()" class="bg-amber-600 hover:bg-amber-700 text-white font-black text-xs px-3.5 py-1.5 rounded-xl transition">
+            <input type="text" name="coupon_code" id="couponCodeInput" placeholder="Enter coupon (e.g. WELCOME10)" class="w-full bg-white border border-amber-300 rounded-xl px-3 py-1.5 text-xs font-bold uppercase outline-none">
+            <button type="button" id="btnApplyCoupon" onclick="applyCouponManual()" class="bg-amber-600 hover:bg-amber-700 text-white font-black text-xs px-3.5 py-1.5 rounded-xl transition">
               Apply
             </button>
           </div>
-          <span id="couponSuccessNote" class="text-[10px] text-emerald-700 font-bold block mt-1 hidden">
-            ✓ 20% discount applied successfully!
-          </span>
+          <span id="couponSuccessNote" class="text-[10px] text-emerald-700 font-bold block mt-1 hidden"></span>
+          <span id="couponErrorNote" class="text-[10px] text-red-600 font-bold block mt-1 hidden"></span>
         </div>
         
+        <!-- Live Bill Summary -->
         <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 space-y-1.5">
           <div class="flex items-center justify-between text-xs text-slate-600">
             <span id="modalStayDuration">Stay Duration: 1 Night</span>
@@ -806,6 +831,7 @@
             <span id="modalDisplayPrice" class="text-base text-blue-700">₹2,072</span>
           </div>
         </div>
+
         <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-xs uppercase tracking-wider py-3.5 rounded-xl transition shadow-lg shadow-blue-600/30 mt-3 flex items-center justify-center gap-2">
           <span>Confirm & Get Reservation Pass</span>
           <i data-lucide="arrow-right" class="w-4 h-4"></i>
@@ -895,10 +921,11 @@
       </div>
     </div>
   </footer>
+
   <!-- ================= JAVASCRIPT LOGIC ================= -->
   <script>
     lucide.createIcons();
-    let manualCouponPercentage = 0;
+    let appliedCouponData = null;
 
     const titles = {
       'flights': {
@@ -1044,7 +1071,7 @@
       return dropdown.contains(target);
     }
 
-    // Dynamic Calculation Engine with Auto Early-Bird & Long-Stay Offers
+    // Dynamic Calculation Engine with Auto Early-Bird, Long-Stay Offers & Real-time Coupons
     function calculateBookingTotal() {
         const checkInInput = document.getElementById('modalCheckIn');
         const checkOutInput = document.getElementById('modalCheckOut');
@@ -1095,19 +1122,24 @@
           }
         }
 
-        // 3. Manual Coupon Code (WELCOMEYATRA) -> 20%
-        if (manualCouponPercentage > 0) {
-          effectiveDiscountPercent = manualCouponPercentage;
-          offerHeading = "Special Promo Code Applied!";
-          offerDesc = "WELCOMEYATRA 20% discount unlocked!";
-          offerIcon = "🎁";
-        }
-
         // Base Room Rate + Meal Extra
         const effectiveNightlyRate = unitRate + mealExtra;
         const subtotal = effectiveNightlyRate * nights;
-        
-        const discount = Math.round(subtotal * (effectiveDiscountPercent / 100));
+
+        let discount = 0;
+        if (effectiveDiscountPercent > 0) {
+          discount = Math.round(subtotal * (effectiveDiscountPercent / 100));
+        }
+
+        // 3. Dynamic Database Coupon Override (Higher Priority if Applied)
+        if (appliedCouponData && appliedCouponData.success) {
+          discount = parseFloat(appliedCouponData.discount_amount);
+          effectiveDiscountPercent = 1;
+          offerHeading = "Coupon Applied!";
+          offerDesc = appliedCouponData.message;
+          offerIcon = "🏷️";
+        }
+
         const taxableBase = Math.max(0, subtotal - discount);
         const gstRate = effectiveNightlyRate < 1000 ? 0.0 : (effectiveNightlyRate <= 7500 ? 0.12 : 0.18);
         const totalGst = Math.round(taxableBase * gstRate);
@@ -1120,15 +1152,15 @@
         
         // Show/Hide Offer Banner & Breakdown
         const offerBanner = document.getElementById('autoOfferBanner');
-        if (effectiveDiscountPercent > 0) {
+        if (discount > 0) {
           offerBanner.classList.remove('hidden');
           document.getElementById('autoOfferIcon').innerText = offerIcon;
           document.getElementById('autoOfferHeading').innerText = offerHeading;
           document.getElementById('autoOfferDesc').innerText = offerDesc;
-          document.getElementById('autoOfferBadge').innerText = `-${effectiveDiscountPercent}% OFF`;
-
+          document.getElementById('autoOfferBadge').innerText = appliedCouponData ? `SAVED ₹${discount.toLocaleString('en-IN')}` : `-${effectiveDiscountPercent}% OFF`;
+          
           document.getElementById('discountRow').classList.remove('hidden');
-          document.getElementById('modalDiscountLabel').innerText = `Offer Discount (${effectiveDiscountPercent}% OFF):`;
+          document.getElementById('modalDiscountLabel').innerText = appliedCouponData ? `Coupon Discount:` : `Offer Discount (${effectiveDiscountPercent}% OFF):`;
           document.getElementById('modalDiscountAmount').innerText = `- ₹${discount.toLocaleString('en-IN')}`;
         } else {
           offerBanner.classList.add('hidden');
@@ -1155,16 +1187,81 @@
       calculateBookingTotal();
     }
 
+    // Dynamic Backend AJAX Coupon Validation
     function applyCouponManual() {
-      const val = document.getElementById('couponCodeInput').value.trim().toUpperCase();
-      if (val === 'WELCOMEYATRA') {
-        manualCouponPercentage = 20;
-        document.getElementById('couponSuccessNote').classList.remove('hidden');
-      } else {
-        manualCouponPercentage = 0;
-        document.getElementById('couponSuccessNote').classList.add('hidden');
+      const couponInput = document.getElementById('couponCodeInput');
+      const val = couponInput.value.trim().toUpperCase();
+      const successNote = document.getElementById('couponSuccessNote');
+      const errorNote = document.getElementById('couponErrorNote');
+      const applyBtn = document.getElementById('btnApplyCoupon');
+
+      successNote.classList.add('hidden');
+      errorNote.classList.add('hidden');
+
+      if (!val) {
+        errorNote.innerText = "Please enter a coupon code.";
+        errorNote.classList.remove('hidden');
+        appliedCouponData = null;
+        calculateBookingTotal();
+        return;
       }
-      calculateBookingTotal();
+
+      const checkInVal = document.getElementById('modalCheckIn').value;
+      const checkOutVal = document.getElementById('modalCheckOut').value;
+      let nights = 1;
+      if (checkInVal && checkOutVal) {
+        const d1 = new Date(checkInVal);
+        const d2 = new Date(checkOutVal);
+        nights = Math.max(Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24)), 1);
+      }
+
+      const baseInput = document.getElementById('modalBaseAmount');
+      const baseRate = parseFloat(baseInput.dataset.unitPrice || 1850);
+      const mealSelect = document.getElementById('modalMealPlan');
+      const mealExtra = mealSelect ? parseFloat(mealSelect.options[mealSelect.selectedIndex].getAttribute('data-price') || 0) : 0;
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+
+      applyBtn.innerText = "...";
+      applyBtn.disabled = true;
+
+      const formData = new FormData();
+      formData.append('coupon_code', val);
+      formData.append('base_rate', baseRate);
+      formData.append('meal_extra', mealExtra);
+      formData.append('nights', nights);
+
+      fetch("{% url 'apply_coupon_ajax' %}", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken
+        },
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        applyBtn.innerText = "Apply";
+        applyBtn.disabled = false;
+
+        if (data.success) {
+          appliedCouponData = data;
+          successNote.innerText = `✓ ${data.message} (Discount: ₹${parseFloat(data.discount_amount).toLocaleString('en-IN')})`;
+          successNote.classList.remove('hidden');
+        } else {
+          appliedCouponData = null;
+          errorNote.innerText = data.message || "Invalid coupon code.";
+          errorNote.classList.remove('hidden');
+        }
+        calculateBookingTotal();
+      })
+      .catch(err => {
+        console.error(err);
+        applyBtn.innerText = "Apply";
+        applyBtn.disabled = false;
+        appliedCouponData = null;
+        errorNote.innerText = "Network error verifying coupon.";
+        errorNote.classList.remove('hidden');
+        calculateBookingTotal();
+      });
     }
 
     function openBookingModal(hotelId, hotelName, hotelCity, basePrice) {
@@ -1174,6 +1271,13 @@
       const cleanPrice = parseFloat(String(basePrice).replace(/[^0-9.]/g, '')) || 1850;
       const baseInput = document.getElementById('modalBaseAmount');
       baseInput.dataset.unitPrice = cleanPrice;
+      
+      // Reset coupon states on modal open
+      appliedCouponData = null;
+      document.getElementById('couponCodeInput').value = '';
+      document.getElementById('couponSuccessNote').classList.add('hidden');
+      document.getElementById('couponErrorNote').classList.add('hidden');
+
       const today = new Date();
       const tomorrow = new Date();
       tomorrow.setDate(today.getDate() + 1);
@@ -1259,6 +1363,7 @@
         'forex': 'navForex', 'insurance': 'navInsurance', 'getaways': 'navGetaways',
         'giftcards': 'navGiftcards', 'pnr': 'navPnr'
       };
+
       const stickyIdMap = {
         'flights': 'stickyNavFlights', 'hotels': 'stickyNavHotels', 'villas': 'stickyNavVillas',
         'packages': 'stickyNavPackages', 'trains': 'stickyNavTrains', 'buses': 'stickyNavBuses',
@@ -1270,12 +1375,14 @@
 
       const activeNavId = navIdMap[tab];
       const activeStickyId = stickyIdMap[tab];
+
       if (activeNavId && document.getElementById(activeNavId)) {
         const navEl = document.getElementById(activeNavId);
         navEl.classList.add('active-pill');
         const icon = navEl.querySelector('i');
         if (icon) icon.classList.add('text-blue-600');
       }
+
       if (activeStickyId && document.getElementById(activeStickyId)) {
         const stickyEl = document.getElementById(activeStickyId);
         stickyEl.classList.add('bg-blue-50', 'text-blue-600');
@@ -1311,7 +1418,6 @@
         }
       }
       else {
-        // flights, trains, buses, hourly, visa, forex, insurance, getaways, giftcards, pnr
         dummyPanel.classList.remove('hidden');
         const serviceData = titles[tab] || { title: tab.toUpperCase() + ' Services', desc: 'This service is currently being integrated for Himachal travelers.' };
         document.getElementById('dummyTitle').innerText = serviceData.title;

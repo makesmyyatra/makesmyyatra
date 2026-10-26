@@ -1,3 +1,5 @@
+import io
+from xhtml2pdf import pisa
 import uuid
 import openpyxl
 import urllib.parse
@@ -13,13 +15,16 @@ from django.utils import timezone
 from django.db.models import Sum, Q, Count, Max
 from django.core.mail import send_mail
 from django.conf import settings
-from .models import Hotel, RoomType, MealPlan, Booking, EmergencySupport, HotelReview, HotelMedia
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.http import require_POST
+from .models import Hotel, RoomType, MealPlan, Booking, EmergencySupport, HotelReview, HotelMedia, Coupon
 from .forms import HotelForm, RoomTypeForm, BookingStatusForm
-from .models import Booking
+from django.template.loader import get_template
 from .notifications import (
     send_booking_sms,
     send_booking_email,
-    send_whatsapp_notification,
+    get_whatsapp_booking_text,
+    send_whatsapp_notification
 )
 
 # Helper to verify admin permissions
@@ -27,32 +32,38 @@ def is_admin(user):
     return user.is_authenticated and (user.is_staff or user.is_superuser)
 
 # Pricing and GST slab calculator with dynamic percentage discount
-def calculate_stay_pricing(base_price, meal_extra=0, nights=1, rooms=1, discount_percent=0):
+def calculate_stay_pricing(base_price, meal_extra=0, nights=1, rooms=1, discount_percent=0, flat_discount=0):
     base_price = Decimal(str(base_price))
     meal_extra = Decimal(str(meal_extra))
     nights = int(nights) if int(nights) > 0 else 1
     rooms = int(rooms) if int(rooms) > 0 else 1
-
+    
     nightly_rate = base_price + meal_extra
     gross_total = nightly_rate * nights * rooms
+    
+    # Flat discount ya Percentage discount dono handle honge
+    if Decimal(str(flat_discount)) > Decimal('0.00'):
+        discount_amount = min(Decimal(str(flat_discount)), gross_total).quantize(Decimal('0.01'))
+    elif Decimal(str(discount_percent)) > Decimal('0.00'):
+        discount_amount = (gross_total * (Decimal(str(discount_percent)) / Decimal('100'))).quantize(Decimal('0.01'))
+    else:
+        discount_amount = Decimal('0.00')
 
-    # Calculate percentage discount
-    discount_amount = (gross_total * (Decimal(str(discount_percent)) / Decimal('100'))).quantize(Decimal('0.01'))
     taxable_amount = max(Decimal('0.00'), gross_total - discount_amount)
-
-    # Dynamic GST slab logic
+    
+    # Dynamic GST slab logic (Per-night room rate ke hisab se)
     if nightly_rate < 1000:
         gst_rate = Decimal('0.00')
     elif nightly_rate <= 7500:
         gst_rate = Decimal('0.12')
     else:
         gst_rate = Decimal('0.18')
-
+        
     total_gst = (taxable_amount * gst_rate).quantize(Decimal('0.01'))
-    cgst = (total_gst / 2).quantize(Decimal('0.01'))
-    sgst = (total_gst / 2).quantize(Decimal('0.01'))
+    cgst = (total_gst / Decimal('2.00')).quantize(Decimal('0.01'))
+    sgst = (total_gst - cgst).quantize(Decimal('0.01'))
     grand_total = (taxable_amount + total_gst).quantize(Decimal('0.01'))
-
+    
     return {
         'nightly_rate': nightly_rate,
         'gross_total': gross_total,
@@ -146,9 +157,11 @@ def book_hotel(request):
             except ValueError:
                 pass
 
-        # --- Automatic Offer & Discount Evaluation ---
+        # --- Automatic Offer & Dynamic DB Coupon Evaluation ---
         discount_percentage = Decimal('0.00')
+        flat_discount_amount = Decimal('0.00')
         offer_name = "Standard Pricing"
+        applied_coupon_obj = None
 
         # 1. Early Bird Offer: Booking made >= 7 days before check-in (10% OFF)
         if check_in_date and (check_in_date - timezone.localdate()).days >= 7:
@@ -161,11 +174,23 @@ def book_hotel(request):
                 discount_percentage = Decimal('15.00')
                 offer_name = "Long Stay Offer (15% OFF)"
 
-        # 3. Promotional Coupon Code: WELCOMEYATRA (20% OFF)
-        coupon_input = (request.POST.get('coupon_code') or '').strip().upper()
-        if coupon_input == 'WELCOMEYATRA':
-            discount_percentage = Decimal('20.00')
-            offer_name = "Promo WELCOMEYATRA (20% OFF)"
+        # 3. Dynamic Database Coupon Lookup
+        coupon_input = (request.POST.get('coupon_code') or '').strip()
+        if coupon_input:
+            coupon_match = Coupon.objects.filter(code__iexact=coupon_input, is_active=True).first()
+            today = timezone.localdate()
+            if coupon_match and (coupon_match.valid_till is None or coupon_match.valid_till >= today):
+                applied_coupon_obj = coupon_match
+                if coupon_match.discount_type == 'flat':
+                    flat_discount_amount = coupon_match.discount_value
+                    discount_percentage = Decimal('0.00')  # Flat coupon override
+                    offer_name = f"Coupon {coupon_match.code} (Rs. {coupon_match.discount_value} OFF)"
+                else:
+                    if coupon_match.discount_value > discount_percentage:
+                        discount_percentage = coupon_match.discount_value
+                        offer_name = f"Coupon {coupon_match.code} ({coupon_match.discount_value}% OFF)"
+            else:
+                messages.warning(request, f"Coupon '{coupon_input}' is either invalid or expired.")
 
         # Compute bill with auto GST & applied discount
         bill = calculate_stay_pricing(
@@ -173,9 +198,9 @@ def book_hotel(request):
             meal_extra=meal_extra,
             nights=nights,
             rooms=1,
-            discount_percent=discount_percentage
+            discount_percent=discount_percentage,
+            flat_discount=flat_discount_amount
         )
-
         custom_booking_id = f"MMY-HTL-{uuid.uuid4().hex[:4].upper()}"
 
         # 1. Create and save booking in DB
@@ -193,6 +218,8 @@ def book_hotel(request):
             destination_title=f"{hotel.name} ({hotel.city})",
             travel_date=check_in_date,
             guests_count=2,
+            coupon=applied_coupon_obj,                  # <-- Naya Add hua
+            discount_amount=bill['discount_amount'],    # <-- Naya Add hua
             base_amount=bill['taxable_amount'],
             cgst_amount=bill['cgst'],
             sgst_amount=bill['sgst'],
@@ -914,19 +941,29 @@ def portal_room_delete(request, hotel_id, room_id):
     room.delete()
     messages.success(request, "Room category removed.")
     return redirect('portal_room_manage', hotel_id=hotel_id)
-from django.template.loader import render_to_string
 
-# 1. Tax Invoice Print/Download View (Dual-Copy: Customer & Hotel)
+# Seedha yahi helper daal do, alag file ki need nahi hai
+def render_to_pdf(template_src, context_dict={}):
+    template = get_template(template_src)
+    html = template.render(context_dict)
+    result = io.BytesIO()
+    pdf = pisa.pisaDocument(io.BytesIO(html.encode("UTF-8")), result)
+    if not pdf.err:
+        return result.getvalue()
+    return None
+
 @login_required(login_url='portal_login')
 def portal_booking_invoice(request, booking_id):
     booking = get_object_or_404(
         Booking.objects.select_related('hotel', 'room_type', 'meal_plan'),
         booking_id=booking_id
     )
+    
     # Calculate nights breakdown
     nights = 1
     if booking.check_in and booking.check_out:
         nights = max((booking.check_out - booking.check_in).days, 1)
+
     context = {
         'booking': booking,
         'hotel': booking.hotel,
@@ -934,7 +971,16 @@ def portal_booking_invoice(request, booking_id):
         'invoice_number': f"INV-{booking.booking_id}",
         'invoice_date': booking.created_at.date() if hasattr(booking, 'created_at') else timezone.localdate(),
     }
-    return render(request, 'custom_admin/invoice_print.html', context)
+
+    # Direct PDF generation
+    pdf = render_to_pdf('custom_admin/invoice_print.html', context)
+    if pdf:
+        response = HttpResponse(pdf, content_type='application/pdf')
+        # Agar click karte hi direct device mein save karwana ho toh 'attachment', browser PDF reader mein kholna ho toh 'inline'
+        response['Content-Disposition'] = f'attachment; filename="Invoice_{booking.booking_id}.pdf"'
+        return response
+
+    return HttpResponse("Error generating invoice PDF", status=500)
 
 # 2. Click Instant Room Toggle (Open/Close Room for Bookings)
 @user_passes_test(is_admin, login_url='portal_login')
@@ -946,20 +992,6 @@ def portal_room_toggle_status(request, room_id):
     status_label = "OPEN" if room.is_open else "BLOCKED / CLOSED"
     messages.success(request, f"Inventory status for '{room.name}' updated to {status_label}.")
     return redirect('portal_room_manage', hotel_id=room.hotel.id)
-
-import urllib.parse
-from django.shortcuts import redirect, get_object_or_404
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.db.models import Q
-
-from .models import Booking
-from .notifications import (
-    send_booking_sms,
-    send_booking_email,
-    get_whatsapp_booking_text
-)
-
 
 @login_required(login_url='portal_login')
 def portal_booking_send_whatsapp(request, booking_id):
@@ -1007,3 +1039,42 @@ def portal_booking_send_whatsapp(request, booking_id):
     # Open WhatsApp chat
     whatsapp_url = f"https://api.whatsapp.com/send?phone={clean_phone}&text={encoded_text}"
     return redirect(whatsapp_url)
+
+@require_POST
+def apply_coupon_ajax(request):
+    coupon_code = request.POST.get('coupon_code', '').strip()
+    base_rate = request.POST.get('base_rate', 0)
+    meal_extra = request.POST.get('meal_extra', 0)
+    nights = request.POST.get('nights', 1)
+
+    if not coupon_code:
+        return JsonResponse({'success': False, 'message': 'Please enter a coupon code.'}, status=400)
+
+    coupon = Coupon.objects.filter(code__iexact=coupon_code, is_active=True).first()
+    today = timezone.localdate()
+
+    if not coupon or (coupon.valid_till and coupon.valid_till < today):
+        return JsonResponse({'success': False, 'message': 'Invalid or expired coupon.'}, status=400)
+
+    flat_disc = coupon.discount_value if coupon.discount_type == 'flat' else 0
+    pct_disc = coupon.discount_value if coupon.discount_type == 'percentage' else 0
+
+    bill = calculate_stay_pricing(
+        base_price=base_rate,
+        meal_extra=meal_extra,
+        nights=nights,
+        rooms=1,
+        discount_percent=pct_disc,
+        flat_discount=flat_disc
+    )
+
+    return JsonResponse({
+        'success': True,
+        'message': f"Coupon '{coupon.code}' applied!",
+        'discount_amount': str(bill['discount_amount']),
+        'taxable_amount': str(bill['taxable_amount']),
+        'cgst': str(bill['cgst']),
+        'sgst': str(bill['sgst']),
+        'total_gst': str(bill['total_gst']),
+        'grand_total': str(bill['grand_total']),
+    })
