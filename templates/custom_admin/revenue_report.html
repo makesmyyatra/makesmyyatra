@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Revenue Report | MakesMyYatra Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
+
+  <div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+    
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl font-black text-slate-900">Revenue & Financial Analytics</h1>
+        <p class="text-xs text-slate-500 mt-0.5">Hotel-wise and date-wise audited revenue collections</p>
+      </div>
+      <div class="flex gap-2">
+        <a href="{% url 'portal_dashboard' %}" class="bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+          <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Dashboard
+        </a>
+      </div>
+    </div>
+
+    <!-- Filter Form Bar -->
+    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm mb-6">
+      <form method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">From Date</label>
+          <input type="date" name="start_date" value="{{ start_date }}" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium focus:ring-orange-500 focus:border-orange-500">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">To Date</label>
+          <input type="date" name="end_date" value="{{ end_date }}" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium focus:ring-orange-500 focus:border-orange-500">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Filter by Property</label>
+          <select name="hotel_id" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium focus:ring-orange-500 focus:border-orange-500">
+            <option value="">All Hotels & Stays</option>
+            {% for h in hotels %}
+              <option value="{{ h.id }}" {% if selected_hotel == h.id %}selected{% endif %}>{{ h.name }} ({{ h.city }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="flex gap-2">
+          <button type="submit" class="w-full bg-slate-900 hover:bg-black text-white px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow">
+            <i data-lucide="filter" class="w-3.5 h-3.5"></i> Apply Filters
+          </button>
+          <a href="{% url 'portal_revenue_report' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center" title="Reset Filters">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+          </a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Bookings</span>
+        <span class="text-2xl font-black text-slate-900 mt-1 block">{{ kpi.total_bookings }}</span>
+      </div>
+
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Gross Revenue</span>
+        <span class="text-2xl font-black text-emerald-600 mt-1 block">₹{{ kpi.total_revenue }}</span>
+      </div>
+
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Meal Plans Revenue</span>
+        <span class="text-2xl font-black text-amber-600 mt-1 block">₹{{ kpi.total_meals }}</span>
+      </div>
+
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total GST Collected</span>
+        <span class="text-2xl font-black text-blue-600 mt-1 block">₹{{ kpi.total_gst }}</span>
+      </div>
+    </div>
+
+    <!-- Tables Layout Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <!-- Hotel-wise Revenue Table -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col">
+        <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+          <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="hotel" class="w-4 h-4 text-orange-600"></i> Hotel-wise Performance
+          </h3>
+          <span class="text-[11px] font-semibold text-slate-500">{{ hotel_summary|length }} Properties</span>
+        </div>
+        <div class="overflow-x-auto flex-1">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
+              <tr>
+                <th class="py-3 px-4">Hotel Name</th>
+                <th class="py-3 px-3 text-center">Bookings</th>
+                <th class="py-3 px-3 text-right">Meal Addon</th>
+                <th class="py-3 px-4 text-right">Total Revenue</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 font-medium">
+              {% for h in hotel_summary %}
+                <tr class="hover:bg-slate-50/60 transition">
+                  <td class="py-3 px-4">
+                    <p class="font-bold text-slate-900">{{ h.hotel__name }}</p>
+                    <p class="text-[10px] text-slate-400">{{ h.hotel__city }}</p>
+                  </td>
+                  <td class="py-3 px-3 text-center font-bold text-slate-700">{{ h.booking_count }}</td>
+                  <td class="py-3 px-3 text-right text-amber-700">₹{{ h.meal_revenue|default:"0.00" }}</td>
+                  <td class="py-3 px-4 text-right font-black text-emerald-600">₹{{ h.revenue }}</td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="4" class="py-6 text-center text-xs text-slate-400">No bookings found for the selected filter.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Date-wise Revenue Table -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col">
+        <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+          <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="calendar" class="w-4 h-4 text-blue-600"></i> Date-wise Daily Revenue
+          </h3>
+          <span class="text-[11px] font-semibold text-slate-500">{{ date_summary|length }} Active Days</span>
+        </div>
+        <div class="overflow-x-auto flex-1">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
+              <tr>
+                <th class="py-3 px-4">Date</th>
+                <th class="py-3 px-3 text-center">Bookings</th>
+                <th class="py-3 px-3 text-right">GST Collected</th>
+                <th class="py-3 px-4 text-right">Daily Total</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 font-medium">
+              {% for d in date_summary %}
+                <tr class="hover:bg-slate-50/60 transition">
+                  <td class="py-3 px-4 font-bold text-slate-800">
+                    {{ d.created_at__date|date:"d M, Y" }}
+                  </td>
+                  <td class="py-3 px-3 text-center font-bold text-slate-700">{{ d.booking_count }}</td>
+                  <td class="py-3 px-3 text-right text-slate-500">₹{{ d.daily_gst|default:"0.00" }}</td>
+                  <td class="py-3 px-4 text-right font-black text-emerald-600">₹{{ d.daily_revenue }}</td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="4" class="py-6 text-center text-xs text-slate-400">No daily records for this date range.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>lucide.createIcons();</script>
+</body>
+</html>

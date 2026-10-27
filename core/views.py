@@ -24,6 +24,7 @@ from django.views.decorators.http import require_POST
 from .models import Hotel, RoomType, MealPlan, Booking, EmergencySupport, HotelReview, HotelMedia, Coupon
 from .forms import HotelForm, RoomTypeForm, BookingStatusForm
 from django.template.loader import get_template
+from datetime import datetime, timedelta
 from .notifications import (
     send_booking_sms,
     send_booking_email,
@@ -35,17 +36,18 @@ from .notifications import (
 def is_admin(user):
     return user.is_authenticated and (user.is_staff or user.is_superuser)
 
-# Pricing and GST slab calculator with dynamic percentage discount
+# Pricing and GST slab calculator with dynamic percentage/flat discount
 def calculate_stay_pricing(base_price, meal_extra=0, nights=1, rooms=1, discount_percent=0, flat_discount=0):
     base_price = Decimal(str(base_price))
     meal_extra = Decimal(str(meal_extra))
     nights = int(nights) if int(nights) > 0 else 1
     rooms = int(rooms) if int(rooms) > 0 else 1
-    
+
+    # Per-night room rate including meal plan add-on
     nightly_rate = base_price + meal_extra
     gross_total = nightly_rate * nights * rooms
-    
-    # Flat discount ya Percentage discount dono handle honge
+
+    # Flat discount ya Percentage discount handling
     if Decimal(str(flat_discount)) > Decimal('0.00'):
         discount_amount = min(Decimal(str(flat_discount)), gross_total).quantize(Decimal('0.01'))
     elif Decimal(str(discount_percent)) > Decimal('0.00'):
@@ -54,20 +56,20 @@ def calculate_stay_pricing(base_price, meal_extra=0, nights=1, rooms=1, discount
         discount_amount = Decimal('0.00')
 
     taxable_amount = max(Decimal('0.00'), gross_total - discount_amount)
-    
-    # Dynamic GST slab logic (Per-night room rate ke hisab se)
+
+    # < 1000: 0% GST | 1000 to 7500: 12% GST | > 7500: 18% GST
     if nightly_rate < 1000:
         gst_rate = Decimal('0.00')
     elif nightly_rate <= 7500:
         gst_rate = Decimal('0.12')
     else:
         gst_rate = Decimal('0.18')
-        
+
     total_gst = (taxable_amount * gst_rate).quantize(Decimal('0.01'))
     cgst = (total_gst / Decimal('2.00')).quantize(Decimal('0.01'))
     sgst = (total_gst - cgst).quantize(Decimal('0.01'))
     grand_total = (taxable_amount + total_gst).quantize(Decimal('0.01'))
-    
+
     return {
         'nightly_rate': nightly_rate,
         'gross_total': gross_total,
@@ -109,7 +111,6 @@ def index(request):
         'request': request,
     })
 
-
 # Booking engine with dynamic pricing, meal plan, auto offers, and GST
 def book_hotel(request):
     if request.method == 'POST':
@@ -121,6 +122,10 @@ def book_hotel(request):
         guest_email = request.POST.get('guest_email', '').strip()
         check_in_str = request.POST.get('check_in')
         check_out_str = request.POST.get('check_out')
+
+        adults_count = int(request.POST.get('adults_count', 2))
+        children_count = int(request.POST.get('children_count', 0))
+        total_guests = adults_count + children_count if (adults_count + children_count) > 0 else 2
 
         hotel = get_object_or_404(Hotel, id=hotel_id)
         room_type = RoomType.objects.filter(id=room_type_id).first() if room_type_id else hotel.room_types.first()
@@ -187,7 +192,7 @@ def book_hotel(request):
                 applied_coupon_obj = coupon_match
                 if coupon_match.discount_type == 'flat':
                     flat_discount_amount = coupon_match.discount_value
-                    discount_percentage = Decimal('0.00')  # Flat coupon override
+                    discount_percentage = Decimal('0.00')
                     offer_name = f"Coupon {coupon_match.code} (Rs. {coupon_match.discount_value} OFF)"
                 else:
                     if coupon_match.discount_value > discount_percentage:
@@ -196,16 +201,21 @@ def book_hotel(request):
             else:
                 messages.warning(request, f"Coupon '{coupon_input}' is either invalid or expired.")
 
-        # Compute bill with auto GST & applied discount
+        # Compute bill via calculator
+        rooms_count = 1
         bill = calculate_stay_pricing(
             base_price=base_rate,
             meal_extra=meal_extra,
             nights=nights,
-            rooms=1,
+            rooms=rooms_count,
             discount_percent=discount_percentage,
             flat_discount=flat_discount_amount
         )
         custom_booking_id = f"MMY-HTL-{uuid.uuid4().hex[:4].upper()}"
+
+        # Clean Breakdown Amounts
+        pure_room_base = (base_rate * Decimal(nights) * Decimal(rooms_count)).quantize(Decimal('0.01'))
+        total_meal_plan_amount = (meal_extra * Decimal(nights) * Decimal(rooms_count)).quantize(Decimal('0.01'))
 
         # 1. Create and save booking in DB
         booking = Booking.objects.create(
@@ -221,10 +231,13 @@ def book_hotel(request):
             check_out=check_out_date,
             destination_title=f"{hotel.name} ({hotel.city})",
             travel_date=check_in_date,
-            guests_count=2,
-            coupon=applied_coupon_obj,                  # <-- Naya Add hua
-            discount_amount=bill['discount_amount'],    # <-- Naya Add hua
-            base_amount=bill['taxable_amount'],
+            guests_count=total_guests,
+            adults_count=adults_count,
+            children_count=children_count,
+            coupon=applied_coupon_obj,
+            base_amount=pure_room_base,                       
+            meal_plan_amount=total_meal_plan_amount,       
+            discount_amount=bill['discount_amount'],
             cgst_amount=bill['cgst'],
             sgst_amount=bill['sgst'],
             gst_amount=bill['total_gst'],
@@ -978,45 +991,83 @@ def portal_room_delete(request, hotel_id, room_id):
     messages.success(request, "Room category removed.")
     return redirect('portal_room_manage', hotel_id=hotel_id)
 
-# Seedha yahi helper daal do, alag file ki need nahi hai
+# Reusable PDF Helper
 def render_to_pdf(template_src, context_dict={}):
-    template = get_template(template_src)
-    html = template.render(context_dict)
-    result = io.BytesIO()
-    pdf = pisa.pisaDocument(io.BytesIO(html.encode("UTF-8")), result)
-    if not pdf.err:
-        return result.getvalue()
-    return None
+  template = get_template(template_src)
+  html = template.render(context_dict)
+  result = io.BytesIO()
+  pdf = pisa.pisaDocument(io.BytesIO(html.encode('UTF-8')), result)
+  if not pdf.err:
+    return result.getvalue()
+  return None
 
+# 1. Customer View (Success page se click karne ke liye, no portal login needed)
+def download_customer_voucher(request, booking_id):
+  booking = get_object_or_404(
+      Booking.objects.select_related('hotel', 'room_type', 'meal_plan'),
+      booking_id=booking_id,
+  )
+
+  nights = 1
+  if booking.check_in and booking.check_out:
+    nights = max((booking.check_out - booking.check_in).days, 1)
+
+  context = {
+      'booking': booking,
+      'hotel': booking.hotel,
+      'nights': nights,
+      'invoice_number': f'INV-{booking.booking_id}',
+      'invoice_date': (
+          booking.created_at.date()
+          if hasattr(booking, 'created_at')
+          else timezone.localdate()
+      ),
+  }
+
+  pdf = render_to_pdf('custom_admin/invoice_print.html', context)
+  if pdf:
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = (
+        f'attachment; filename="Voucher_{booking.booking_id}.pdf"'
+    )
+    return response
+
+  return HttpResponse('Error generating voucher PDF', status=500)
+
+
+# 2. Admin Portal View 
 @login_required(login_url='portal_login')
 def portal_booking_invoice(request, booking_id):
-    booking = get_object_or_404(
-        Booking.objects.select_related('hotel', 'room_type', 'meal_plan'),
-        booking_id=booking_id
+  booking = get_object_or_404(
+      Booking.objects.select_related('hotel', 'room_type', 'meal_plan'),
+      booking_id=booking_id,
+  )
+
+  nights = 1
+  if booking.check_in and booking.check_out:
+    nights = max((booking.check_out - booking.check_in).days, 1)
+
+  context = {
+      'booking': booking,
+      'hotel': booking.hotel,
+      'nights': nights,
+      'invoice_number': f'INV-{booking.booking_id}',
+      'invoice_date': (
+          booking.created_at.date()
+          if hasattr(booking, 'created_at')
+          else timezone.localdate()
+      ),
+  }
+
+  pdf = render_to_pdf('custom_admin/invoice_print.html', context)
+  if pdf:
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = (
+        f'attachment; filename="Invoice_{booking.booking_id}.pdf"'
     )
-    
-    # Calculate nights breakdown
-    nights = 1
-    if booking.check_in and booking.check_out:
-        nights = max((booking.check_out - booking.check_in).days, 1)
+    return response
 
-    context = {
-        'booking': booking,
-        'hotel': booking.hotel,
-        'nights': nights,
-        'invoice_number': f"INV-{booking.booking_id}",
-        'invoice_date': booking.created_at.date() if hasattr(booking, 'created_at') else timezone.localdate(),
-    }
-
-    # Direct PDF generation
-    pdf = render_to_pdf('custom_admin/invoice_print.html', context)
-    if pdf:
-        response = HttpResponse(pdf, content_type='application/pdf')
-        # Agar click karte hi direct device mein save karwana ho toh 'attachment', browser PDF reader mein kholna ho toh 'inline'
-        response['Content-Disposition'] = f'attachment; filename="Invoice_{booking.booking_id}.pdf"'
-        return response
-
-    return HttpResponse("Error generating invoice PDF", status=500)
+  return HttpResponse('Error generating invoice PDF', status=500)
 
 # 2. Click Instant Room Toggle (Open/Close Room for Bookings)
 @user_passes_test(is_admin, login_url='portal_login')
@@ -1050,11 +1101,11 @@ def portal_booking_send_whatsapp(request, booking_id):
 
     # Feedback flash message for Admin
     if sms_sent and email_sent:
-        messages.success(request, f"SMS aur Email #{booking.booking_id} ke liye bhej diye gaye hain!")
+        messages.success(request, f"SMS and Email #{booking.booking_id} sent!")
     elif email_sent:
-        messages.info(request, f"Email dispatch ho gaya hai (#{booking.booking_id}).")
+        messages.info(request, f"Email dispatched (#{booking.booking_id}).")
     elif sms_sent:
-        messages.info(request, f"SMS dispatch ho gaya hai (#{booking.booking_id}).")
+        messages.info(request, f"SMS dispatched (#{booking.booking_id}).")
 
     # 3. Format Phone & Message for WhatsApp Redirect
     raw_phone = str(booking.guest_phone).strip().replace(" ", "").replace("-", "").replace("+", "")
@@ -1155,3 +1206,136 @@ def portal_coupon_delete(request, coupon_id):
 def portal_meal_plans(request):
     meal_plans = MealPlan.objects.all().order_by('id')
     return render(request, 'custom_admin/meal_plans.html', {'meal_plans': meal_plans})
+
+
+@login_required(login_url='portal_login')
+def portal_revenue_report(request):
+    hotels = Hotel.objects.all().order_by('name')
+    
+    # 1. Date Filters Read Karein (Default: Last 30 Days)
+    today = timezone.localdate()
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    hotel_id = request.GET.get('hotel_id')
+
+    try:
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else today - timedelta(days=30)
+    except ValueError:
+        start_date = today - timedelta(days=30)
+
+    try:
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else today
+    except ValueError:
+        end_date = today
+
+    # 2. Base Query (Sirf Confirmed / Completed bookings ka revenue count hoga)
+    valid_statuses = ['CONFIRMED', 'CHECKED_IN', 'CHECKED_OUT']
+    base_bookings = Booking.objects.filter(
+        created_at__date__gte=start_date,
+        created_at__date__lte=end_date,
+        status__in=valid_statuses
+    )
+
+    if hotel_id and hotel_id.isdigit():
+        base_bookings = base_bookings.filter(hotel_id=int(hotel_id))
+
+    # 3. Overall KPI Metrics
+    totals = base_bookings.aggregate(
+        total_bookings=Count('id'),
+        total_revenue=Sum('total_amount'),
+        total_gst=Sum('gst_amount'),
+        total_meals=Sum('meal_plan_amount'),
+        total_discount=Sum('discount_amount'),
+    )
+
+    kpi_summary = {
+        'total_bookings': totals['total_bookings'] or 0,
+        'total_revenue': totals['total_revenue'] or Decimal('0.00'),
+        'total_gst': totals['total_gst'] or Decimal('0.00'),
+        'total_meals': totals['total_meals'] or Decimal('0.00'),
+        'total_discount': totals['total_discount'] or Decimal('0.00'),
+        'net_revenue': ((totals['total_revenue'] or Decimal('0.00')) - (totals['total_gst'] or Decimal('0.00'))),
+    }
+
+    # 4. Hotel-wise Breakdown
+    hotel_summary = (
+        base_bookings.values('hotel__id', 'hotel__name', 'hotel__city')
+        .annotate(
+            booking_count=Count('id'),
+            revenue=Sum('total_amount'),
+            tax=Sum('gst_amount'),
+            meal_revenue=Sum('meal_plan_amount')
+        )
+        .order_by('-revenue')
+    )
+
+    # 5. Date-wise Breakdown
+    date_summary = (
+        base_bookings.values('created_at__date')
+        .annotate(
+            booking_count=Count('id'),
+            daily_revenue=Sum('total_amount'),
+            daily_gst=Sum('gst_amount')
+        )
+        .order_by('-created_at__date')
+    )
+
+    context = {
+        'hotels': hotels,
+        'selected_hotel': int(hotel_id) if hotel_id and hotel_id.isdigit() else '',
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'end_date': end_date.strftime('%Y-%m-%d'),
+        'kpi': kpi_summary,
+        'hotel_summary': hotel_summary,
+        'date_summary': date_summary,
+    }
+    return render(request, 'custom_admin/revenue_report.html', context)
+
+
+def calculate_cancellation_refund(booking):
+  """Calculates refund and deduction based on hours left until check-in date."""
+  now = timezone.now()
+  # Check-in date at standard 12:00 PM check-in time
+  check_in_datetime = timezone.make_aware(
+      datetime.combine(booking.check_in, datetime.min.time().replace(hour=12))
+  )
+
+  hours_left = (check_in_datetime - now).total_seconds() / 3600
+  total_paid = booking.total_amount
+
+  if hours_left >= 48:
+    refund_percent = Decimal('1.00')  # 100% Refund
+    policy_note = 'Free cancellation applied (>48 hrs before check-in)'
+  elif 24 <= hours_left < 48:
+    refund_percent = Decimal('0.50')  # 50% Refund
+    policy_note = '50% retention charge applied (24-48 hrs before check-in)'
+  else:
+    refund_percent = Decimal('0.00')  # No Refund
+    policy_note = 'No refund policy applied (<24 hrs before check-in)'
+
+  refund_amount = (total_paid * refund_percent).quantize(Decimal('0.01'))
+  cancellation_fee = (total_paid - refund_amount).quantize(Decimal('0.01'))
+
+  return refund_amount, cancellation_fee, policy_note
+
+
+@login_required(login_url='portal_login')
+def portal_booking_cancel(request, booking_id):
+  booking = get_object_or_404(Booking, booking_id=booking_id)
+
+  if booking.status == 'CANCELLED':
+    messages.warning(request, f'Booking #{booking.booking_id} is already cancelled.')
+    return redirect('portal_bookings')
+
+  refund_amt, cancel_fee, note = calculate_cancellation_refund(booking)
+
+  # Status update
+  booking.status = 'CANCELLED'
+  booking.save()
+
+  messages.success(
+      request,
+      f'Booking #{booking.booking_id} cancelled successfully! Refund Amount:'
+      f' ₹{refund_amt} | Fee: ₹{cancel_fee} ({note})',
+  )
+  return redirect('portal_bookings')

@@ -73,16 +73,16 @@ def get_whatsapp_booking_text(booking):
 
     return (
         f"🏔️ *MakesMyYatra Booking Confirmation*\n\n"
-        f"Namaste *{booking.guest_name}*,\n"
-        f"Aapka mountain stay confirm ho chuka hai!\n\n"
+        f"Dear *{booking.guest_name}*,\n"
+        f"Your mountain stay has been successfully confirmed!\n\n"
         f"🏨 *Property:* {booking.hotel.name}\n"
         f"📍 *Location:* {booking.hotel.city}, Himachal Pradesh\n"
         f"🔖 *Booking ID:* #{booking.booking_id}\n"
         f"📅 *Dates:* {check_in_str} to {check_out_str}\n"
         f"🍽️ *Meal Plan:* {meal_display}\n"
         f"💰 *Total Payable:* ₹{booking.total_amount} ({booking.get_payment_mode_display() if hasattr(booking, 'get_payment_mode_display') else booking.payment_mode})\n\n"
-        f"Route guide ya kisi bhi query ke liye support helpline: +91 98160 00000\n\n"
-        f"Shubh Yatra! 🌲"
+        f"For route guidance or any assistance, please contact our support helpline: +91 98160 00000\n\n"
+        f"Have a wonderful trip! 🌲"
     )
 
 
@@ -141,8 +141,8 @@ def send_booking_email(booking):
     check_out_str = booking.check_out.strftime('%d %b %Y') if hasattr(booking.check_out, 'strftime') else str(booking.check_out)
 
     message = (
-        f"Namaste {booking.guest_name},\n\n"
-        f"Aapki booking '{booking.hotel.name}' ke liye successfully confirm ho gayi hai.\n\n"
+        f"Dear {booking.guest_name},\n\n"
+        f"Your booking for '{booking.hotel.name}' has been successfully confirmed.\n\n"
         f"--- BOOKING SUMMARY ---\n"
         f"Booking ID: #{booking.booking_id}\n"
         f"Property: {booking.hotel.name}\n"
@@ -152,7 +152,7 @@ def send_booking_email(booking):
         f"Total Amount: Rs. {booking.total_amount}\n"
         f"Payment Mode: {booking.get_payment_mode_display() if hasattr(booking, 'get_payment_mode_display') else booking.payment_mode}\n\n"
         f"Address / Reach Out: {booking.hotel.address or booking.hotel.city}\n\n"
-        f"Shubh Yatra!\n"
+        f"Have a wonderful trip!\n"
         f"Team MakesMyYatra\n"
         f"Helpline: +91 98160 00000"
     )

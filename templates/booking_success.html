@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MakesMyYatra</title>
+  <title>MakesMyYatra - Booking Voucher</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -23,7 +23,7 @@
       <p class="text-xs text-slate-500 mt-0.5">Your stay has been confirmed in Himachal Pradesh.</p>
     </div>
 
-    <!-- Booking Summary Card -->
+    <!-- Booking Details Summary -->
     <div class="mt-6 bg-slate-50 rounded-2xl p-5 border border-slate-200/80 space-y-3">
       <div class="flex justify-between items-center pb-3 border-b border-slate-200 text-xs">
         <span class="text-slate-500 font-semibold">Booking ID</span>
@@ -41,8 +41,22 @@
       </div>
 
       <div class="flex justify-between items-center text-xs">
-        <span class="text-slate-500 font-medium">Guest Name</span>
-        <span class="font-bold text-slate-900">{{ guest_name }}</span>
+        <span class="text-slate-500 font-medium">Room Type</span>
+        <span class="font-bold text-slate-900">{{ booking.room_type.name|default:"Deluxe Room" }}</span>
+      </div>
+
+      <!-- Meal Plan Badge -->
+      <div class="flex justify-between items-center text-xs">
+        <span class="text-slate-500 font-medium">Meal Plan</span>
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+          <i data-lucide="utensils" class="w-3 h-3 mr-1 text-amber-600"></i>
+          {{ booking.meal_plan.get_plan_code_display|default:"Room Only (EP)" }}
+        </span>
+      </div>
+
+      <div class="flex justify-between items-center text-xs">
+        <span class="text-slate-500 font-medium">Guest Details</span>
+        <span class="font-bold text-slate-900">{{ guest_name }} ({{ booking.guests_count }} Guests)</span>
       </div>
 
       <div class="flex justify-between items-center text-xs">
@@ -50,22 +64,48 @@
         <span class="font-bold text-slate-900">{{ check_in }} → {{ check_out }}</span>
       </div>
 
-      <div class="flex justify-between items-center text-xs">
-        <span class="text-slate-500 font-medium">Payment Mode</span>
-        <span class="font-bold text-slate-700 bg-slate-200 px-2 py-0.5 rounded text-[10px]">Pay at Hotel</span>
+      <!-- Detailed Price Breakup -->
+      <div class="border-t border-slate-200 pt-3 space-y-1.5 text-xs text-slate-600">
+        <div class="flex justify-between">
+          <span>Room Base Fare:</span>
+          <span class="font-semibold text-slate-800">₹{{ booking.base_amount }}</span>
+        </div>
+
+        {% if booking.meal_plan_amount > 0 %}
+        <div class="flex justify-between">
+          <span class="flex items-center gap-1">
+            <i data-lucide="coffee" class="w-3 h-3 text-amber-600"></i> Meal Plan Charges:
+          </span>
+          <span class="font-semibold text-slate-800">+₹{{ booking.meal_plan_amount }}</span>
+        </div>
+        {% endif %}
+
+        {% if booking.discount_amount > 0 %}
+        <div class="flex justify-between text-emerald-600">
+          <span>Discount ({{ offer_applied }}):</span>
+          <span class="font-bold">-₹{{ booking.discount_amount }}</span>
+        </div>
+        {% endif %}
+
+        <div class="flex justify-between text-slate-500">
+          <span>Taxes & GST:</span>
+          <span>+₹{{ booking.gst_amount }}</span>
+        </div>
       </div>
 
-      <div class="flex justify-between items-center pt-3 border-t border-slate-200 text-sm">
-        <span class="font-black text-slate-800">Total Payable Amount</span>
-        <span class="font-black text-emerald-600 text-base">₹{{ booking.total_amount }}</span>
+      <!-- Total Payable -->
+      <div class="flex justify-between items-center pt-3 border-t border-slate-300 text-sm">
+        <div>
+          <span class="font-black text-slate-900 block">Total Amount</span>
+          <span class="text-[10px] text-slate-400 font-semibold uppercase">{{ booking.get_payment_mode_display|default:"Pay at Hotel" }}</span>
+        </div>
+        <span class="font-black text-emerald-600 text-lg">₹{{ booking.total_amount }}</span>
       </div>
     </div>
 
-    <!-- Actions -->
-    <div class="mt-6 flex flex-col gap-2">
-      <button onclick="window.print()" class="w-full bg-slate-900 hover:bg-black text-white font-black text-xs uppercase tracking-wider py-3.5 rounded-xl transition flex items-center justify-center gap-2 shadow-md">
-        <i data-lucide="printer" class="w-4 h-4"></i> Print Customer Voucher
-      </button>
+    <a href="{% url 'download_customer_voucher' booking.booking_id %}" class="w-full bg-slate-900 hover:bg-black text-white font-black text-xs uppercase tracking-wider py-3.5 rounded-xl transition flex items-center justify-center gap-2 shadow-md">
+      <i data-lucide="download" class="w-4 h-4"></i> Download PDF Voucher
+    </a>
       <a href="{% url 'index' %}" class="w-full text-center text-xs font-bold text-slate-500 hover:text-slate-900 py-2 transition">
         ← Back to Browse Stays
       </a>

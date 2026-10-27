@@ -1,16 +1,13 @@
 {% extends 'custom_admin/base.html' %}
-
 {% block title %}ALL BOOKINGS - MakesMyYatra{% endblock %}
 {% block header_title %}ALL BOOKINGS{% endblock %}
-
 {% block content %}
 <div class="space-y-6">
-
   <!-- Flash Messages -->
   {% if messages %}
   <div class="space-y-2">
     {% for message in messages %}
-    <div class="p-3.5 rounded-2xl {% if message.tags == 'success' %}bg-emerald-50 border border-emerald-200 text-emerald-800{% else %}bg-amber-50 border border-amber-200 text-amber-800{% endif %} text-xs font-bold flex items-center justify-between shadow-sm">
+    <div class="p-3.5 rounded-2xl {% if message.tags == 'success' %}bg-emerald-50 border border-emerald-200 text-emerald-800{% elif message.tags == 'warning' %}bg-amber-50 border border-amber-200 text-amber-800{% else %}bg-rose-50 border border-rose-200 text-rose-800{% endif %} text-xs font-bold flex items-center justify-between shadow-sm">
       <span>{{ message }}</span>
       <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">✕</button>
     </div>
@@ -29,19 +26,20 @@
         <h2 class="text-sm font-black text-slate-900 uppercase tracking-wider">All Reservations</h2>
         <p class="text-xs text-slate-500 font-medium mt-0.5">Total Bookings Logged: <span class="font-bold text-slate-800">{{ bookings|length }}</span></p>
       </div>
-
       <div class="flex items-center gap-2.5">
         <!-- Excel Export -->
         <a href="{% url 'export_bookings_excel' %}" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
           <i data-lucide="sheet" class="w-4 h-4"></i> Export to Excel
         </a>
-
+        <!-- Revenue Report Shortcut -->
+        <a href="{% url 'portal_revenue_report' %}" class="px-3.5 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+          <i data-lucide="bar-chart-3" class="w-4 h-4"></i> Revenue Report
+        </a>
         <!-- Three-Dots Button (⋮) -->
         <div class="relative">
           <button type="button" onclick="toggleTopMenu()" class="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
             <i data-lucide="more-vertical" class="w-4 h-4"></i>
           </button>
-
           <!-- Three-Dots Dropdown Menu -->
           <div id="topDropdownMenu" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50">
             <button type="button" onclick="enableSelectionMode()" class="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
@@ -85,7 +83,7 @@
               <th class="py-4 px-4">Guest Details</th>
               <th class="py-4 px-4">Property & Meal</th>
               <th class="py-4 px-4">Check-In / Out</th>
-              <th class="py-4 px-4">Amount</th>
+              <th class="py-4 px-4 text-right">Amount & Breakdown</th>
               <th class="py-4 px-4">Status</th>
               <th class="py-4 px-4 text-right">Actions</th>
             </tr>
@@ -137,12 +135,22 @@
                 {% endif %}
               </td>
 
-              <!-- Amount & Payment Mode -->
-              <td class="py-4 px-4">
-                <span class="font-extrabold text-slate-900 text-sm">₹{{ b.total_amount|default:b.base_amount }}</span>
-                <span class="block text-[9px] uppercase tracking-wider text-slate-400">
+              <!-- Combined Pricing & Breakdown Column -->
+              <td class="py-4 px-4 text-right">
+                <p class="font-extrabold text-slate-900 text-sm">₹{{ b.total_amount }}</p>
+                <span class="inline-block text-[9px] uppercase tracking-wider text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
                   {{ b.get_payment_mode_display|default:b.payment_mode|default:"Pay at Hotel" }}
                 </span>
+                <div class="text-[10px] text-slate-500 space-y-0.5 mt-1">
+                  <p>Base: ₹{{ b.base_amount }}</p>
+                  {% if b.meal_plan_amount > 0 %}
+                    <p class="text-orange-600 font-medium">Meal: +₹{{ b.meal_plan_amount }}</p>
+                  {% endif %}
+                  {% if b.discount_amount > 0 %}
+                    <p class="text-emerald-600 font-medium">Discount: -₹{{ b.discount_amount }}</p>
+                  {% endif %}
+                  <p>GST: ₹{{ b.gst_amount }}</p>
+                </div>
               </td>
 
               <!-- Status Badge -->
@@ -173,13 +181,13 @@
               <!-- Actions Column -->
               <td class="py-4 px-4 text-right whitespace-nowrap">
                 <div class="flex items-center justify-end gap-1.5">
-                  <!-- Tax Invoice PDF/Print -->
+                  <!-- Tax Invoice PDF -->
                   <a href="{% url 'portal_booking_invoice' b.booking_id|default:b.id %}" target="_blank" class="px-2 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl font-bold text-[11px] inline-flex items-center gap-1 transition shadow-sm" title="Print Tax Invoice">
                     <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Invoice
                   </a>
 
-                  <!-- Status Change Toggle -->
-                  {% if b.status != 'CONFIRMED' and b.status != 'CHECKED_IN' %}
+                  <!-- Status Change Actions -->
+                  {% if b.status == 'PENDING' %}
                     <a href="{% url 'portal_booking_status_change' b.booking_id|default:b.id 'CONFIRMED' %}" class="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-[11px] transition shadow-sm">
                       Confirm
                     </a>
@@ -193,8 +201,20 @@
                     </a>
                   {% endif %}
 
-                  <!-- Row Single Delete (Trash Icon) -->
-                  <a href="{% url 'portal_booking_delete' b.id %}" onclick="return confirm('Are you sure you want to delete this booking?');" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete Booking">
+                  <!-- Cancel Booking Button with Policy rules -->
+                  {% if b.status != 'CANCELLED' and b.status != 'CHECKED_OUT' %}
+                    <a href="{% url 'portal_booking_cancel' b.booking_id|default:b.id %}" onclick="return confirm('Are you sure you want to cancel booking #{{ b.booking_id|default:b.id }}? Refund policy rules will apply.');" class="px-2 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl font-bold text-[11px] inline-flex items-center gap-1 transition" title="Cancel Booking">
+                      <i data-lucide="x-circle" class="w-3.5 h-3.5"></i> Cancel
+                    </a>
+                  {% endif %}
+
+                  <!-- WhatsApp Resend Alert -->
+                  <a href="{% url 'portal_booking_send_whatsapp' b.booking_id|default:b.id %}" target="_blank" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition" title="Send WhatsApp Confirmation">
+                    <i data-lucide="message-circle" class="w-4 h-4"></i>
+                  </a>
+
+                  <!-- Row Delete (Trash Icon) -->
+                  <a href="{% url 'portal_booking_delete' b.id %}" onclick="return confirm('Are you sure you want to delete this booking permanently?');" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete Booking">
                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                   </a>
                 </div>
@@ -212,7 +232,6 @@
         </table>
       </div>
     </div>
-
   </form>
 </div>
 {% endblock %}
@@ -224,7 +243,6 @@
     menu.classList.toggle('hidden');
   }
 
-  // Outside click to close top menu
   document.addEventListener('click', (e) => {
     if (!e.target.closest('#topDropdownMenu') && !e.target.closest('button[onclick="toggleTopMenu()"]')) {
       const tm = document.getElementById('topDropdownMenu');
