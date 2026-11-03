@@ -16,7 +16,7 @@ urlpatterns = [
     path('booking/<str:booking_id>/cancel/', views.cancel_booking, name='cancel_booking'),
     
     # --- Hotel Public Reviews & Gallery ---
-    path('hotel/<int:hotel_id>/review/', views.submit_hotel_review, name='submit_hotel_review'),
+    path('hotel/<int:hotel_id>/review/submit/', views.submit_hotel_review, name='submit_hotel_review'),
     path('hotel/<int:hotel_id>/gallery/', views.hotel_gallery, name='hotel_gallery'),
 
     # --- AJAX Endpoints ---

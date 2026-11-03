@@ -1184,7 +1184,7 @@ def submit_hotel_review(request, hotel_id):
         ).first()
 
         if not valid_booking:
-            messages.error(request, "Invalid Booking ID! Ya toh yeh ID is hotel ki nahi hai, ya stay verified nahi hai.")
+            messages.error(request, "Invalid Booking ID! Please ensure you have completed your stay at this property before submitting a review.")
             return redirect('index')
 
         # 2. Check if review already exists for this booking

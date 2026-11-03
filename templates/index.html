@@ -916,23 +916,45 @@
     </div>
   </div>
 
-  <!-- ================= SUBMIT REVIEW MODAL ================= -->
+  <!-- ================= SUBMIT REVIEW MODAL (VERIFIED BOOKING LOCKED) ================= -->
   <div id="reviewModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-200 relative">
       <button onclick="closeReviewModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
         <i data-lucide="x" class="w-5 h-5"></i>
       </button>
       <div class="mb-4">
-        <span class="text-[10px] font-black uppercase tracking-wider text-amber-600 bg-amber-50 px-2.5 py-1 rounded-md">Guest Feedback</span>
+        <span class="text-[10px] font-black uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-md">
+          🛡️ Verified Guest Feedback
+        </span>
         <h3 id="reviewHotelName" class="text-lg font-black text-slate-900 mt-2">Leave a Stay Review</h3>
-        <p class="text-xs text-slate-500 font-medium">Rate your experience to help fellow mountain travelers.</p>
+        <p class="text-xs text-slate-500 font-medium">Rate your experience using your reservation pass ID.</p>
       </div>
+
       <form id="reviewSubmitForm" action="" method="POST" class="space-y-3">
         {% csrf_token %}
+        
+        <!-- Verified Booking ID Field -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">
+            Booking ID <span class="text-slate-400 font-normal">(from your voucher)</span>
+          </label>
+          <input type="text" 
+                 name="booking_id" 
+                 required 
+                 placeholder="e.g. MMY-HTL-1001" 
+                 class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold uppercase tracking-wider outline-none focus:ring-2 focus:ring-blue-500 placeholder:normal-case placeholder:font-sans placeholder:font-normal">
+          <p class="text-[10px] text-slate-400 mt-1"> Please enter your verified booking ID for review validation </p>
+        </div>
+
         <div>
           <label class="block text-[11px] font-bold text-slate-600 mb-1">Your Full Name</label>
-          <input type="text" name="guest_name" required placeholder="e.g. Rohit Thakur" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500">
+          <input type="text" 
+                 name="guest_name" 
+                 required 
+                 placeholder="e.g. Rohit Thakur" 
+                 class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500">
         </div>
+
         <div>
           <label class="block text-[11px] font-bold text-slate-600 mb-1">Star Rating</label>
           <select name="rating" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
@@ -943,12 +965,18 @@
             <option value="1">⭐ (1 - Needs Improvement)</option>
           </select>
         </div>
+
         <div>
           <label class="block text-[11px] font-bold text-slate-600 mb-1">Experience Review</label>
-          <textarea name="comment" rows="3" required placeholder="Tell us about the room quality, scenic view, cleanliness and hospitality..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+          <textarea name="comment" 
+                    rows="3" 
+                    required 
+                    placeholder="Tell us about the room quality, scenic view, cleanliness and hospitality..." 
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500"></textarea>
         </div>
+
         <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase tracking-wider py-3 rounded-xl transition shadow mt-2">
-          Post Review
+          Submit Verified Review
         </button>
       </form>
     </div>
@@ -1410,11 +1438,11 @@
 
     // Review Modal Functions
     function openReviewModal(hotelId, hotelName) {
-      document.getElementById('reviewHotelName').innerText = `Review: ${hotelName}`;
-      document.getElementById('reviewSubmitForm').action = `/hotel/${hotelId}/review/`;
+      const form = document.getElementById('reviewSubmitForm');
+      form.action = `/hotel/${hotelId}/review/submit/`; // thats the endpoint for review submission
+      document.getElementById('reviewHotelName').innerText = hotelName;
       document.getElementById('reviewModal').classList.remove('hidden');
     }
-
     function closeReviewModal() {
       document.getElementById('reviewModal').classList.add('hidden');
     }
