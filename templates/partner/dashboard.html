@@ -1,89 +1,640 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Partner Desk | MakesMyYatra</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Operations Desk | MakesMyYatra</title>
+    <!-- Bootstrap 5 & Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --brand-primary: #0f172a;
+            --brand-accent: #2563eb;
+            --surface-bg: #f8fafc;
+            --card-border: #e2e8f0;
+        }
+
+        body {
+            background-color: var(--surface-bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Top Navbar */
+        .partner-navbar {
+            background: #ffffff;
+            border-bottom: 1px solid var(--card-border);
+            padding: 0.85rem 1.5rem;
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #ffffff;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1rem;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
+        }
+
+        /* Metric Cards */
+        .metric-card {
+            background: #ffffff;
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.4rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            transition: all 0.2s ease;
+            height: 100%;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.08);
+            border-color: #cbd5e1;
+        }
+
+        .metric-icon-wrap {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .metric-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+        }
+
+        .metric-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-top: 0.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        /* Section Container Cards */
+        .desk-card {
+            background: #ffffff;
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .desk-card-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--card-border);
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Property Card Grid */
+        .property-panel {
+            background: #ffffff;
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 1.25rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .property-panel:hover {
+            border-color: #93c5fd;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.06);
+        }
+
+        .room-rate-pill {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0.65rem 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Status Badges */
+        .badge-status {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.35rem 0.75rem;
+            border-radius: 30px;
+            letter-spacing: 0.3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-CONFIRMED { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        .status-CHECKED_IN { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+        .status-CHECKED_OUT { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+        .status-CANCELLED { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+        .status-CANCELLED_BY_PARTNER { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+        .status-CANCELLED_BY_GUEST { background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; }
+
+        /* Tables */
+        .table > :not(caption) > * > * {
+            padding: 1rem 1.25rem;
+            vertical-align: middle;
+        }
+
+        .table-custom thead th {
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #64748b;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--card-border);
+        }
+    </style>
 </head>
-<body class="bg-[#faf8f5] text-slate-800 min-h-screen">
-  <header class="bg-[#0f2e24] text-white py-4 px-6 border-b border-white/10">
-    <div class="max-w-6xl mx-auto flex items-center justify-between">
-      <div>
-        <h1 class="font-serif font-black text-lg text-[#c5a880]">MakesMyYatra Hotelier Desk</h1>
-        <p class="text-[11px] text-white/60">Partner: {{ request.user.username }}</p>
-      </div>
-      <div class="flex items-center gap-3">
-        <a href="{% url 'portal_logout' %}" class="text-xs bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl font-bold transition">Sign Out</a>
-      </div>
-    </div>
-  </header>
+<body>
 
-  <main class="max-w-6xl mx-auto p-6 space-y-6">
-    <!-- Managed Hotels Strip -->
-    <div class="bg-white p-5 rounded-2xl border border-[#e2d9cc] shadow-sm flex items-center justify-between">
-      <div>
-        <span class="text-[10px] font-bold uppercase text-slate-400">Assigned Properties</span>
-        <h2 class="text-base font-bold text-[#0f2e24]">
-          {% for h in hotels %}{{ h.name }}{% if not forloop.last %}, {% endif %}{% empty %}No Property Linked Yet{% endfor %}
-        </h2>
-      </div>
-      <span class="text-xs font-bold px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200">Active Partner</span>
-    </div>
+    <!-- Top Navigation -->
+    <header class="partner-navbar sticky-top">
+        <div class="container-fluid px-3 d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <span class="brand-icon">M</span>
+                <div>
+                    <span class="fw-bold fs-5 text-dark tracking-tight">Makes<span class="text-primary">My</span>Yatra</span>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-2 px-2 py-1" style="font-size: 0.68rem; font-weight: 700;">
+                        PARTNER DESK
+                    </span>
+                </div>
+            </div>
 
-    <!-- Quick Stats -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div class="bg-white p-5 rounded-2xl border border-[#e2d9cc] shadow-sm">
-        <p class="text-xs font-bold text-slate-400 uppercase">Total Guest Reservations</p>
-        <h3 class="text-3xl font-black text-[#0f2e24] mt-1">{{ total_bookings }}</h3>
-      </div>
-      <div class="bg-white p-5 rounded-2xl border border-[#e2d9cc] shadow-sm">
-        <p class="text-xs font-bold text-slate-400 uppercase">Total Revenue Settled</p>
-        <h3 class="text-3xl font-black text-emerald-700 mt-1">₹{{ partner_revenue }}</h3>
-      </div>
-    </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-end d-none d-md-block">
+                    <div class="fw-bold small text-dark">{{ request.user.first_name|default:request.user.username }}</div>
+                    <div class="text-muted" style="font-size: 0.72rem;">Verified Stay Host</div>
+                </div>
 
-    <!-- Bookings Table -->
-    <div class="bg-white rounded-3xl border border-[#e2d9cc] p-6 shadow-sm">
-      <h3 class="font-bold text-sm text-[#0f2e24] mb-4">Guest Arrival Log</h3>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-[#faf8f5] uppercase font-bold text-[10px] text-slate-500 border-b border-slate-200">
-            <tr>
-              <th class="p-3">Booking ID</th>
-              <th class="p-3">Guest Name</th>
-              <th class="p-3">Phone</th>
-              <th class="p-3">Check-In</th>
-              <th class="p-3">Check-Out</th>
-              <th class="p-3">Tariff</th>
-              <th class="p-3">Status</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">
-            {% for b in bookings %}
-            <tr class="hover:bg-slate-50">
-              <td class="p-3 font-mono font-bold text-[#0f2e24]">#{{ b.booking_id }}</td>
-              <td class="p-3 font-bold">{{ b.guest_name }}</td>
-              <td class="p-3 font-mono text-slate-600">{{ b.guest_phone }}</td>
-              <td class="p-3">{{ b.check_in|date:"d M Y" }}</td>
-              <td class="p-3">{{ b.check_out|date:"d M Y" }}</td>
-              <td class="p-3 font-black text-[#0f2e24]">₹{{ b.total_amount }}</td>
-              <td class="p-3">
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800">
-                  {{ b.status|upper }}
-                </span>
-              </td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="7" class="p-6 text-center text-slate-400">No bookings for your properties yet.</td>
-            </tr>
+                <a href="{% url 'add_property' %}" class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold shadow-sm">
+                    <i class="bi bi-plus-lg me-1"></i> Add Property
+                </a>
+
+                <a href="{% url 'partner_logout' %}" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold">
+                    <i class="bi bi-box-arrow-right me-1"></i> Logout
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container-fluid px-4 py-4">
+
+        <!-- System Alerts -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show border-0 shadow-sm rounded-3 py-3" role="alert">
+                    <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
             {% endfor %}
-          </tbody>
-        </table>
-      </div>
+        {% endif %}
+
+        <!-- Property Verification Guard Banner -->
+        {% for hotel in hotels %}
+            {% if not hotel.is_verified %}
+                <div class="alert bg-warning-subtle border border-warning-subtle text-dark p-3 rounded-4 mb-4 shadow-sm d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3" role="alert">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-warning text-white rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="bi bi-shield-lock-fill fs-5"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold fs-6">Audit Verification Pending: "{{ hotel.name }}"</div>
+                            <div class="small text-muted">Property listing under compliance review. It will become live on guest discovery once trade details and safety documents are validated.</div>
+                        </div>
+                    </div>
+                    <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold text-uppercase" style="font-size: 0.72rem;">
+                        Under Compliance Review
+                    </span>
+                </div>
+            {% endif %}
+        {% endfor %}
+
+        <!-- Section 1: Financial & Payout Summary Cards -->
+        <div class="row g-3 mb-4">
+            
+            <!-- Gross Revenue (Auto-reduced on cancellation) -->
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="metric-card">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="metric-title">Gross Bookings</span>
+                        <div class="metric-icon-wrap bg-primary-subtle text-primary">
+                            <i class="bi bi-wallet2"></i>
+                        </div>
+                    </div>
+                    <div class="metric-value text-dark">₹{{ partner_revenue|floatformat:2 }}</div>
+                    {% if deducted_revenue and deducted_revenue > 0 %}
+                        <div class="small text-danger fw-semibold">
+                            <i class="bi bi-arrow-down-circle-fill me-1"></i> -₹{{ deducted_revenue|floatformat:2 }} ({{ cancelled_count }} cancelled)
+                        </div>
+                    {% else %}
+                        <div class="small text-muted"><i class="bi bi-check2-circle text-success me-1"></i> Confirmed total volume</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Platform Commission -->
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="metric-card">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="metric-title">MMY Cut (15%)</span>
+                        <div class="metric-icon-wrap bg-danger-subtle text-danger">
+                            <i class="bi bi-percent"></i>
+                        </div>
+                    </div>
+                    <div class="metric-value text-danger">₹{{ platform_commission|default:0|floatformat:2 }}</div>
+                    <div class="small text-muted"><i class="bi bi-file-earmark-lock text-muted me-1"></i> System facilitation fee</div>
+                </div>
+            </div>
+
+            <!-- Net Payout -->
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="metric-card">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="metric-title">Net Payout to Host</span>
+                        <div class="metric-icon-wrap bg-success-subtle text-success">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                    </div>
+                    <div class="metric-value text-success">₹{{ net_payout|floatformat:2 }}</div>
+                    <div class="small text-muted"><i class="bi bi-bank text-success me-1"></i> Direct payable balance</div>
+                </div>
+            </div>
+
+            <!-- Total Reservations -->
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="metric-card">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="metric-title">Active Bookings</span>
+                        <div class="metric-icon-wrap bg-warning-subtle text-warning">
+                            <i class="bi bi-calendar-check"></i>
+                        </div>
+                    </div>
+                    <div class="metric-value text-dark">{{ active_bookings_count|default:"0" }}</div>
+                    <div class="small text-muted"><i class="bi bi-graph-up-arrow text-primary me-1"></i> Valid stay reservations</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Section 2: Properties & Inventory Rate Controls -->
+        <div class="desk-card mb-4">
+            <div class="desk-card-header">
+                <div>
+                    <h6 class="mb-0 fw-bold text-dark fs-6">My Properties & Inventory Rates</h6>
+                    <small class="text-muted">Directly manage daily room pricing, galleries, and availability switches</small>
+                </div>
+                <span class="badge bg-light text-secondary border px-3 py-1 rounded-pill">
+                    {{ hotels.count }} Listed Properties
+                </span>
+            </div>
+
+            <div class="p-4">
+                <div class="row g-4">
+                    {% for hotel in hotels %}
+                    <div class="col-12 col-md-6 col-xl-4">
+                        <div class="property-panel">
+                            <div>
+                                <div class="d-flex align-items-start justify-content-between mb-2">
+                                    <div>
+                                        <div class="d-flex align-items-center gap-1 mb-1">
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-0.5 rounded-pill" style="font-size: 0.68rem; font-weight: 700;">
+                                                {{ hotel.city|upper }}
+                                            </span>
+                                            {% if hotel.latitude and hotel.longitude %}
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-0.5 rounded-pill" style="font-size: 0.68rem; font-weight: 700;">
+                                                    <i class="bi bi-crosshair me-1"></i> GPS Mapped
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary-subtle text-secondary px-2 py-0.5 rounded-pill" style="font-size: 0.68rem;">
+                                                    No GPS
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        <h5 class="fw-bold text-dark mb-0">{{ hotel.name }}</h5>
+                                        <p class="text-muted small text-truncate mb-0" style="max-width: 260px;">{{ hotel.address|default:"No address set" }}</p>
+                                    </div>
+                                    
+                                    <span class="badge rounded-circle p-1 {% if hotel.is_active %}bg-success{% else %}bg-secondary{% endif %}" style="width: 10px; height: 10px;" title="{% if hotel.is_active %}Active{% else %}Inactive{% endif %}"></span>
+                                </div>
+
+                                <!-- Dynamic Room Rate & Open/Close Switch -->
+                                <div class="mt-3 pt-3 border-top">
+                                    <span class="small fw-bold text-muted text-uppercase d-block mb-2" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                                        Room Rates & Booking Status
+                                    </span>
+
+                                    {% for room in hotel.room_types.all %}
+                                    <form method="POST" action="{% url 'partner_quick_update_room' room.id %}" class="room-rate-pill d-flex align-items-center justify-content-between gap-2 shadow-sm">
+                                        {% csrf_token %}
+                                        <div class="text-truncate">
+                                            <div class="fw-bold small text-dark text-truncate" style="max-width: 130px;" title="{{ room.name }}">
+                                                {{ room.name }}
+                                            </div>
+                                            <div class="d-flex align-items-center gap-1 mt-1">
+                                                <span class="text-muted small fw-bold">₹</span>
+                                                <input type="number" name="base_price" value="{{ room.base_price }}" step="50" class="form-control form-control-sm py-0 px-2 fw-bold" style="width: 80px; font-size: 0.8rem;">
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="form-check form-switch m-0">
+                                                <input class="form-check-input" type="checkbox" name="is_open" {% if room.is_open %}checked{% endif %} id="roomSwitch{{ room.id }}">
+                                                <label class="form-check-label small fw-semibold" for="roomSwitch{{ room.id }}" style="font-size: 0.72rem;">Open</label>
+                                            </div>
+                                            <button type="submit" class="btn btn-dark btn-sm rounded-2 px-2 py-1" style="font-size: 0.75rem; font-weight: 600;">
+                                                Save
+                                            </button>
+                                        </div>
+                                    </form>
+                                    {% empty %}
+                                    <div class="text-muted small italic py-2">No room categories registered under this stay.</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Footer Actions: Verification Badge, Photos Button & Delete -->
+                            <div class="d-flex align-items-center justify-content-between pt-3 mt-3 border-top">
+                                <div>
+                                    {% if hotel.is_verified %}
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1" style="font-size: 0.7rem;">
+                                            <i class="bi bi-patch-check-fill me-1"></i> Live
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2.5 py-1" style="font-size: 0.7rem;">
+                                            <i class="bi bi-hourglass-split me-1"></i> Pending
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <!-- 1. Edit Hotel Details Button -->
+                                    <a href="{% url 'partner_edit_property' hotel.id %}" 
+                                    class="btn btn-outline-dark btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1" 
+                                    style="font-size: 0.72rem;">
+                                        <i class="bi bi-pencil-square"></i>
+                                        <span>Edit Details</span>
+                                    </a>
+                                </div>
+
+                                <div class="d-flex align-items-center gap-2">
+                                    <a href="{% url 'partner_manage_gallery' hotel.id %}" 
+                                       class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1" 
+                                       style="font-size: 0.72rem;">
+                                        <i class="bi bi-images"></i>
+                                        <span>Photos</span>
+                                    </a>
+
+                                    <a href="{% url 'delete_hotel' hotel.id %}" 
+                                       onclick="return confirm('Are you sure you want to permanently delete {{ hotel.name }}?');" 
+                                       class="btn btn-outline-danger btn-sm rounded-pill px-2.5 py-1 fw-semibold" 
+                                       style="font-size: 0.72rem;"
+                                       title="Delete Property">
+                                        <i class="bi bi-trash3"></i>
+                                    </a>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center py-5">
+                        <i class="bi bi-building-add fs-1 text-muted d-block mb-2"></i>
+                        <div class="fw-bold text-dark">No stays listed under this account</div>
+                        <p class="text-muted small">Begin by onboarding your hotel or homestay details.</p>
+                        <a href="{% url 'add_property' %}" class="btn btn-primary btn-sm rounded-pill px-4">Register Property</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: Live Guest Reservations Desk -->
+        <div class="desk-card">
+            <div class="desk-card-header">
+                <div>
+                    <h6 class="mb-0 fw-bold text-dark fs-6">Live Guest Reservations Desk</h6>
+                    <small class="text-muted">Perform check-ins, check-outs, and manage booking cancellations</small>
+                </div>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 rounded-pill fw-bold">
+                    {{ bookings.count }} Bookings
+                </span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-custom table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>Guest Profile</th>
+                            <th>Stay Dates</th>
+                            <th>Room / Stay</th>
+                            <th>Settlement Bill</th>
+                            <th>Status</th>
+                            <th class="text-end">Front-Desk Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in bookings %}
+                        <tr>
+                            <!-- Booking ID & Time -->
+                            <td>
+                                <span class="fw-bold font-monospace text-primary" style="font-size: 0.88rem;">{{ b.booking_id|default:b.id }}</span>
+                                <div class="text-muted" style="font-size: 0.72rem;">{{ b.created_at|date:"d M Y, h:i A" }}</div>
+                            </td>
+
+                            <!-- Guest Profile -->
+                            <td>
+                                <div class="fw-bold text-dark">{{ b.guest_name }}</div>
+                                <div class="text-muted small"><i class="bi bi-telephone me-1"></i>{{ b.guest_phone|default:"N/A" }}</div>
+                            </td>
+
+                            <!-- Stay Dates -->
+                            <td>
+                                <div class="small"><span class="fw-bold text-secondary">In:</span> {{ b.check_in|date:"d M Y" }}</div>
+                                <div class="small"><span class="fw-bold text-secondary">Out:</span> {{ b.check_out|date:"d M Y" }}</div>
+                            </td>
+
+                            <!-- Room Type & Hotel -->
+                            <td>
+                                <div class="fw-semibold text-dark small">{{ b.room_type.name|default:"Standard Stay" }}</div>
+                                <div class="text-muted" style="font-size: 0.72rem;">{{ b.hotel.name }}</div>
+                            </td>
+
+                            <!-- Settlement Bill -->
+                            <td>
+                                <div class="fw-bold text-dark">₹{{ b.total_amount|floatformat:2 }}</div>
+                                {% if b.status == 'CANCELLED_BY_PARTNER' %}
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-0.5" style="font-size: 0.68rem;">
+                                        Payout: ₹0.00
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-light text-secondary border px-2 py-0.5" style="font-size: 0.68rem;">
+                                        {{ b.get_payment_mode_display }}
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Stay Status Badge -->
+                            <td>
+                                <span class="badge-status status-{{ b.status }}">
+                                    {% if b.status == 'CONFIRMED' %}
+                                        <i class="bi bi-check-circle-fill"></i> Confirmed
+                                    {% elif b.status == 'CHECKED_IN' %}
+                                        <i class="bi bi-box-arrow-in-right"></i> Checked In
+                                    {% elif b.status == 'CHECKED_OUT' %}
+                                        <i class="bi bi-door-closed-fill"></i> Checked Out
+                                    {% elif b.status == 'CANCELLED_BY_PARTNER' %}
+                                        <i class="bi bi-slash-circle-fill"></i> Cancelled by Host
+                                    {% elif b.status == 'CANCELLED_BY_GUEST' or b.status == 'CANCELLED' %}
+                                        <i class="bi bi-x-circle-fill"></i> Cancelled
+                                    {% else %}
+                                        {{ b.get_status_display }}
+                                    {% endif %}
+                                </span>
+                                {% if b.cancellation_reason and b.status == 'CANCELLED_BY_PARTNER' %}
+                                    <div class="text-muted text-truncate mt-1" style="font-size: 0.68rem; max-width: 140px;" title="{{ b.cancellation_reason }}">
+                                        Reason: {{ b.cancellation_reason }}
+                                    </div>
+                                {% endif %}
+                            </td>
+
+                            <!-- Operations Desk Actions -->
+                            <td class="text-end">
+                                <div class="d-inline-flex align-items-center gap-1">
+                                    {% if b.status == 'CONFIRMED' %}
+                                        <a href="{% url 'partner_update_booking_status' b.booking_id 'CHECKED_IN' %}" 
+                                           class="btn btn-success btn-sm rounded-pill px-3 py-1 fw-semibold" 
+                                           style="font-size: 0.75rem;">
+                                            <i class="bi bi-box-arrow-in-right me-1"></i> Check In
+                                        </a>
+
+                                        <!-- Trigger Cancel Modal with Reduction Alert -->
+                                        <button type="button" 
+                                                class="btn btn-outline-danger btn-sm rounded-circle p-1" 
+                                                style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;"
+                                                title="Cancel Booking & Deduct Gross"
+                                                onclick="triggerCancelModal('{{ b.id }}', '{{ b.booking_id }}', '{{ b.total_amount }}')">
+                                            <i class="bi bi-x-lg" style="font-size: 0.7rem;"></i>
+                                        </button>
+
+                                    {% elif b.status == 'CHECKED_IN' %}
+                                        <a href="{% url 'partner_update_booking_status' b.booking_id 'CHECKED_OUT' %}" 
+                                           class="btn btn-primary btn-sm rounded-pill px-3 py-1 fw-semibold" 
+                                           style="font-size: 0.75rem;">
+                                            <i class="bi bi-box-arrow-right me-1"></i> Check Out
+                                        </a>
+                                    {% elif b.status == 'CANCELLED_BY_PARTNER' %}
+                                        <span class="badge bg-danger-subtle text-danger" style="font-size: 0.68rem;">Revenue Deducted</span>
+                                    {% endif %}
+
+                                    <!-- Stay Voucher Print/Download -->
+                                    <a href="{% url 'booking_voucher' b.booking_id|default:b.id %}" 
+                                       target="_blank" 
+                                       class="btn btn-outline-secondary btn-sm rounded-pill px-2.5 py-1 fw-semibold" 
+                                       style="font-size: 0.75rem;" 
+                                       title="Download Invoice/Voucher">
+                                        <i class="bi bi-printer"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
+                                <span class="fw-semibold">No guest reservations received yet.</span>
+                                <div class="small">Bookings made by customers will appear here in real time.</div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Bootstrap 5 Partner Cancellation Confirmation Modal -->
+    <div class="modal fade" id="partnerCancelModal" tabindex="-1" aria-labelledby="partnerCancelModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+                <div class="modal-header bg-danger-subtle border-bottom border-danger-subtle py-3">
+                    <h6 class="modal-title fw-bold text-danger d-flex align-items-center gap-2" id="partnerCancelModalLabel">
+                        <i class="bi bi-exclamation-triangle-fill"></i> Confirm Partner Cancellation
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <form id="partnerCancelForm" method="POST" action="">
+                    {% csrf_token %}
+                    <div class="modal-body p-4">
+                        <p class="small text-muted mb-2">
+                            You are requesting to cancel reservation <strong id="modalBookingCode" class="text-dark"></strong>.
+                        </p>
+                        
+                        <div class="alert bg-warning-subtle border border-warning-subtle text-dark p-3 rounded-3 small mb-3">
+                            <strong><i class="bi bi-cash-coin me-1"></i> Financial Notice:</strong>
+                            Gross booking value of <strong id="modalBookingAmount" class="text-danger fw-bold"></strong> will be automatically deducted from your Gross Volume and payable balance.
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="cancelReasonSelect" class="form-label small fw-bold text-dark">Cancellation Reason <span class="text-danger">*</span></label>
+                            <select name="reason" id="cancelReasonSelect" class="form-select form-select-sm" required>
+                                <option value="Property Overbooked / Inventory Mismatch">Property Overbooked / Inventory Mismatch</option>
+                                <option value="Emergency Maintenance / Repairs">Emergency Maintenance / Repairs</option>
+                                <option value="Guest Contacted to Cancel Directly">Guest Contacted to Cancel Directly</option>
+                                <option value="Rate Discrepancy / System Error">Rate Discrepancy / System Error</option>
+                                <option value="Other Operational Constraint">Other Operational Constraint</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer border-top bg-light px-4 py-2">
+                        <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Keep Booking</button>
+                        <button type="submit" class="btn btn-danger btn-sm rounded-pill px-3 fw-semibold">
+                            Confirm Cancellation
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-  </main>
-  <script>lucide.createIcons();</script>
+
+    <!-- Bootstrap JS Bundle & Modal Trigger Script -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function triggerCancelModal(bookingPk, bookingId, totalAmount) {
+            document.getElementById('modalBookingCode').textContent = '#' + bookingId;
+            document.getElementById('modalBookingAmount').textContent = '₹' + parseFloat(totalAmount).toFixed(2);
+            
+            // Set dynamic post URL
+            const form = document.getElementById('partnerCancelForm');
+            form.action = '/partner/booking/' + bookingPk + '/cancel/';
+
+            const cancelModal = new bootstrap.Modal(document.getElementById('partnerCancelModal'));
+            cancelModal.show();
+        }
+    </script>
 </body>
 </html>

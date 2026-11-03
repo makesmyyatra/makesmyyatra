@@ -7,6 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security Settings
 SECRET_KEY = 'django-insecure-makesmyyatra-local-dev-key'
 DEBUG = True
+LOGIN_URL = 'partner_login' 
 ALLOWED_HOSTS = ['*']
 
 # Application definition
@@ -99,3 +100,5 @@ EMAIL_HOST_USER = ''
 EMAIL_HOST_PASSWORD = 'your_16_digit_app_password' # Google Account > App password
 DEFAULT_FROM_EMAIL = 'MakesMyYatra <your_email@gmail.com>'
 FAST2SMS_API_KEY = 'your_fast2sms_api_key_here'
+
+

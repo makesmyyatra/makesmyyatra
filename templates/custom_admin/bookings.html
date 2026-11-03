@@ -1,298 +1,135 @@
 {% extends 'custom_admin/base.html' %}
-{% block title %}ALL BOOKINGS - MakesMyYatra{% endblock %}
-{% block header_title %}ALL BOOKINGS{% endblock %}
+{% block title %}All Bookings | MakesMyYatra Portal{% endblock %}
+{% block page_title %}Reservations Registry{% endblock %}
+
 {% block content %}
 <div class="space-y-6">
-  <!-- Flash Messages -->
-  {% if messages %}
-  <div class="space-y-2">
-    {% for message in messages %}
-    <div class="p-3.5 rounded-2xl {% if message.tags == 'success' %}bg-emerald-50 border border-emerald-200 text-emerald-800{% elif message.tags == 'warning' %}bg-amber-50 border border-amber-200 text-amber-800{% else %}bg-rose-50 border border-rose-200 text-rose-800{% endif %} text-xs font-bold flex items-center justify-between shadow-sm">
-      <span>{{ message }}</span>
-      <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">✕</button>
+
+  <!-- Top Action Bar -->
+  <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-white p-5 rounded-2xl border border-[#e2d9cc]/70 shadow-sm">
+    <div>
+      <h3 class="font-black text-sm text-[#0f2e24]">All Guest Reservations</h3>
+      <p class="text-xs text-slate-500">Live booking status, invoices, and stay records</p>
     </div>
-    {% endfor %}
+    <div class="flex items-center gap-3">
+      <span class="text-xs font-bold bg-[#faf8f5] px-3.5 py-1.5 rounded-xl border border-[#e2d9cc] text-[#0f2e24]">
+        Total: {{ bookings|length }} Bookings
+      </span>
+      <a href="{% url 'export_bookings_excel' %}" class="px-3.5 py-1.5 bg-[#0f2e24] hover:bg-[#1b4332] text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm">
+        <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+        <span>Export Excel</span>
+      </a>
+    </div>
   </div>
-  {% endif %}
 
-  <!-- Bulk Actions Form Wrapper -->
-  <form id="bookingsBulkForm" action="{% url 'portal_booking_actions' %}" method="POST">
+  <!-- Bookings Table Form -->
+  <form method="POST" action="{% url 'portal_booking_actions' %}" class="bg-white rounded-3xl border border-[#e2d9cc]/70 shadow-sm overflow-hidden">
     {% csrf_token %}
-    <input type="hidden" name="action" id="bulkActionInput" value="delete_selected">
-
-    <!-- Top Filter & Action Bar with 3-Dots Menu -->
-    <div class="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-      <div>
-        <h2 class="text-sm font-black text-slate-900 uppercase tracking-wider">All Reservations</h2>
-        <p class="text-xs text-slate-500 font-medium mt-0.5">Total Bookings Logged: <span class="font-bold text-slate-800">{{ bookings|length }}</span></p>
-      </div>
-      <div class="flex items-center gap-2.5">
-        <!-- Excel Export -->
-        <a href="{% url 'export_bookings_excel' %}" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
-          <i data-lucide="sheet" class="w-4 h-4"></i> Export to Excel
-        </a>
-        <!-- Revenue Report Shortcut -->
-        <a href="{% url 'portal_revenue_report' %}" class="px-3.5 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
-          <i data-lucide="bar-chart-3" class="w-4 h-4"></i> Revenue Report
-        </a>
-        <!-- Three-Dots Button (⋮) -->
-        <div class="relative">
-          <button type="button" onclick="toggleTopMenu()" class="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
-            <i data-lucide="more-vertical" class="w-4 h-4"></i>
-          </button>
-          <!-- Three-Dots Dropdown Menu -->
-          <div id="topDropdownMenu" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50">
-            <button type="button" onclick="enableSelectionMode()" class="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
-              <i data-lucide="check-square" class="w-4 h-4 text-blue-600"></i> Select Bookings
-            </button>
-            <button type="button" onclick="triggerDeleteAll()" class="w-full text-left px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-slate-100">
-              <i data-lucide="trash-2" class="w-4 h-4 text-red-600"></i> Delete All Bookings
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Floating Selection Toolbar -->
-    <div id="selectionToolbar" class="hidden bg-blue-50 border border-blue-200 rounded-2xl p-3 mb-4 flex items-center justify-between">
-      <div class="flex items-center gap-3 text-xs font-bold text-blue-900">
-        <label class="flex items-center gap-2 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-blue-200">
-          <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" class="w-4 h-4 rounded text-blue-600 focus:ring-0">
-          <span>Select All</span>
-        </label>
-        <span id="selectedCountText" class="text-blue-600 font-normal">(0 selected)</span>
-      </div>
+    
+    <div class="p-3 bg-[#faf8f5] border-b border-[#e2d9cc] flex items-center justify-between gap-3 text-xs">
       <div class="flex items-center gap-2">
-        <button type="button" onclick="disableSelectionMode()" class="px-3 py-1.5 bg-white text-slate-600 font-bold text-xs rounded-xl hover:bg-slate-100 border border-slate-200">
-          Cancel
-        </button>
-        <button type="button" onclick="triggerDeleteSelected()" class="px-3.5 py-1.5 bg-red-600 text-white font-bold text-xs rounded-xl hover:bg-red-700 shadow-sm flex items-center gap-1.5">
-          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete Selected
+        <span class="font-bold text-[#0f2e24] text-[11px] uppercase tracking-wider">Bulk Actions:</span>
+        <button type="submit" name="action" value="delete_selected" onclick="return confirm('Delete selected records permanently?');" class="px-2.5 py-1 bg-white hover:bg-rose-50 text-rose-700 hover:text-rose-800 border border-[#e2d9cc] rounded-lg text-xs font-bold transition flex items-center gap-1">
+          <i data-lucide="trash-2" class="w-3 h-3 text-rose-500"></i>
+          <span>Delete Selected</span>
         </button>
       </div>
+      <a href="{% url 'portal_dashboard' %}" class="text-xs font-bold text-[#0f2e24] hover:underline">
+        &larr; Return to Dashboard
+      </a>
     </div>
 
-    <!-- Reservations Table Card -->
-    <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs border-collapse">
-          <thead>
-            <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-extrabold text-[10px]">
-              <th class="py-4 px-4 w-10 selectCol hidden text-center"></th>
-              <th class="py-4 px-4">Booking ID</th>
-              <th class="py-4 px-4">Guest Details</th>
-              <th class="py-4 px-4">Property & Meal</th>
-              <th class="py-4 px-4">Check-In / Out</th>
-              <th class="py-4 px-4 text-right">Amount & Breakdown</th>
-              <th class="py-4 px-4">Status</th>
-              <th class="py-4 px-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 font-medium">
-            {% for b in bookings %}
-            <tr class="hover:bg-slate-50/70 transition">
-              <!-- Checkbox Column -->
-              <td class="py-4 px-4 selectCol hidden text-center">
-                <input type="checkbox" name="selected_bookings" value="{{ b.id }}" onchange="updateSelectedCount()" class="bookingItemCheckbox w-4 h-4 rounded border-slate-300 text-blue-600 cursor-pointer">
-              </td>
-
-              <!-- Booking ID & Date -->
-              <td class="py-4 px-4">
-                <span class="font-mono font-bold text-blue-600 block text-xs">
-                  #{{ b.booking_id|default:b.id }}
-                </span>
-                <span class="text-[10px] text-slate-400">
-                  {{ b.created_at|date:"d M Y, h:i A" }}
-                </span>
-              </td>
-
-              <!-- Guest Details -->
-              <td class="py-4 px-4">
-                <p class="font-bold text-slate-900">{{ b.guest_name|default:"Guest" }}</p>
-                <p class="text-[11px] text-slate-600 font-mono">{{ b.guest_phone|default:"-" }}</p>
-                {% if b.guest_email %}
-                  <p class="text-[10px] text-slate-400 truncate max-w-[150px]">{{ b.guest_email }}</p>
-                {% endif %}
-              </td>
-
-              <!-- Property & Meal Details -->
-              <td class="py-4 px-4">
-                <p class="font-bold text-slate-900">{{ b.hotel.name|default:"General Stay" }}</p>
-                <p class="text-[11px] text-slate-500">{{ b.hotel.city|default:"Himachal" }}</p>
-                <span class="inline-flex items-center px-2 py-0.5 mt-1 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                  <i data-lucide="utensils" class="w-2.5 h-2.5 mr-1 text-slate-500"></i>
-                  {{ b.meal_plan.get_plan_code_display|default:"Room Only (EP)" }}
-                </span>
-              </td>
-
-              <!-- Check-in / Check-out Dates -->
-              <td class="py-4 px-4 text-slate-700">
-                {% if b.check_in and b.check_out %}
-                  <p class="font-bold text-slate-900">{{ b.check_in|date:"d M Y" }}</p>
-                  <p class="text-[11px] text-slate-500">to {{ b.check_out|date:"d M Y" }}</p>
-                {% else %}
-                  <span class="text-slate-400 italic">Not specified</span>
-                {% endif %}
-              </td>
-
-              <!-- Combined Pricing & Breakdown Column -->
-              <td class="py-4 px-4 text-right">
-                <p class="font-extrabold text-slate-900 text-sm">₹{{ b.total_amount }}</p>
-                <span class="inline-block text-[9px] uppercase tracking-wider text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
-                  {{ b.get_payment_mode_display|default:b.payment_mode|default:"Pay at Hotel" }}
-                </span>
-                <div class="text-[10px] text-slate-500 space-y-0.5 mt-1">
-                  <p>Base: ₹{{ b.base_amount }}</p>
-                  {% if b.meal_plan_amount > 0 %}
-                    <p class="text-orange-600 font-medium">Meal: +₹{{ b.meal_plan_amount }}</p>
-                  {% endif %}
-                  {% if b.discount_amount > 0 %}
-                    <p class="text-emerald-600 font-medium">Discount: -₹{{ b.discount_amount }}</p>
-                  {% endif %}
-                  <p>GST: ₹{{ b.gst_amount }}</p>
-                </div>
-              </td>
-
-              <!-- Status Badge -->
-              <td class="py-4 px-4">
-                {% if b.status == 'CONFIRMED' %}
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200">
-                    Confirmed
-                  </span>
-                {% elif b.status == 'CHECKED_IN' %}
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    Checked-In
-                  </span>
-                {% elif b.status == 'CHECKED_OUT' %}
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black bg-slate-100 text-slate-700 border border-slate-300">
-                    Checked-Out
-                  </span>
-                {% elif b.status == 'CANCELLED' %}
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-200">
-                    Cancelled
-                  </span>
-                {% else %}
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-50 text-amber-700 border border-amber-200">
-                    Pending
-                  </span>
-                {% endif %}
-              </td>
-
-              <!-- Actions Column -->
-              <td class="py-4 px-4 text-right whitespace-nowrap">
-                <div class="flex items-center justify-end gap-1.5">
-                  <!-- Tax Invoice PDF -->
-                  <a href="{% url 'portal_booking_invoice' b.booking_id|default:b.id %}" target="_blank" class="px-2 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl font-bold text-[11px] inline-flex items-center gap-1 transition shadow-sm" title="Print Tax Invoice">
-                    <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Invoice
-                  </a>
-
-                  <!-- Status Change Actions -->
-                  {% if b.status == 'PENDING' %}
-                    <a href="{% url 'portal_booking_status_change' b.booking_id|default:b.id 'CONFIRMED' %}" class="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-[11px] transition shadow-sm">
-                      Confirm
-                    </a>
-                  {% elif b.status == 'CONFIRMED' %}
-                    <a href="{% url 'portal_booking_status_change' b.booking_id|default:b.id 'CHECKED_IN' %}" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-[11px] transition shadow-sm">
-                      Check-In
-                    </a>
-                  {% elif b.status == 'CHECKED_IN' %}
-                    <a href="{% url 'portal_booking_status_change' b.booking_id|default:b.id 'CHECKED_OUT' %}" class="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-800 text-white rounded-xl font-bold text-[11px] transition shadow-sm">
-                      Check-Out
-                    </a>
-                  {% endif %}
-
-                  <!-- Cancel Booking Button with Policy rules -->
-                  {% if b.status != 'CANCELLED' and b.status != 'CHECKED_OUT' %}
-                    <a href="{% url 'portal_booking_cancel' b.booking_id|default:b.id %}" onclick="return confirm('Are you sure you want to cancel booking #{{ b.booking_id|default:b.id }}? Refund policy rules will apply.');" class="px-2 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl font-bold text-[11px] inline-flex items-center gap-1 transition" title="Cancel Booking">
-                      <i data-lucide="x-circle" class="w-3.5 h-3.5"></i> Cancel
-                    </a>
-                  {% endif %}
-
-                  <!-- WhatsApp Resend Alert -->
-                  <a href="{% url 'portal_booking_send_whatsapp' b.booking_id|default:b.id %}" target="_blank" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition" title="Send WhatsApp Confirmation">
-                    <i data-lucide="message-circle" class="w-4 h-4"></i>
-                  </a>
-
-                  <!-- Row Delete (Trash Icon) -->
-                  <a href="{% url 'portal_booking_delete' b.id %}" onclick="return confirm('Are you sure you want to delete this booking permanently?');" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete Booking">
-                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                  </a>
-                </div>
-              </td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="8" class="py-12 text-center text-slate-400">
-                <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
-                No reservations logged in system yet.
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-[#faf8f5] text-[#0f2e24] uppercase font-bold text-[10px] tracking-wider border-b border-[#e2d9cc]">
+          <tr>
+            <th class="py-3.5 px-4 w-8 text-center">
+              <input type="checkbox" id="selectAllBookings" class="rounded border-slate-300 text-[#0f2e24] focus:ring-0">
+            </th>
+            <th class="py-3.5 px-4">Booking ID</th>
+            <th class="py-3.5 px-4">Guest Details</th>
+            <th class="py-3.5 px-4">Hotel / Property</th>
+            <th class="py-3.5 px-4">Stay Dates</th>
+            <th class="py-3.5 px-4">Total Amount</th>
+            <th class="py-3.5 px-4">Status</th>
+            <th class="py-3.5 px-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[#e2d9cc]/40 font-medium">
+          {% for b in bookings %}
+          <tr class="hover:bg-[#faf8f5]/50 transition">
+            <td class="py-3.5 px-4 text-center">
+              <input type="checkbox" name="selected_bookings" value="{{ b.id }}" class="booking-row-checkbox rounded border-slate-300 text-[#0f2e24] focus:ring-0">
+            </td>
+            <td class="py-3.5 px-4 font-mono font-bold text-[#0f2e24] whitespace-nowrap">
+              {{ b.booking_id|default:b.id }}
+            </td>
+            <td class="py-3.5 px-4">
+              <span class="block font-bold text-[#0f2e24]">{{ b.guest_name }}</span>
+              <span class="block text-[11px] text-slate-400 font-mono">{{ b.guest_phone }}</span>
+            </td>
+            <td class="py-3.5 px-4">
+              <span class="block font-bold text-slate-800">{{ b.hotel.name|default:"Property Stay" }}</span>
+              <span class="block text-[11px] text-slate-500">{{ b.room_type.name|default:"Standard Room" }}</span>
+            </td>
+            <td class="py-3.5 px-4 text-slate-600 whitespace-nowrap">
+              <span class="block font-semibold text-slate-800">{{ b.check_in|date:"d M Y" }}</span>
+              <span class="block text-[11px] text-slate-400">to {{ b.check_out|date:"d M Y" }}</span>
+            </td>
+            <td class="py-3.5 px-4 whitespace-nowrap">
+              <span class="block font-bold text-[#0f2e24]">₹{{ b.total_amount }}</span>
+              <span class="block text-[10px] text-slate-400 font-semibold">{{ b.payment_mode|default:"Pay at Hotel" }}</span>
+            </td>
+            <td class="py-3.5 px-4 whitespace-nowrap">
+              <select onchange="window.location.href='/portal/bookings/status/' + '{{ b.booking_id }}' + '/' + this.value + '/';" 
+                      class="text-[11px] font-bold rounded-lg border px-2 py-1 outline-none cursor-pointer
+                      {% if b.status == 'CONFIRMED' %}bg-emerald-50 text-emerald-800 border-emerald-300
+                      {% elif b.status == 'CHECKED_IN' %}bg-blue-50 text-blue-800 border-blue-300
+                      {% elif b.status == 'CHECKED_OUT' %}bg-slate-100 text-slate-800 border-slate-300
+                      {% elif b.status == 'CANCELLED' %}bg-rose-50 text-rose-800 border-rose-300
+                      {% else %}bg-amber-50 text-amber-800 border-amber-300{% endif %}">
+                <option value="PENDING" {% if b.status == 'PENDING' %}selected{% endif %}>PENDING</option>
+                <option value="CONFIRMED" {% if b.status == 'CONFIRMED' %}selected{% endif %}>CONFIRMED</option>
+                <option value="CHECKED_IN" {% if b.status == 'CHECKED_IN' %}selected{% endif %}>CHECKED_IN</option>
+                <option value="CHECKED_OUT" {% if b.status == 'CHECKED_OUT' %}selected{% endif %}>CHECKED_OUT</option>
+                <option value="CANCELLED" {% if b.status == 'CANCELLED' %}selected{% endif %}>CANCELLED</option>
+              </select>
+            </td>
+            <td class="py-3.5 px-4 text-right whitespace-nowrap">
+              <div class="inline-flex items-center gap-1.5">
+                <a href="{% url 'booking_voucher' b.booking_id|default:b.id %}" target="_blank" class="p-1.5 rounded-lg bg-slate-100 hover:bg-[#0f2e24] hover:text-white text-slate-700 transition" title="Print Tax Invoice">
+                  <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                </a>
+                <a href="{% url 'portal_booking_send_whatsapp' b.booking_id|default:b.id %}" target="_blank" class="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition" title="Send WhatsApp">
+                  <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+                </a>
+                <a href="{% url 'portal_booking_delete' b.id %}" onclick="return confirm('Permanently delete this booking record?');" class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition" title="Delete Booking">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="py-12 text-center text-slate-400 font-semibold text-xs">
+              No bookings found. Please check back later or adjust your filters.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </form>
+
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <script>
-  function toggleTopMenu() {
-    const menu = document.getElementById('topDropdownMenu');
-    menu.classList.toggle('hidden');
-  }
-
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('#topDropdownMenu') && !e.target.closest('button[onclick="toggleTopMenu()"]')) {
-      const tm = document.getElementById('topDropdownMenu');
-      if (tm) tm.classList.add('hidden');
-    }
-  });
-
-  function enableSelectionMode() {
-    document.getElementById('topDropdownMenu').classList.add('hidden');
-    document.getElementById('selectionToolbar').classList.remove('hidden');
-    document.querySelectorAll('.selectCol').forEach(col => col.classList.remove('hidden'));
-  }
-
-  function disableSelectionMode() {
-    document.getElementById('selectionToolbar').classList.add('hidden');
-    document.querySelectorAll('.selectCol').forEach(col => col.classList.add('hidden'));
-    document.getElementById('selectAllCheckbox').checked = false;
-    document.querySelectorAll('.bookingItemCheckbox').forEach(cb => cb.checked = false);
-    updateSelectedCount();
-  }
-
-  function toggleSelectAll(masterCb) {
-    const checkboxes = document.querySelectorAll('.bookingItemCheckbox');
-    checkboxes.forEach(cb => cb.checked = masterCb.checked);
-    updateSelectedCount();
-  }
-
-  function updateSelectedCount() {
-    const totalSelected = document.querySelectorAll('.bookingItemCheckbox:checked').length;
-    document.getElementById('selectedCountText').innerText = `(${totalSelected} selected)`;
-  }
-
-  function triggerDeleteSelected() {
-    const totalSelected = document.querySelectorAll('.bookingItemCheckbox:checked').length;
-    if (totalSelected === 0) {
-      alert('Please select bookings to delete.');
-      return;
-    }
-    if (confirm(`Are you sure you want to delete these ${totalSelected} bookings?`)) {
-      document.getElementById('bulkActionInput').value = 'delete_selected';
-      document.getElementById('bookingsBulkForm').submit();
-    }
-  }
-
-  function triggerDeleteAll() {
-    document.getElementById('topDropdownMenu').classList.add('hidden');
-    if (confirm('CAUTION: Deleting all bookings will remove every booking record from the system. Are you sure you want to proceed?')) {
-      document.getElementById('bulkActionInput').value = 'delete_all';
-      document.getElementById('bookingsBulkForm').submit();
-    }
+  const selectAll = document.getElementById('selectAllBookings');
+  const checkboxes = document.querySelectorAll('.booking-row-checkbox');
+  if (selectAll) {
+    selectAll.addEventListener('change', function() {
+      checkboxes.forEach(cb => cb.checked = selectAll.checked);
+    });
   }
 </script>
 {% endblock %}

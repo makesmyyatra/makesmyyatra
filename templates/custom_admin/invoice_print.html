@@ -1,290 +1,414 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TAX INVOICE - {{ invoice_number }} | MakesMyYatra</title>
   <style>
-    @page {
-      size: a4 portrait;
-      margin: 12mm 15mm 12mm 15mm;
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
+
     body {
-      font-family: Helvetica, Arial, sans-serif;
+      background-color: #f1f5f9;
       color: #1e293b;
-      font-size: 10px;
-      line-height: 1.4;
-      background-color: #ffffff;
       margin: 0;
-      padding: 0;
+      padding: 30px 15px;
+      font-size: 11px;
+      line-height: 1.5;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
-    .w-100 { width: 100%; }
+
+    /* Action bar on top (Screen only) */
+    .action-bar {
+      max-width: 820px;
+      margin: 0 auto 16px auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .btn-back {
+      color: #64748b;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+
+    .btn-back:hover {
+      color: #0f172a;
+    }
+
+    .btn-print {
+      background-color: #2563eb;
+      color: #ffffff;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+      transition: background 0.2s;
+    }
+
+    .btn-print:hover {
+      background-color: #1d4ed8;
+    }
+
+    /* A4 Centered Invoice Container */
+    .invoice-card {
+      max-width: 820px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      padding: 36px 40px;
+    }
+
     .table-layout {
       width: 100%;
       border-collapse: collapse;
     }
+
     .header-table td {
       vertical-align: top;
-      padding-bottom: 12px;
+      padding-bottom: 16px;
       border-bottom: 2px solid #2563eb;
     }
+
     .brand-title {
-      font-size: 20px;
-      font-weight: bold;
+      font-size: 22px;
+      font-weight: 800;
       color: #0f172a;
       letter-spacing: -0.5px;
     }
+
     .brand-highlight {
       color: #2563eb;
     }
+
     .text-muted {
       color: #64748b;
-      font-size: 9px;
+      font-size: 10px;
     }
+
     .badge {
       display: inline-block;
-      padding: 2px 8px;
-      font-size: 8.5px;
-      font-weight: bold;
+      padding: 3px 8px;
+      font-size: 9px;
+      font-weight: 700;
       color: #1d4ed8;
       background-color: #eff6ff;
       border: 1px solid #bfdbfe;
+      border-radius: 4px;
       text-transform: uppercase;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
+
     .invoice-title {
-      font-size: 13px;
-      font-weight: bold;
+      font-size: 14px;
+      font-weight: 800;
       color: #0f172a;
+      font-family: 'JetBrains Mono', monospace;
     }
+
     .info-card {
       background-color: #f8fafc;
       border: 1px solid #e2e8f0;
-      padding: 8px 10px;
+      border-radius: 8px;
+      padding: 12px 14px;
       vertical-align: top;
     }
+
     .card-label {
-      font-size: 8px;
-      font-weight: bold;
+      font-size: 9px;
+      font-weight: 700;
       color: #94a3b8;
       text-transform: uppercase;
-      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+      margin-bottom: 5px;
     }
+
     .schedule-table {
       border: 1px solid #cbd5e1;
-      margin-top: 10px;
-      margin-bottom: 10px;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 14px;
+      margin-bottom: 14px;
     }
+
     .schedule-cell {
       text-align: center;
-      padding: 6px 4px;
+      padding: 8px 6px;
       border-right: 1px solid #e2e8f0;
     }
+
     .item-table {
-      margin-top: 10px;
+      margin-top: 14px;
       border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      overflow: hidden;
     }
+
     .item-table th {
-      background-color: #f1f5f9;
+      background-color: #f8fafc;
       color: #334155;
-      font-size: 9px;
-      font-weight: bold;
+      font-size: 10px;
+      font-weight: 700;
       text-transform: uppercase;
-      padding: 6px 8px;
+      padding: 8px 12px;
       border-bottom: 1px solid #cbd5e1;
     }
+
     .item-table td {
-      padding: 7px 8px;
+      padding: 10px 12px;
       border-bottom: 1px solid #f1f5f9;
-      font-size: 9.5px;
+      font-size: 10.5px;
     }
+
     .calc-table {
-      width: 50%;
+      width: 52%;
       margin-left: auto;
-      margin-top: 12px;
+      margin-top: 14px;
       border-collapse: collapse;
     }
+
     .calc-table td {
-      padding: 3px 6px;
-      font-size: 9.5px;
+      padding: 4px 8px;
+      font-size: 10.5px;
     }
+
     .discount-row td {
       color: #059669;
-      font-weight: bold;
+      font-weight: 600;
     }
+
     .taxable-border td {
       border-top: 1px solid #cbd5e1;
-      padding-top: 5px;
-      font-weight: bold;
+      padding-top: 6px;
+      font-weight: 700;
       color: #0f172a;
     }
+
     .total-row td {
       border-top: 2px solid #2563eb;
       border-bottom: 2px solid #2563eb;
       background-color: #eff6ff;
-      font-size: 11.5px;
-      font-weight: bold;
+      font-size: 13px;
+      font-weight: 800;
       color: #1d4ed8;
-      padding: 6px;
+      padding: 8px;
     }
+
     .footer-table {
-      margin-top: 20px;
+      margin-top: 24px;
       border-top: 1px solid #e2e8f0;
-      padding-top: 10px;
+      padding-top: 12px;
     }
+
     .footer-table td {
-      font-size: 8.5px;
+      font-size: 9px;
       color: #94a3b8;
       vertical-align: top;
+    }
+
+    /* Dedicated Print Styling */
+    @media print {
+      @page {
+        size: a4 portrait;
+        margin: 10mm 12mm;
+      }
+      body {
+        background-color: #ffffff !important;
+        padding: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .invoice-card {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+      }
     }
   </style>
 </head>
 <body>
 
-  <!-- Header -->
-  <table class="table-layout header-table">
-    <tr>
-      <td style="width: 55%;">
-        <div class="brand-title">MAKES<span class="brand-highlight">MY</span>YATRA</div>
-      </td>
-      <td style="width: 45%; text-align: right;">
-        <div class="badge">Official Tax Invoice</div>
-        <div class="invoice-title">{{ invoice_number }}</div>
-        <div class="text-muted" style="margin-top: 2px;">Booking Ref: <b>#{{ booking.booking_id }}</b></div>
-        <div class="text-muted">Issued Date: {{ invoice_date|date:"d M Y" }}</div>
-        <div class="text-muted">Txn ID: {{ booking.transaction_id|default:"TXN-HOTEL" }}</div>
-      </td>
-    </tr>
-  </table>
+  <div class="action-bar no-print">
+    <a href="/" class="btn-back">&larr; Back to Home</a>
+    <div style="display: flex; gap: 8px;">
+      <a href="{% url 'download_customer_voucher' booking.booking_id %}" class="btn-print" style="text-decoration: none; background: #059669;">
+        📥 Download PDF
+      </a>
+      <button onclick="window.print()" class="btn-print">
+        🖨️ Print Voucher
+      </button>
+    </div>
+  </div>
 
-  <!-- Billed To & Stay Destination -->
-  <table class="table-layout" style="margin-top: 12px;">
-    <tr>
-      <td style="width: 48%;" class="info-card">
-        <div class="card-label">Customer / Guest (Billed To)</div>
-        <div style="font-size: 11px; font-weight: bold; color: #0f172a;">{{ booking.guest_name }}</div>
-        <div style="color: #475569; font-family: monospace;">Phone: {{ booking.guest_phone|default:"N/A" }}</div>
-        {% if booking.guest_email %}
-        <div style="color: #64748b;">Email: {{ booking.guest_email }}</div>
-        {% endif %}
-      </td>
-      <td style="width: 4%;"></td>
-      <td style="width: 48%;" class="info-card">
-        <div class="card-label">Reserved Stay &amp; Location</div>
-        <div style="font-size: 11px; font-weight: bold; color: #0f172a;">{{ hotel.name }}</div>
-        <div style="color: #475569;">{{ hotel.address|default:hotel.city }}</div>
-        <div style="color: #64748b;">Destination: <b>{{ hotel.city }}, Himachal Pradesh</b></div>
-      </td>
-    </tr>
-  </table>
+  <!-- A4 Printable Card Container -->
+  <div class="invoice-card">
 
-  <!-- Stay Schedule Grid -->
-  <table class="table-layout schedule-table">
-    <tr>
-      <td style="width: 25%;" class="schedule-cell">
-        <div class="card-label">Check-In</div>
-        <div style="font-weight: bold; color: #0f172a;">{{ booking.check_in|date:"d M Y" }}</div>
-      </td>
-      <td style="width: 25%;" class="schedule-cell">
-        <div class="card-label">Check-Out</div>
-        <div style="font-weight: bold; color: #0f172a;">{{ booking.check_out|date:"d M Y" }}</div>
-      </td>
-      <td style="width: 25%;" class="schedule-cell">
-        <div class="card-label">Stay Duration</div>
-        <div style="font-weight: bold; color: #2563eb;">{{ nights }} Night(s)</div>
-      </td>
-      <td style="width: 25%; text-align: center; padding: 6px 4px;">
-        <div class="card-label">Payment Mode</div>
-        <div style="font-weight: bold; color: #0f172a;">{{ booking.get_payment_mode_display|default:booking.payment_mode }}</div>
-      </td>
-    </tr>
-  </table>
-
-  <!-- Tariff & Description Table -->
-  <table class="table-layout item-table">
-    <thead>
+    <!-- Header -->
+    <table class="table-layout header-table">
       <tr>
-        <th style="text-align: left; width: 45%;">Item Description</th>
-        <th style="text-align: center; width: 20%;">Plan</th>
-        <th style="text-align: center; width: 10%;">Nights</th>
-        <th style="text-align: right; width: 25%;">Gross Tariff</th>
+        <td style="width: 55%;">
+          <div class="brand-title">MAKES<span class="brand-highlight">MY</span>YATRA</div>
+          <div class="text-muted" style="margin-top: 4px;">Himachal's Premier Verified Stay Network</div>
+        </td>
+        <td style="width: 45%; text-align: right;">
+          <div class="badge">Official Tax Invoice</div>
+          <div class="invoice-title">{{ invoice_number }}</div>
+          <div class="text-muted" style="margin-top: 3px;">Booking Ref: <b>#{{ booking.booking_id }}</b></div>
+          <div class="text-muted">Issued Date: {{ invoice_date|date:"d M Y" }}</div>
+          <div class="text-muted">Txn ID: {{ booking.transaction_id|default:"TXN-HOTEL" }}</div>
+        </td>
       </tr>
-    </thead>
-    <tbody>
+    </table>
+
+    <!-- Billed To & Stay Destination -->
+    <table class="table-layout" style="margin-top: 14px;">
       <tr>
-        <td>
-          <div style="font-weight: bold; color: #0f172a;">{{ booking.room_type.name|default:"Standard Suite" }}</div>
-          <div class="text-muted">Base Accommodation at {{ hotel.name }}</div>
+        <td style="width: 48%;" class="info-card">
+          <div class="card-label">Customer / Guest (Billed To)</div>
+          <div style="font-size: 12px; font-weight: 700; color: #0f172a;">{{ booking.guest_name }}</div>
+          <div style="color: #475569; font-family: monospace; font-size: 10.5px;">Phone: {{ booking.guest_phone|default:"N/A" }}</div>
+          {% if booking.guest_email %}
+          <div style="color: #64748b; font-size: 10px;">Email: {{ booking.guest_email }}</div>
+          {% endif %}
         </td>
-        <td style="text-align: center;">
-          <span style="background-color: #f1f5f9; padding: 2px 5px; font-size: 8.5px; font-weight: bold;">
-            {% if booking.meal_plan %}{{ booking.meal_plan.plan_code }}{% else %}EP (Room Only){% endif %}
-          </span>
+        <td style="width: 4%;"></td>
+        <td style="width: 48%;" class="info-card">
+          <div class="card-label">Reserved Stay &amp; Location</div>
+          <div style="font-size: 12px; font-weight: 700; color: #0f172a;">{{ hotel.name }}</div>
+          <div style="color: #475569;">{{ hotel.address|default:hotel.city }}</div>
+          <div style="color: #64748b;">Destination: <b>{{ hotel.city }}, Himachal Pradesh</b></div>
         </td>
-        <td style="text-align: center; font-weight: bold;">{{ nights }}</td>
-        <td style="text-align: right; font-weight: bold; color: #0f172a;">
+      </tr>
+    </table>
+
+    <!-- Stay Schedule Grid -->
+    <table class="table-layout schedule-table">
+      <tr>
+        <td style="width: 25%;" class="schedule-cell">
+          <div class="card-label">Check-In</div>
+          <div style="font-weight: 700; color: #0f172a;">{{ booking.check_in|date:"d M Y" }}</div>
+        </td>
+        <td style="width: 25%;" class="schedule-cell">
+          <div class="card-label">Check-Out</div>
+          <div style="font-weight: 700; color: #0f172a;">{{ booking.check_out|date:"d M Y" }}</div>
+        </td>
+        <td style="width: 25%;" class="schedule-cell">
+          <div class="card-label">Stay Duration</div>
+          <div style="font-weight: 700; color: #2563eb;">{{ nights }} Night(s)</div>
+        </td>
+        <td style="width: 25%; text-align: center; padding: 8px 6px;">
+          <div class="card-label">Payment Mode</div>
+          <div style="font-weight: 700; color: #0f172a;">{{ booking.get_payment_mode_display|default:booking.payment_mode }}</div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Tariff & Description Table -->
+    <table class="table-layout item-table">
+      <thead>
+        <tr>
+          <th style="text-align: left; width: 45%;">Item Description</th>
+          <th style="text-align: center; width: 20%;">Plan</th>
+          <th style="text-align: center; width: 10%;">Nights</th>
+          <th style="text-align: right; width: 25%;">Gross Tariff</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div style="font-weight: 700; color: #0f172a;">{{ booking.room_type.name|default:"Standard Suite" }}</div>
+            <div class="text-muted">Base Accommodation at {{ hotel.name }}</div>
+          </td>
+          <td style="text-align: center;">
+            <span style="background-color: #f1f5f9; padding: 2px 6px; font-size: 9px; font-weight: 700; border-radius: 4px;">
+              {% if booking.meal_plan %}{{ booking.meal_plan.plan_code }}{% else %}EP (Room Only){% endif %}
+            </span>
+          </td>
+          <td style="text-align: center; font-weight: 700;">{{ nights }}</td>
+          <td style="text-align: right; font-weight: 700; color: #0f172a;">
+            Rs. {{ booking.base_amount|add:booking.discount_amount }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Tax & Grand Total Summary -->
+    <table class="calc-table">
+      <tr>
+        <td style="color: #475569;">Gross Tariff Subtotal:</td>
+        <td style="text-align: right; font-weight: 700;">
           Rs. {{ booking.base_amount|add:booking.discount_amount }}
         </td>
       </tr>
-    </tbody>
-  </table>
 
-  <!-- Tax & Grand Total Summary -->
-  <table class="calc-table">
-    <tr>
-      <td style="color: #475569;">Gross Tariff Subtotal:</td>
-      <td style="text-align: right; font-weight: bold;">
-        Rs. {{ booking.base_amount|add:booking.discount_amount }}
-      </td>
-    </tr>
+      {% if booking.discount_amount and booking.discount_amount > 0 %}
+      <tr class="discount-row">
+        <td>
+          Discount Applied {% if booking.coupon %}({{ booking.coupon.code }}){% endif %}:
+        </td>
+        <td style="text-align: right;">
+          - Rs. {{ booking.discount_amount }}
+        </td>
+      </tr>
+      {% endif %}
 
-    {% if booking.discount_amount and booking.discount_amount > 0 %}
-    <tr class="discount-row">
-      <td>
-        Discount Applied {% if booking.coupon %}({{ booking.coupon.code }}){% endif %}:
-      </td>
-      <td style="text-align: right;">
-        - Rs. {{ booking.discount_amount }}
-      </td>
-    </tr>
-    {% endif %}
+      <tr class="taxable-border">
+        <td>Taxable Base Value:</td>
+        <td style="text-align: right;">Rs. {{ booking.base_amount }}</td>
+      </tr>
 
-    <tr class="taxable-border">
-      <td>Taxable Base Value:</td>
-      <td style="text-align: right;">Rs. {{ booking.base_amount }}</td>
-    </tr>
+      <tr>
+        <td style="color: #475569;">Central GST (CGST):</td>
+        <td style="text-align: right; font-weight: 700;">Rs. {{ booking.cgst_amount|default:"0.00" }}</td>
+      </tr>
+      <tr>
+        <td style="color: #475569;">State GST (SGST):</td>
+        <td style="text-align: right; font-weight: 700;">Rs. {{ booking.sgst_amount|default:"0.00" }}</td>
+      </tr>
+      <tr>
+        <td style="color: #475569;">Total GST (Combined):</td>
+        <td style="text-align: right; font-weight: 700;">Rs. {{ booking.gst_amount|default:"0.00" }}</td>
+      </tr>
 
-    <tr>
-      <td style="color: #475569;">Central GST (CGST):</td>
-      <td style="text-align: right; font-weight: bold;">Rs. {{ booking.cgst_amount|default:"0.00" }}</td>
-    </tr>
-    <tr>
-      <td style="color: #475569;">State GST (SGST):</td>
-      <td style="text-align: right; font-weight: bold;">Rs. {{ booking.sgst_amount|default:"0.00" }}</td>
-    </tr>
-    <tr>
-      <td style="color: #475569;">Total GST (Combined):</td>
-      <td style="text-align: right; font-weight: bold;">Rs. {{ booking.gst_amount|default:"0.00" }}</td>
-    </tr>
+      <tr class="total-row">
+        <td>Grand Total Payable:</td>
+        <td style="text-align: right;">Rs. {{ booking.total_amount }}</td>
+      </tr>
+    </table>
 
-    <tr class="total-row">
-      <td>Grand Total Payable:</td>
-      <td style="text-align: right;">Rs. {{ booking.total_amount }}</td>
-    </tr>
-  </table>
+    <!-- Footer Terms & Helpline -->
+    <table class="table-layout footer-table">
+      <tr>
+        <td style="width: 55%;">
+          <div style="font-weight: 700; color: #475569;">Computer Generated Tax Invoice</div>
+          <div>No physical signature required. Valid for travel records and corporate input tax credit.</div>
+        </td>
+        <td style="width: 45%; text-align: right;">
+          <div style="font-weight: 700; color: #334155;">MakesMyYatra Operations Desk</div>
+          <div>Helpline: +91 98160 00000 | helpdesk@makesmyyatra.com</div>
+        </td>
+      </tr>
+    </table>
 
-  <!-- Footer Terms & Helpline -->
-  <table class="table-layout footer-table">
-    <tr>
-      <td style="width: 55%;">
-        <div style="font-weight: bold; color: #475569;">Computer Generated Tax Invoice</div>
-        <div>No physical signature required. Valid for travel records and corporate input tax credit.</div>
-      </td>
-      <td style="width: 45%; text-align: right;">
-        <div style="font-weight: bold; color: #334155;">MakesMyYatra Operations Desk</div>
-        <div>Helpline: +91 98160 00000 | helpdesk@makesmyyatra.com</div>
-      </td>
-    </tr>
-  </table>
+  </div>
 
 </body>
 </html>

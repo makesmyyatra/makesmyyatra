@@ -1,0 +1,129 @@
+{% extends 'custom_admin/base.html' %}
+
+{% block title %}Confirm Cancellation | {{ booking.booking_id }} | MMY Operations{% endblock %}
+{% block page_title %}Operations Cancellation Desk{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-4 space-y-6">
+
+  <!-- Breadcrumbs & Back -->
+  <div class="flex items-center gap-2 text-xs font-semibold text-slate-500">
+    <a href="{% url 'portal_dashboard' %}" class="hover:text-blue-600 transition">Portal</a>
+    <span>/</span>
+    <span class="text-slate-700">Cancel Booking</span>
+    <span>/</span>
+    <span class="font-mono font-bold text-slate-900">{{ booking.booking_id }}</span>
+  </div>
+
+  <!-- Main Card -->
+  <div class="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
+    
+    <!-- Header Warning Banner -->
+    <div class="bg-gradient-to-r from-rose-950 via-rose-900 to-slate-900 p-6 sm:p-8 text-white flex items-start gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-rose-500/20 border border-rose-400/30 text-rose-300 flex items-center justify-center shrink-0">
+        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+      </div>
+      <div class="space-y-1">
+        <span class="text-[10px] font-black uppercase tracking-widest text-rose-300 inline-block bg-rose-500/20 px-2.5 py-0.5 rounded-full border border-rose-400/20">
+          Admin Override Action
+        </span>
+        <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight">Confirm Reservation Cancellation</h2>
+        <p class="text-xs text-rose-200/90 leading-relaxed">
+          Cancelling this reservation will invalidate the guest stay pass and reopen room inventory.
+        </p>
+      </div>
+    </div>
+
+    <!-- Booking Summary Details -->
+    <div class="p-6 sm:p-8 space-y-6">
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Booking Reference</span>
+          <span class="font-mono text-sm font-black text-blue-600 mt-0.5 block">{{ booking.booking_id }}</span>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Current Status</span>
+          <span class="text-xs font-black text-amber-600 mt-0.5 inline-flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            {{ booking.get_status_display }}
+          </span>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Guest Details</span>
+          <span class="text-xs font-bold text-slate-800 mt-0.5 block">{{ booking.guest_name }}</span>
+          <span class="text-[11px] text-slate-500 block">{{ booking.guest_phone|default:"No phone" }}</span>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Property & Stay</span>
+          <span class="text-xs font-bold text-slate-800 mt-0.5 block">{{ booking.hotel.name }}</span>
+          <span class="text-[11px] text-slate-500 block">{{ booking.hotel.city }}</span>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Travel Dates</span>
+          <span class="text-xs font-bold text-slate-800 mt-0.5 block">
+            {{ booking.check_in|date:"d M Y" }} &rarr; {{ booking.check_out|date:"d M Y" }}
+          </span>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Settlement Value</span>
+          <span class="text-sm font-black text-slate-900 mt-0.5 block">₹{{ booking.total_amount|floatformat:2 }}</span>
+          <span class="text-[10px] text-slate-500 font-medium">{{ booking.get_payment_mode_display }}</span>
+        </div>
+      </div>
+
+      <!-- Cancellation Form -->
+      <form method="POST" class="space-y-5 pt-2">
+        {% csrf_token %}
+
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">
+            Primary Reason for Cancellation *
+          </label>
+          <select name="cancellation_reason" class="w-full px-4 py-3 rounded-2xl border border-slate-200 text-xs font-semibold text-slate-800 bg-white focus:ring-2 focus:ring-rose-500 outline-none transition" required>
+            <option value="Guest requested cancellation via support">Guest requested cancellation via support</option>
+            <option value="Hotelier reported property emergency / overbooking">Hotelier reported property emergency / overbooking</option>
+            <option value="Severe weather / road blockage in Himachal route">Severe weather / road blockage in Himachal route</option>
+            <option value="Suspected fraudulent / unverified booking activity">Suspected fraudulent / unverified booking activity</option>
+            <option value="Payment verification failed or deposit timeout">Payment verification failed or deposit timeout</option>
+            <option value="Other administrative intervention">Other administrative intervention</option>
+          </select>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">
+            Internal Operations Log / Note (Optional)
+          </label>
+          <textarea name="admin_notes" rows="2" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-medium text-slate-800 bg-white focus:ring-2 focus:ring-rose-500 outline-none transition placeholder:text-slate-400" placeholder="Add any specific context or guest communication notes for audit records..."></textarea>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+          <a href="{% url 'portal_dashboard' %}" class="px-5 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+            Dismiss & Keep Active
+          </a>
+          <button type="submit" class="px-6 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black uppercase tracking-wider transition shadow-lg shadow-rose-600/30 flex items-center gap-1.5 active:scale-95">
+            <i data-lucide="x-circle" class="w-4 h-4"></i>
+            <span>Confirm Revocation</span>
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  }
+</script>
+{% endblock %}

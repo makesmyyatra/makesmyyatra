@@ -12,6 +12,8 @@ urlpatterns = [
     path('booking/<str:booking_id>/', views.booking_detail, name='booking_detail'),
     path('booking/voucher/<str:booking_id>/', views.booking_voucher, name='booking_voucher'),
     path('booking/<str:booking_id>/voucher/', views.download_customer_voucher, name='download_customer_voucher'),
+    path('booking/download-voucher/<str:booking_id>/', views.download_customer_voucher, name='download_customer_voucher'),
+    path('booking/<str:booking_id>/cancel/', views.cancel_booking, name='cancel_booking'),
     
     # --- Hotel Public Reviews & Gallery ---
     path('hotel/<int:hotel_id>/review/', views.submit_hotel_review, name='submit_hotel_review'),
@@ -20,19 +22,37 @@ urlpatterns = [
     # --- AJAX Endpoints ---
     path('api/apply-coupon/', views.apply_coupon_ajax, name='apply_coupon_ajax'),
 
+    
+    # urgent help endpoints for portal
+    path('portal/urgent-help/<int:support_id>/resolve/',views.portal_urgent_help_resolve,name='portal_urgent_help_resolve',),
+    path('portal/urgent-help/<int:support_id>/delete/',views.portal_urgent_help_delete,name='portal_urgent_help_delete',),
+    path('portal/urgent-help/', views.portal_urgent_help, name='portal_urgent_help'),
+
     # --- Partner Auth & Dashboard ---
+    path('partner/register/', views.partner_register, name='partner_register'),
+    path('partner/add-property/', views.add_property, name='add_property'),
     path('partner/login/', views.partner_login, name='partner_login'),
+    path('partner/logout/', views.partner_logout, name='partner_logout'),
     path('partner/dashboard/', views.partner_dashboard, name='partner_dashboard'),
+    path('partner/property/<int:hotel_id>/edit/', views.partner_edit_property, name='partner_edit_property'),
+    path('partner/hotel/<int:hotel_id>/gallery/', views.partner_manage_gallery, name='partner_manage_gallery'),
+    path('partner/gallery/<int:media_id>/delete/', views.partner_gallery_image_delete, name='partner_gallery_image_delete'),
+    path('partner/hotel/<int:hotel_id>/delete/', views.delete_hotel, name='delete_hotel'),
+    path('partner/room/<int:room_id>/quick-update/', views.partner_quick_update_room, name='partner_quick_update_room'),
+    path('partner/booking/<str:booking_id>/status/<str:new_status>/', views.partner_update_booking_status, name='partner_update_booking_status'),
+    path('partner/booking/<int:booking_id>/cancel/', views.partner_cancel_booking, name='partner_cancel_booking'),
 
     # --- Operations / Portal Auth & Dashboard ---
     path('portal/login/', views.portal_login, name='portal_login'),
     path('portal/logout/', views.portal_logout, name='portal_logout'),
     path('portal/dashboard/', views.portal_dashboard, name='portal_dashboard'),
     path('portal/customers/', views.portal_customers, name='portal_customers'),
+    path('portal/booking/<str:booking_id>/invoice/', views.portal_booking_invoice, name='portal_booking_invoice'),
 
     # --- Hotel & Room Management ---
     path('portal/hotels/', views.portal_hotels, name='portal_hotels'),
     path('portal/hotels/add/', views.portal_hotel_add, name='portal_hotel_add'),
+    path('portal/hotel/<int:hotel_id>/toggle-verification/', views.portal_toggle_hotel_verification, name='portal_toggle_hotel_verification'),
     path('portal/hotels/edit/<int:hotel_id>/', views.portal_hotel_edit, name='portal_hotel_edit'),
     path('portal/hotels/delete/<int:hotel_id>/', views.portal_hotel_delete, name='portal_hotel_delete'),
     
@@ -70,8 +90,8 @@ urlpatterns = [
     # --- Urgent Help / Emergency ---
     path('portal/urgent-help/', views.portal_urgent_help, name='portal_urgent_help'),
     path('portal/urgent-help/<int:support_id>/resolve/', views.portal_urgent_help_resolve, name='portal_urgent_help_resolve'),
-
     path('portal/reports/revenue/', views.portal_revenue_report, name='portal_revenue_report'),
-
     path('portal/bookings/<str:booking_id>/cancel/',views.portal_booking_cancel,name='portal_booking_cancel',),
+
+    
 ]

@@ -6,10 +6,12 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 
+
 # Helper for Booking Reference
 def generate_mmy_booking_id():
     random_code = "".join(random.choices(string.digits, k=4))
     return f"MMY-HTL-{random_code}"
+
 
 # Hotel profile and details
 class Hotel(models.Model):
@@ -34,6 +36,11 @@ class Hotel(models.Model):
     city = models.CharField(max_length=100, default="Una")
     address = models.TextField(blank=True, default="")
     google_maps_url = models.URLField(max_length=500, blank=True, null=True)
+
+    # Live Geolocation Fields
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+
     star_rating = models.PositiveSmallIntegerField(default=3)
     cover_image = models.TextField(blank=True, null=True)
     owner_name = models.CharField(max_length=150, blank=True, default="")
@@ -50,6 +57,11 @@ class Hotel(models.Model):
         max_digits=5, decimal_places=2, default=15.00
     )
     is_active = models.BooleanField(default=True)
+
+    # Verification & Crime-Free Check
+    is_verified = models.BooleanField(default=False, help_text="Admin approval needed")
+    verification_doc = models.FileField(upload_to="verification_docs/", null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -159,7 +171,7 @@ class Coupon(models.Model):
         return round(discount, 2), "Applied successfully."
 
     def __str__(self):
-        return f"{self.code} ({self.get_discount_type_display()} - {self.discount_value})"
+        return f"{self.code} ({self.get_discount_type_display()} {self.discount_value})"
 
 
 # Booking records with auto MMY ID generation
@@ -170,6 +182,9 @@ class Booking(models.Model):
         ("CHECKED_IN", "Checked-In"),
         ("CHECKED_OUT", "Checked-Out"),
         ("CANCELLED", "Cancelled"),
+        ("CANCELLED_BY_ADMIN", "Cancelled by Admin"),
+        ("CANCELLED_BY_PARTNER", "Cancelled by Partner"),
+        ("CANCELLED_BY_GUEST", "Cancelled by Guest"),
     ]
     PAYMENT_MODES = [
         ("PREPAID", "Full Online Payment"),
@@ -244,12 +259,28 @@ class Booking(models.Model):
         max_digits=10, decimal_places=2, default=0.00
     )
     
+    # === Partner Payout & Cancellation Reduction Fields ===
+    partner_payout = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00,
+        help_text="Net payout due to hotel partner (becomes 0 if partner cancels)"
+    )
+    cancelled_by = models.CharField(
+        max_length=30, blank=True, null=True,
+        choices=[("PARTNER", "Partner"), ("GUEST", "Guest"), ("ADMIN", "Admin")]
+    )
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    cancellation_reason = models.TextField(blank=True, null=True)
+    cancellation_penalty = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00,
+        help_text="Penalty levied on partner if cancelled by partner"
+    )
+
     payment_mode = models.CharField(
         max_length=20, choices=PAYMENT_MODES, default="PAY_AT_HOTEL"
     )
     payment_status = models.CharField(max_length=20, default="CONFIRMED")
     status = models.CharField(
-        max_length=20, choices=STATUS_CHOICES, default="CONFIRMED"
+        max_length=30, choices=STATUS_CHOICES, default="CONFIRMED"
     )
     transaction_id = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -295,7 +326,7 @@ class HotelMedia(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.hotel.name} - Photo ({self.id})"
+        return f"{self.hotel.name} Photo ({self.id})"
 
 
 # Reviews & Ratings
@@ -311,3 +342,23 @@ class HotelReview(models.Model):
 
     def __str__(self):
         return f"{self.guest_name} ({self.rating}★) - {self.hotel.name}"
+
+
+class UrgentHelp(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending Support'),
+        ('IN_PROGRESS', 'Calling / In Touch'),
+        ('RESOLVED', 'Issue Resolved'),
+    ]
+
+    guest_name = models.CharField(max_length=150)
+    guest_phone = models.CharField(max_length=20)
+    booking_id = models.CharField(max_length=50, blank=True, null=True)
+    issue_description = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    admin_notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.guest_name} - {self.guest_phone} ({self.status})"

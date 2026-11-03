@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Partner Registration - MakesMyYatra</title>
+  <!-- Tailwind CSS & Lucide Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 antialiased">
+
+  <!-- Minimal Brand Header -->
+  <header class="py-5 px-6 border-b border-slate-200 bg-white/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <a href="{% url 'index' %}" class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md text-lg font-black">
+          ⛰️
+        </div>
+        <span class="text-xl font-black tracking-tight text-slate-900">MAKES<span class="text-blue-600">MY</span>YATRA</span>
+      </a>
+      <a href="{% url 'partner_login' %}" class="text-xs font-bold text-slate-600 hover:text-blue-600 transition flex items-center gap-1">
+        <span>Already a Partner? Login</span>
+        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+      </a>
+    </div>
+  </header>
+
+  <!-- Register Form Card -->
+  <main class="max-w-md mx-auto px-4 py-10">
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-xl p-8">
+      
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-inner">
+          <i data-lucide="building-2" class="w-6 h-6"></i>
+        </div>
+        <h1 class="text-2xl font-black text-slate-900">Partner With Us</h1>
+        <p class="text-xs text-slate-500 mt-1">List your hotel or homestay on MakesMyYatra</p>
+      </div>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="p-3 mb-4 text-xs font-semibold rounded-xl {% if message.tags == 'error' %}bg-rose-50 text-rose-700 border border-rose-200{% else %}bg-emerald-50 text-emerald-700 border border-emerald-200{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="POST" action="{% url 'partner_register' %}" class="space-y-4">
+        {% csrf_token %}
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Your Full Name</label>
+          <input type="text" name="full_name" required placeholder="e.g. Ramesh Sharma"
+            class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Email Address (Login Username)</label>
+          <input type="email" name="email" required placeholder="owner@example.com"
+            class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Phone Number</label>
+          <input type="tel" name="phone" required placeholder="e.g. 98160XXXXX"
+            class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Create Password</label>
+            <input type="password" name="password" required placeholder="••••••••"
+              class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Confirm Password</label>
+            <input type="password" name="confirm_password" required placeholder="••••••••"
+              class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+        </div>
+
+        <button type="submit"
+          class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md hover:shadow-lg transition flex items-center justify-center gap-2">
+          <span>Create Account & Continue</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+
+        <p class="text-xs text-slate-500 text-center pt-2">
+          Already a partner? 
+          <a href="{% url 'partner_login' %}" class="text-emerald-600 font-bold hover:underline">Partner Login</a>
+        </p>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+  </script>
+</body>
+</html>

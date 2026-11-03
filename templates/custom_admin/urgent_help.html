@@ -3,34 +3,183 @@
 {% block page_title %}Traveler Urgent Assistance Desk{% endblock %}
 
 {% block content %}
-<div class="space-y-4">
-  {% for s in supports %}
-  <div class="bg-white p-6 rounded-3xl border border-[#e2d9cc] shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-    <div class="space-y-1">
-      <div class="flex items-center gap-3">
-        <h4 class="font-bold text-[#0f2e24] text-base">{{ s.name }}</h4>
-        <span class="text-xs bg-red-100 text-red-700 px-2.5 py-0.5 rounded-full font-bold">Urgent</span>
-      </div>
-      <p class="text-xs text-[#64748b]">Phone: <strong class="text-[#0f2e24]">{{ s.phone }}</strong> | Email: {{ s.email }}</p>
-      <p class="text-sm text-[#1a2e22] mt-2 bg-[#faf8f5] p-3 rounded-xl border border-[#e2d9cc]">{{ s.message }}</p>
-      <span class="text-[10px] text-[#64748b] block mt-1">Logged on: {{ s.created_at|date:"D, d M Y - h:i A" }}</span>
-    </div>
+<div class="space-y-5">
+
+  <!-- Radio Segment Filter Bar -->
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-[#e2d9cc] shadow-sm">
     
-    <div class="flex items-center gap-2 shrink-0">
-      <a href="tel:{{ s.phone }}" class="bg-[#0f2e24] text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:opacity-90 transition flex items-center gap-1.5">
-        <i data-lucide="phone" class="h-3.5 w-3.5"></i> Call Now
-      </a>
-      <a href="https://wa.me/91{{ s.phone }}" target="_blank" class="bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-emerald-700 transition flex items-center gap-1.5">
-        <i data-lucide="message-circle" class="h-3.5 w-3.5"></i> WhatsApp
-      </a>
+    <!-- Radio Filter Group -->
+    <div class="inline-flex p-1 bg-slate-100 rounded-2xl border border-slate-200" id="filterRadioGroup">
+      
+      <!-- 1. All Logs Radio -->
+      <label class="cursor-pointer">
+        <input type="radio" name="desk_filter" value="all" checked onchange="filterCards('all')" class="hidden peer">
+        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-slate-600 transition-all peer-checked:bg-[#0f2e24] peer-checked:text-white peer-checked:shadow-sm">
+          <i data-lucide="layers" class="h-3.5 w-3.5"></i>
+          <span>All Logs</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-700 peer-checked:bg-white/20 peer-checked:text-white">
+            {{ total_count|default:supports|length }}
+          </span>
+        </span>
+      </label>
+
+      <!-- 2. Resolved Radio -->
+      <label class="cursor-pointer">
+        <input type="radio" name="desk_filter" value="resolved" onchange="filterCards('resolved')" class="hidden peer">
+        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-slate-600 transition-all peer-checked:bg-[#0f2e24] peer-checked:text-white peer-checked:shadow-sm">
+          <i data-lucide="check-check" class="h-3.5 w-3.5 text-emerald-500"></i>
+          <span>Resolved</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-700 peer-checked:bg-emerald-500/30 peer-checked:text-white">
+            {{ resolved_count }}
+          </span>
+        </span>
+      </label>
+
+      <!-- 3. Needs Attention Radio -->
+      <label class="cursor-pointer">
+        <input type="radio" name="desk_filter" value="pending" onchange="filterCards('pending')" class="hidden peer">
+        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-slate-600 transition-all peer-checked:bg-[#0f2e24] peer-checked:text-white peer-checked:shadow-sm">
+          <i data-lucide="alert-circle" class="h-3.5 w-3.5 text-red-500"></i>
+          <span>Needs Attention</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-700 peer-checked:bg-red-500/30 peer-checked:text-white">
+            {{ pending_count }}
+          </span>
+        </span>
+      </label>
+
+    </div>
+
+    <div class="text-[11px] text-[#64748b] pr-2 flex items-center gap-1.5">
+      <i data-lucide="shield-check" class="h-3.5 w-3.5 text-emerald-600"></i>
+      <span>Autopilot: Auto-purges resolved logs after 30 days</span>
     </div>
   </div>
-  {% empty %}
-  <div class="bg-white p-12 rounded-3xl border border-[#e2d9cc] text-center text-[#64748b]">
-    <i data-lucide="check-circle-2" class="h-10 w-10 text-emerald-600 mx-auto mb-2"></i>
-    <p class="font-bold text-sm text-[#0f2e24]">All Clear!</p>
-    <p class="text-xs mt-1">There are no pending emergency requests from travelers.</p>
+
+  <!-- Cards List -->
+  <div class="space-y-4" id="cardsListContainer">
+    {% for s in supports %}
+    <!-- Data-status attribute for instant JS filter -->
+    <div class="ticket-card p-6 rounded-3xl border shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-all duration-300 border-l-[6px] 
+         {% if s.status|upper == 'RESOLVED' %}
+           bg-[#f4faf6] border-emerald-200 border-l-emerald-600
+         {% else %}
+           bg-white border-[#e2d9cc] border-l-rose-500 hover:shadow-md
+         {% endif %}"
+         data-status="{% if s.status|upper == 'RESOLVED' %}resolved{% else %}pending{% endif %}">
+      
+      <div class="space-y-1.5 flex-1">
+        <div class="flex items-center gap-3">
+          <h4 class="font-bold text-[#0f2e24] text-base">{{ s.name }}</h4>
+          
+          <div>
+            {% if s.status|upper == 'RESOLVED' %}
+              <span class="text-xs bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1 border border-emerald-300">
+                <i data-lucide="check" class="h-3 w-3"></i> Resolved
+              </span>
+            {% else %}
+              <span class="text-xs bg-red-100 text-red-700 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1 border border-red-200 animate-pulse">
+                <i data-lucide="alert-triangle" class="h-3 w-3"></i> Action Required
+              </span>
+            {% endif %}
+          </div>
+        </div>
+        
+        <p class="text-xs text-[#64748b] flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span><i data-lucide="phone" class="h-3 w-3 inline mr-1 text-[#0f2e24]"></i><strong class="text-[#0f2e24]">{{ s.phone }}</strong></span>
+          {% if s.location %}
+            <span><i data-lucide="map-pin" class="h-3 w-3 inline mr-1 text-red-500"></i>Location: <strong class="text-[#0f2e24]">{{ s.location }}</strong></span>
+          {% endif %}
+        </p>
+
+        <p class="text-sm text-[#1a2e22] mt-2 bg-white/70 p-3 rounded-xl border border-[#e2d9cc] leading-relaxed">
+          {{ s.issue_details }}
+        </p>
+
+        <div class="text-[10px] text-[#64748b] pt-1 flex items-center gap-2">
+          <span>Logged: {{ s.created_at|date:"D, d M Y - h:i A" }}</span>
+          {% if s.resolved_at %}
+            <span>•</span>
+            <strong class="text-emerald-700 font-semibold">Resolved on: {{ s.resolved_at|date:"d M, h:i A" }}</strong>
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- Action Controls -->
+      <div class="flex items-center gap-2 shrink-0 flex-wrap">
+        <!-- Call -->
+        <a href="tel:{{ s.phone }}" class="bg-[#0f2e24] text-white px-3.5 py-2 rounded-xl text-xs font-bold hover:opacity-90 transition flex items-center gap-1.5 shadow-sm">
+          <i data-lucide="phone-outgoing" class="h-3.5 w-3.5"></i> Call
+        </a>
+
+        <!-- WhatsApp -->
+        <a href="https://wa.me/91{{ s.phone }}?text=Hello%20{{ s.name }},%20this%20is%20MakesMyYatra%20Ground%20Support." target="_blank" class="bg-emerald-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition flex items-center gap-1.5 shadow-sm">
+          <i data-lucide="message-circle" class="h-3.5 w-3.5"></i> WhatsApp
+        </a>
+
+        <!-- Mark Done: Sirf pending cards par dikhega -->
+        {% if s.status|upper != 'RESOLVED' %}
+        <a href="{% url 'portal_urgent_help_resolve' s.id %}" 
+           onclick="return confirm('Mark request from {{ s.name }} as resolved?');"
+           class="bg-[#1e293b] text-white px-3.5 py-2 rounded-xl text-xs font-bold hover:bg-emerald-800 transition flex items-center gap-1.5 shadow-sm">
+          <i data-lucide="check-circle" class="h-3.5 w-3.5 text-emerald-400"></i> Mark Done
+        </a>
+        {% else %}
+        <span class="bg-emerald-100 text-emerald-800 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 border border-emerald-200">
+          <i data-lucide="check-check" class="h-3.5 w-3.5"></i> Closed
+        </span>
+        {% endif %}
+
+        <!-- Immediate Delete -->
+        <a href="{% url 'portal_urgent_help_delete' s.id %}" 
+           onclick="return confirm('Permanently delete ticket for {{ s.name }}?');"
+           class="bg-red-50 text-red-600 border border-red-200 p-2 rounded-xl text-xs font-bold hover:bg-red-600 hover:text-white transition flex items-center justify-center shadow-sm"
+           title="Delete immediately">
+          <i data-lucide="trash-2" class="h-3.5 w-3.5"></i>
+        </a>
+      </div>
+    </div>
+    {% empty %}
+    <div class="bg-white p-12 rounded-3xl border border-[#e2d9cc] text-center text-[#64748b]">
+      <p class="font-bold text-sm text-[#0f2e24]">No records in emergency helpdesk.</p>
+    </div>
+    {% endfor %}
+
+    <!-- Dynamic Empty State for Radio Filtering -->
+    <div id="dynamicEmptyState" class="hidden bg-white p-12 rounded-3xl border border-[#e2d9cc] text-center text-[#64748b]">
+      <div class="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-emerald-100">
+        <i data-lucide="check-check" class="h-6 w-6 text-emerald-600"></i>
+      </div>
+      <p class="font-bold text-sm text-[#0f2e24]" id="emptyStateText">No tickets in this section!</p>
+    </div>
   </div>
-  {% endfor %}
+
 </div>
+
+<!-- 5-Line Instant Radio Filter Script -->
+<script>
+function filterCards(type) {
+    const cards = document.querySelectorAll('.ticket-card');
+    const emptyState = document.getElementById('dynamicEmptyState');
+    const emptyText = document.getElementById('emptyStateText');
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+        const cardStatus = card.getAttribute('data-status');
+        
+        if (type === 'all' || cardStatus === type) {
+            card.style.display = 'flex';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    if (visibleCount === 0) {
+        emptyState.classList.remove('hidden');
+        emptyText.textContent = type === 'pending' ? 'No pending emergencies! All attended.' : 'No resolved tickets found.';
+    } else {
+        emptyState.classList.add('hidden');
+    }
+}
+</script>
 {% endblock %}

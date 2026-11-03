@@ -177,6 +177,8 @@
       
       <!-- Brand & Top-Right Header Actions -->
       <div class="flex items-center justify-between mb-4">
+        
+        <!-- Logo & Title -->
         <a href="{% url 'index' %}" class="flex items-center gap-2.5">
           <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 text-2xl font-black">
             ⛰️
@@ -186,15 +188,28 @@
             <span class="block text-[9px] uppercase font-bold tracking-widest text-slate-300">Himachal Travel Super-App</span>
           </div>
         </a>
-        <!-- Right Side Nav Chips -->
+
+        <!-- Right Side Nav Actions -->
         <div class="flex items-center gap-3">
-          <a href="{% url 'partner_login' %}" class="hidden md:flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-400/30 text-xs font-bold transition">
-            <i data-lucide="building" class="w-4 h-4 text-emerald-400"></i>
+          
+          <!-- 1. List Your Property (New Partner Registration) -->
+          <a href="{% url 'partner_register' %}" class="hidden md:flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-400/30 text-xs font-bold transition shadow-sm group">
+            <div class="w-7 h-7 rounded-xl bg-emerald-500/30 text-emerald-300 flex items-center justify-center">
+              <i data-lucide="building-2" class="w-4 h-4 text-emerald-300 group-hover:scale-110 transition"></i>
+            </div>
             <div>
-              <span class="block leading-tight">List Your Property</span>
+              <span class="block leading-tight text-white group-hover:text-emerald-200 transition">List Your Property</span>
               <span class="text-[9px] text-emerald-300 font-medium">Grow your business!</span>
             </div>
           </a>
+
+          <!-- 2. Partner Login Shortcut (Agar already registered hai) -->
+          <a href="{% url 'partner_login' %}" class="hidden lg:flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10 text-xs font-bold transition">
+            <i data-lucide="key-round" class="w-3.5 h-3.5 text-emerald-400"></i>
+            <span>Partner Login</span>
+          </a>
+
+          <!-- 3. My Trips / Track Booking -->
           <a href="{% url 'track_booking' %}" class="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/20 transition shadow-sm group">
             <div class="w-7 h-7 rounded-xl bg-amber-400 text-slate-900 flex items-center justify-center font-bold">
               <i data-lucide="ticket" class="w-4 h-4"></i>
@@ -204,8 +219,11 @@
               <span class="block text-[9px] text-slate-300 font-medium">Track Booking</span>
             </div>
           </a>
+
+          <!-- 4. Admin Portal -->
           <a href="{% url 'portal_login' %}" class="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl border border-slate-700/80 bg-slate-900/60 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition shadow-sm">
-            <i data-lucide="lock" class="w-3.5 h-3.5 text-blue-400"></i> Admin
+            <i data-lucide="lock" class="w-3.5 h-3.5 text-blue-400"></i>
+            <span>Admin</span>
           </a>
         </div>
       </div>
@@ -671,13 +689,71 @@
             <p class="text-xs text-slate-500 mt-1 flex items-center gap-1">
               <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400"></i> {{ hotel.address|truncatechars:45 }}
             </p>
-            
-            <div class="flex flex-wrap gap-1.5 mt-3">
-              <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">Free Wi-Fi</span>
-              <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">Mountain View</span>
-              <span class="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md">Pay @ Hotel</span>
-            </div>
+            <!-- High-Visibility Highlighted Amenities -->
+            <div class="d-flex flex-wrap gap-1.5 my-2.5">
+                {% if hotel.has_wifi %}
+                    <span class="d-inline-flex align-items-center gap-1 px-2.5 py-1 rounded-pill fw-semibold shadow-xs" 
+                          style="font-size: 0.74rem; background-color: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;">
+                        <i class="bi bi-check-circle-fill" style="color: #059669; font-size: 0.8rem;"></i>
+                        <i class="bi bi-wifi" style="color: #0d9488;"></i>
+                        <span>Free Wi-Fi</span>
+                    </span>
+                {% endif %}
 
+                {% if hotel.has_ac %}
+                    <span class="d-inline-flex align-items-center gap-1 px-2.5 py-1 rounded-pill fw-semibold shadow-xs" 
+                          style="font-size: 0.74rem; background-color: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 0.8rem;"></i>
+                        <i class="bi bi-snow text-primary"></i>
+                        <span>Air Conditioning</span>
+                    </span>
+                {% endif %}
+
+                {% if hotel.has_heater %}
+                    <span class="d-inline-flex align-items-center gap-1 px-2.5 py-1 rounded-pill fw-semibold shadow-xs" 
+                          style="font-size: 0.74rem; background-color: #fffbeb; color: #92400e; border: 1px solid #fde68a;">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 0.8rem;"></i>
+                        <i class="bi bi-fire text-warning"></i>
+                        <span>Room Heater</span>
+                    </span>
+                {% endif %}
+
+                {% if hotel.has_parking %}
+                    <span class="d-inline-flex align-items-center gap-1 px-2.5 py-1 rounded-pill fw-semibold shadow-xs" 
+                          style="font-size: 0.74rem; background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 0.8rem;"></i>
+                        <i class="bi bi-p-square-fill text-success"></i>
+                        <span>Free Parking</span>
+                    </span>
+                {% endif %}
+
+                {% if hotel.has_breakfast %}
+                    <span class="d-inline-flex align-items-center gap-1 px-2.5 py-1 rounded-pill fw-semibold shadow-xs" 
+                          style="font-size: 0.74rem; background-color: #fdf2f8; color: #9d174d; border: 1px solid #fbcfe8;">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 0.8rem;"></i>
+                        <i class="bi bi-cup-hot-fill" style="color: #db2777;"></i>
+                        <span>Breakfast Included</span>
+                    </span>
+                {% endif %}
+
+                {% if hotel.has_restaurant %}
+                    <span class="d-inline-flex align-items-center gap-1 px-2.5 py-1 rounded-pill fw-semibold shadow-xs" 
+                          style="font-size: 0.74rem; background-color: #fff7ed; color: #9a3412; border: 1px solid #fed7aa;">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 0.8rem;"></i>
+                        <i class="bi bi-egg-fried" style="color: #ea580c;"></i>
+                        <span>Restaurant</span>
+                    </span>
+                {% endif %}
+
+                {% if hotel.has_pool %}
+                    <span class="d-inline-flex align-items-center gap-1 px-2.5 py-1 rounded-pill fw-semibold shadow-xs" 
+                          style="font-size: 0.74rem; background-color: #ecfeff; color: #155e75; border: 1px solid #a5f3fc;">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 0.8rem;"></i>
+                        <i class="bi bi-water" style="color: #0891b2;"></i>
+                        <span>Swimming Pool</span>
+                    </span>
+                {% endif %}
+            </div>
             <!-- Approved Guest Reviews Preview -->
             {% if hotel.reviews.all %}
             <div class="mt-3.5 pt-3 border-t border-slate-100 space-y-1.5">
@@ -922,10 +998,12 @@
     </div>
   </footer>
 
-  <!-- ================= JAVASCRIPT LOGIC ================= -->
+ <!-- ================= JAVASCRIPT LOGIC ================= -->
   <script>
     lucide.createIcons();
     let appliedCouponData = null;
+    const SURGE_PERCENT = 20; // 20% on Friday & Saturday nights
+    const GST_RATE = 0.12;    // Fixed 12% GST
 
     const titles = {
       'flights': {
@@ -1071,7 +1149,7 @@
       return dropdown.contains(target);
     }
 
-    // Dynamic Calculation Engine with Auto Early-Bird, Long-Stay Offers & Real-time Coupons
+    // Dynamic Calculation Engine with Auto Early-Bird, Weekend Surge & Real-time AJAX Coupons
     function calculateBookingTotal() {
         const checkInInput = document.getElementById('modalCheckIn');
         const checkOutInput = document.getElementById('modalCheckOut');
@@ -1081,30 +1159,55 @@
         const unitRate = parseFloat(baseInput.dataset.unitPrice || 1850);
         const mealExtra = mealSelect ? parseFloat(mealSelect.options[mealSelect.selectedIndex].getAttribute('data-price') || 0) : 0;
         
-        const d1 = new Date(checkInInput.value);
-        const d2 = new Date(checkOutInput.value);
-        const diffTime = d2 - d1;
-        let nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        if (isNaN(nights) || nights < 1) {
-          nights = 1;
-          const nextDay = new Date(d1);
-          nextDay.setDate(d1.getDate() + 1);
-          checkOutInput.value = formatDateStr(nextDay);
+        if (!checkInInput.value) return;
+
+        const d1 = new Date(checkInInput.value + 'T00:00:00');
+        let d2 = new Date(checkOutInput.value + 'T00:00:00');
+
+        if (isNaN(d2.getTime()) || d2 <= d1) {
+          d2 = new Date(d1);
+          d2.setDate(d1.getDate() + 1);
+          checkOutInput.value = formatDateStr(d2);
         }
 
-        // Advance booking days for Early Bird
+        // Night breakdown (Friday = 5, Saturday = 6)
+        let weekdayNights = 0;
+        let weekendNights = 0;
+        let cur = new Date(d1);
+
+        while (cur < d2) {
+          const day = cur.getDay();
+          if (day === 5 || day === 6) {
+            weekendNights++;
+          } else {
+            weekdayNights++;
+          }
+          cur.setDate(cur.getDate() + 1);
+        }
+
+        const nights = weekdayNights + weekendNights;
+
+        // 1. Base Room Fare with 20% Surge on Weekend Nights
+        const surgeMultiplier = 1 + (SURGE_PERCENT / 100);
+        const weekdaySubtotal = weekdayNights * unitRate;
+        const weekendSubtotal = weekendNights * (unitRate * surgeMultiplier);
+        const pureRoomTariff = weekdaySubtotal + weekendSubtotal;
+
+        // Meal plan added per night
+        const totalMealCharges = mealExtra * nights;
+        const subtotal = pureRoomTariff + totalMealCharges;
+
+        // 2. Early Bird / Advance Days
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const checkInDateOnly = new Date(checkInInput.value);
-        const advanceDays = Math.ceil((checkInDateOnly - today) / (1000 * 60 * 60 * 24));
+        const advanceDays = Math.ceil((d1 - today) / (1000 * 60 * 60 * 24));
 
-        // Evaluate Best Applicable Offer
         let effectiveDiscountPercent = 0;
         let offerHeading = "";
         let offerDesc = "";
         let offerIcon = "✨";
 
-        // 1. Early Bird Offer (7+ days ahead) -> 10%
+        // Early Bird Offer (7+ days ahead) -> 10%
         if (advanceDays >= 7) {
           effectiveDiscountPercent = 10;
           offerHeading = "Early Bird Savings Applied!";
@@ -1112,26 +1215,20 @@
           offerIcon = "📅";
         }
 
-        // 2. Long Stay Offer (3+ nights) -> 15% (Takes priority over Early Bird)
-        if (nights >= 3) {
-          if (15 > effectiveDiscountPercent) {
-            effectiveDiscountPercent = 15;
-            offerHeading = "Long Vacation Offer Applied!";
-            offerDesc = `Enjoying a ${nights}-night scenic stay (Flat 15% OFF)`;
-            offerIcon = "🏔️";
-          }
+        // Long Stay Offer (3+ nights) -> 15%
+        if (nights >= 3 && 15 > effectiveDiscountPercent) {
+          effectiveDiscountPercent = 15;
+          offerHeading = "Long Vacation Offer Applied!";
+          offerDesc = `Enjoying a ${nights}-night scenic stay (Flat 15% OFF)`;
+          offerIcon = "🏔️";
         }
-
-        // Base Room Rate + Meal Extra
-        const effectiveNightlyRate = unitRate + mealExtra;
-        const subtotal = effectiveNightlyRate * nights;
 
         let discount = 0;
         if (effectiveDiscountPercent > 0) {
           discount = Math.round(subtotal * (effectiveDiscountPercent / 100));
         }
 
-        // 3. Dynamic Database Coupon Override (Higher Priority if Applied)
+        // 3. Dynamic Database Coupon Override (If Applied via AJAX)
         if (appliedCouponData && appliedCouponData.success) {
           discount = parseFloat(appliedCouponData.discount_amount);
           effectiveDiscountPercent = 1;
@@ -1140,15 +1237,27 @@
           offerIcon = "🏷️";
         }
 
+        // 4. Flat 12% GST Calculation
         const taxableBase = Math.max(0, subtotal - discount);
-        const gstRate = effectiveNightlyRate < 1000 ? 0.0 : (effectiveNightlyRate <= 7500 ? 0.12 : 0.18);
-        const totalGst = Math.round(taxableBase * gstRate);
+        const totalGst = Math.round(taxableBase * GST_RATE);
         const grandTotal = taxableBase + totalGst;
 
         baseInput.value = taxableBase;
-        document.getElementById('modalStayDuration').innerText = `Stay Duration: ${nights} Night${nights > 1 ? 's' : ''}`;
-        document.getElementById('modalRateCalculation').innerText = `₹${effectiveNightlyRate.toLocaleString('en-IN')} × ${nights}`;
-        document.getElementById('modalBaseSubtotal').innerText = `₹${subtotal.toLocaleString('en-IN')}`;
+
+        // UI Texts
+        let durationText = `Stay Duration: ${nights} Night${nights > 1 ? 's' : ''}`;
+        if (weekendNights > 0) {
+          durationText += ` (${weekendNights} Weekend)`;
+        }
+        document.getElementById('modalStayDuration').innerText = durationText;
+
+        if (weekendNights > 0) {
+          document.getElementById('modalRateCalculation').innerText = `${weekdayNights > 0 ? `₹${Math.round(unitRate)} × ${weekdayNights} + ` : ''}₹${Math.round(unitRate * surgeMultiplier)} (Surge) × ${weekendNights}`;
+        } else {
+          document.getElementById('modalRateCalculation').innerText = `₹${Math.round(unitRate + mealExtra).toLocaleString('en-IN')} × ${nights}`;
+        }
+
+        document.getElementById('modalBaseSubtotal').innerText = `₹${Math.round(subtotal).toLocaleString('en-IN')}`;
         
         // Show/Hide Offer Banner & Breakdown
         const offerBanner = document.getElementById('autoOfferBanner');
@@ -1167,7 +1276,8 @@
           document.getElementById('discountRow').classList.add('hidden');
         }
 
-        document.getElementById('modalGstLabel').innerText = `Taxes & GST (${Math.round(gstRate * 100)}%):`;
+        const gstLabelElem = document.getElementById('modalGstLabel');
+        if (gstLabelElem) gstLabelElem.innerText = `Taxes & GST (12%):`;
         document.getElementById('modalGstAmount').innerText = `+ ₹${totalGst.toLocaleString('en-IN')}`;
         document.getElementById('modalDisplayPrice').innerText = `₹${grandTotal.toLocaleString('en-IN')}`;
     }
@@ -1175,7 +1285,7 @@
     function onCheckInChange() {
       const checkInVal = document.getElementById('modalCheckIn').value;
       if (!checkInVal) return;
-      const d1 = new Date(checkInVal);
+      const d1 = new Date(checkInVal + 'T00:00:00');
       const minCheckOut = new Date(d1);
       minCheckOut.setDate(d1.getDate() + 1);
       const minCheckOutStr = formatDateStr(minCheckOut);
@@ -1187,7 +1297,7 @@
       calculateBookingTotal();
     }
 
-    // Dynamic Backend AJAX Coupon Validation
+    // Dynamic Backend AJAX Coupon Validation (Your Original AJAX Engine)
     function applyCouponManual() {
       const couponInput = document.getElementById('couponCodeInput');
       const val = couponInput.value.trim().toUpperCase();
@@ -1210,8 +1320,8 @@
       const checkOutVal = document.getElementById('modalCheckOut').value;
       let nights = 1;
       if (checkInVal && checkOutVal) {
-        const d1 = new Date(checkInVal);
-        const d2 = new Date(checkOutVal);
+        const d1 = new Date(checkInVal + 'T00:00:00');
+        const d2 = new Date(checkOutVal + 'T00:00:00');
         nights = Math.max(Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24)), 1);
       }
 

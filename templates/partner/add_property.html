@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register Property | MakesMyYatra Partner</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <style>
+    :root {
+      --brand-primary: #0f172a;
+      --brand-accent: #2563eb;
+      --surface-bg: #f8fafc;
+      --card-border: #e2e8f0;
+    }
+    body {
+      background-color: var(--surface-bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #1e293b;
+    }
+    .form-section-card {
+      background: #ffffff;
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .section-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+    .section-subtitle {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-bottom: 1.25rem;
+    }
+    .form-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 0.35rem;
+    }
+    .amenity-pill {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 0.65rem 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+    .amenity-pill:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header class="bg-white border-bottom py-3 px-4 mb-4">
+    <div class="container-fluid d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center gap-2">
+        <a href="{% url 'partner_dashboard' %}" class="btn btn-sm btn-outline-secondary rounded-pill">
+          <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+        </a>
+        <span class="fw-bold fs-5 ms-2 text-dark">Makes<span class="text-primary">My</span>Yatra</span>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 rounded-pill" style="font-size: 0.7rem;">
+          Host Onboarding
+        </span>
+      </div>
+      <div class="small text-muted">Signed in: <strong>{{ request.user.username }}</strong></div>
+    </div>
+  </header>
+
+  <div class="container py-2" style="max-width: 900px;">
+
+    <!-- System Messages -->
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'danger' }} alert-dismissible fade show border-0 shadow-sm rounded-3 py-3" role="alert">
+          <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <div class="mb-4">
+      <h3 class="fw-bold text-dark mb-1">List a New Stay / Hotel</h3>
+      <p class="text-muted small">Enter complete property specifications, room rates, GPS mapping, and verification documents.</p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <!-- 1. Property Identity -->
+      <div class="form-section-card">
+        <div class="section-title"><i class="bi bi-buildings text-primary"></i> 1. Property Identity</div>
+        <div class="section-subtitle">Official registered stay details</div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Property / Hotel Name *</label>
+            <input type="text" name="hotel_name" class="form-control" placeholder="e.g. Pine View Valley Retreat" required>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Category</label>
+            <select name="category" class="form-select">
+              <option value="budget" selected>Budget Stay</option>
+              <option value="luxury">Luxury Resort</option>
+              <option value="boutique">Boutique Hotel</option>
+              <option value="homestay">Cozy Homestay</option>
+              <option value="camp">Camping & Glamping</option>
+            </select>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Star Rating</label>
+            <select name="star_rating" class="form-select">
+              <option value="3" selected>★★★☆☆ (3 Star Standard)</option>
+              <option value="4">★★★★☆ (4 Star Premium)</option>
+              <option value="5">★★★★★ (5 Star Luxury)</option>
+              <option value="2">★★☆☆☆ (2 Star Budget)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Location & Base Pricing -->
+      <div class="form-section-card">
+        <div class="section-title"><i class="bi bi-geo-alt text-primary"></i> 2. Location, Base Tariff & Live GPS</div>
+        <div class="section-subtitle">Specify district destination, coordinates, and starting price per night</div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Destination / District *</label>
+            <select name="city" class="form-select" required>
+              <option value="" disabled selected>-- Select Destination --</option>
+              <option value="Hamirpur">Hamirpur</option>
+              <option value="Una">Una</option>
+              <option value="Kangra">Kangra</option>
+              <option value="Dharamshala">Dharamshala</option>
+              <option value="Mandi">Mandi</option>
+              <option value="Solan">Solan</option>
+              <option value="Bilaspur">Bilaspur</option>
+              <option value="Shimla">Shimla</option>
+              <option value="Manali">Manali</option>
+              <option value="Kullu">Kullu</option>
+              <option value="Kasol">Kasol</option>
+              <option value="Dalhousie">Dalhousie</option>
+              <option value="Chamba">Chamba</option>
+              <option value="Palampur">Palampur</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Starting Tariff Per Night (₹) *</label>
+            <div class="input-group">
+              <span class="input-group-text bg-white fw-bold">₹</span>
+              <input type="number" name="base_price" class="form-control" placeholder="1850" min="300" required>
+            </div>
+          </div>
+
+          <!-- GPS Coordinates with Auto-Detect -->
+          <div class="col-md-5">
+            <label class="form-label">Latitude</label>
+            <input type="text" name="latitude" id="hotel_lat" class="form-control" placeholder="e.g. 31.686200">
+          </div>
+          <div class="col-md-5">
+            <label class="form-label">Longitude</label>
+            <input type="text" name="longitude" id="hotel_lng" class="form-control" placeholder="e.g. 76.521800">
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <button type="button" class="btn btn-outline-primary w-100 fw-semibold" onclick="detectLiveGPS()">
+              <i class="bi bi-crosshair me-1"></i> Detect
+            </button>
+          </div>
+          <div class="col-12">
+            <small id="gps_status" class="text-muted" style="font-size: 0.72rem;">
+              Click "Detect" while at property location to automatically fill exact coordinates for guest turn-by-turn navigation.
+            </small>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Google Maps Pin Link (Optional)</label>
+            <input type="url" name="google_maps_url" class="form-control" placeholder="https://maps.app.goo.gl/...">
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Detailed Address / Landmark *</label>
+            <textarea name="address" rows="2" class="form-control" placeholder="Street, Village/Town, Near Landmark, Pincode" required></textarea>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Property Description</label>
+            <textarea name="description" rows="2" class="form-control" placeholder="Highlight scenic view, nearby attractions, and property specialty..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Property Amenities Checklist -->
+      <div class="form-section-card">
+        <div class="section-title"><i class="bi bi-stars text-primary"></i> 3. Property Amenities Checklist</div>
+        <div class="section-subtitle">Select all facilities available for guests at this stay</div>
+
+        <div class="row g-2">
+          <div class="col-6 col-md-3">
+            <label class="amenity-pill">
+              <input type="checkbox" name="has_wifi" checked class="form-check-input mt-0">
+              <span class="small fw-semibold"><i class="bi bi-wifi me-1 text-primary"></i> Free WiFi</span>
+            </label>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="amenity-pill">
+              <input type="checkbox" name="has_ac" checked class="form-check-input mt-0">
+              <span class="small fw-semibold"><i class="bi bi-snow me-1 text-info"></i> Air Conditioned</span>
+            </label>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="amenity-pill">
+              <input type="checkbox" name="has_parking" checked class="form-check-input mt-0">
+              <span class="small fw-semibold"><i class="bi bi-p-square me-1 text-success"></i> Free Parking</span>
+            </label>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="amenity-pill">
+              <input type="checkbox" name="has_restaurant" checked class="form-check-input mt-0">
+              <span class="small fw-semibold"><i class="bi bi-egg-fried me-1 text-warning"></i> Restaurant</span>
+            </label>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="amenity-pill">
+              <input type="checkbox" name="has_breakfast" checked class="form-check-input mt-0">
+              <span class="small fw-semibold"><i class="bi bi-cup-hot me-1 text-danger"></i> Breakfast</span>
+            </label>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="amenity-pill">
+              <input type="checkbox" name="has_heater" class="form-check-input mt-0">
+              <span class="small fw-semibold"><i class="bi bi-fire me-1 text-danger"></i> Room Heater</span>
+            </label>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="amenity-pill">
+              <input type="checkbox" name="has_pool" class="form-check-input mt-0">
+              <span class="small fw-semibold"><i class="bi bi-water me-1 text-primary"></i> Swimming Pool</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Host & Operations Contact -->
+      <div class="form-section-card">
+        <div class="section-title"><i class="bi bi-person-lines-fill text-primary"></i> 4. Host & Emergency Operations Contact</div>
+        <div class="section-subtitle">Point of contact for guest arrivals and booking coordination</div>
+
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Owner / Manager Name</label>
+            <input type="text" name="owner_name" class="form-control" value="{{ request.user.first_name|default:request.user.username }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Contact Phone Number *</label>
+            <input type="tel" name="owner_phone" class="form-control" placeholder="+91 98765 43210" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Owner Email Address</label>
+            <input type="email" name="owner_email" class="form-control" value="{{ request.user.email }}">
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Verification & Anti-Fraud Security Check -->
+      <div class="form-section-card">
+        <div class="section-title"><i class="bi bi-shield-check text-success"></i> 5. Anti-Fraud & Legal Compliance</div>
+        <div class="section-subtitle">Required for crime-free listing verification and public launch approval</div>
+
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Identity / Trade License Document (PDF or Image)</label>
+            <input type="file" name="verification_doc" class="form-control" accept=".pdf,image/*">
+            <small class="text-muted" style="font-size: 0.72rem;">
+              Upload property GST Certificate, Tourism Registration, Trade License, or Owner Govt ID. Properties undergo compliance review before going live.
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. Photos & Media -->
+      <div class="form-section-card">
+        <div class="section-title"><i class="bi bi-images text-primary"></i> 6. Property Media & Gallery</div>
+        <div class="section-subtitle">Upload cover picture or web image URL</div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Primary Cover Photo (Device Upload)</label>
+            <input type="file" name="cover_file" class="form-control" accept="image/*">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Or Paste Cover Web URL</label>
+            <input type="url" name="cover_image" class="form-control" placeholder="https://images.unsplash.com/...">
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Submission -->
+      <div class="d-flex align-items-center justify-content-end gap-3 mb-5">
+        <a href="{% url 'partner_dashboard' %}" class="btn btn-light px-4 rounded-pill">Cancel</a>
+        <button type="submit" class="btn btn-primary px-5 py-2 rounded-pill fw-bold shadow">
+          <i class="bi bi-cloud-arrow-up-fill me-1"></i> Submit Property for Review
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  <script>
+    function detectLiveGPS() {
+      const status = document.getElementById('gps_status');
+      if ("geolocation" in navigator) {
+        status.innerHTML = "<span class='text-primary fw-bold'><i class='bi bi-hourglass-split'></i> Fetching satellite coordinates...</span>";
+        navigator.geolocation.getCurrentPosition(
+          function(position) {
+            document.getElementById('hotel_lat').value = position.coords.latitude.toFixed(6);
+            document.getElementById('hotel_lng').value = position.coords.longitude.toFixed(6);
+            status.innerHTML = "<span class='text-success fw-bold'><i class='bi bi-check-circle-fill'></i> GPS location captured successfully!</span>";
+          },
+          function(error) {
+            status.innerHTML = "<span class='text-danger fw-bold'><i class='bi bi-exclamation-triangle-fill'></i> GPS Access denied or unavailable: " + error.message + "</span>";
+          },
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
+      } else {
+        status.innerHTML = "<span class='text-danger'>Geolocation is not supported by your browser.</span>";
+      }
+    }
+  </script>
+</body>
+</html>

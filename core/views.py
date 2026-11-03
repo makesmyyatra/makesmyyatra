@@ -3,14 +3,15 @@ from xhtml2pdf import pisa
 import uuid
 import openpyxl
 import urllib.parse
+from django.db import models
 from django.db.models import Sum
 from django.contrib.admin.models import LogEntry 
 from django.contrib.auth.models import Group, User
 from core.models import Booking, Coupon, EmergencySupport, Hotel, MealPlan, RoomType
 from decimal import Decimal
 from datetime import datetime, date
+from .utils import purge_expired_emergency_requests
 from openpyxl.styles import Font, PatternFill, Alignment
-from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -24,6 +25,7 @@ from django.views.decorators.http import require_POST
 from .models import Hotel, RoomType, MealPlan, Booking, EmergencySupport, HotelReview, HotelMedia, Coupon
 from .forms import HotelForm, RoomTypeForm, BookingStatusForm
 from django.template.loader import get_template
+from .utils import calculate_stay_pricing, partner_cancel_booking_logic, get_partner_booking_metrics
 from datetime import datetime, timedelta
 from .notifications import (
     send_booking_sms,
@@ -36,51 +38,6 @@ from .notifications import (
 def is_admin(user):
     return user.is_authenticated and (user.is_staff or user.is_superuser)
 
-# Pricing and GST slab calculator with dynamic percentage/flat discount
-def calculate_stay_pricing(base_price, meal_extra=0, nights=1, rooms=1, discount_percent=0, flat_discount=0):
-    base_price = Decimal(str(base_price))
-    meal_extra = Decimal(str(meal_extra))
-    nights = int(nights) if int(nights) > 0 else 1
-    rooms = int(rooms) if int(rooms) > 0 else 1
-
-    # Per-night room rate including meal plan add-on
-    nightly_rate = base_price + meal_extra
-    gross_total = nightly_rate * nights * rooms
-
-    # Flat discount ya Percentage discount handling
-    if Decimal(str(flat_discount)) > Decimal('0.00'):
-        discount_amount = min(Decimal(str(flat_discount)), gross_total).quantize(Decimal('0.01'))
-    elif Decimal(str(discount_percent)) > Decimal('0.00'):
-        discount_amount = (gross_total * (Decimal(str(discount_percent)) / Decimal('100'))).quantize(Decimal('0.01'))
-    else:
-        discount_amount = Decimal('0.00')
-
-    taxable_amount = max(Decimal('0.00'), gross_total - discount_amount)
-
-    # < 1000: 0% GST | 1000 to 7500: 12% GST | > 7500: 18% GST
-    if nightly_rate < 1000:
-        gst_rate = Decimal('0.00')
-    elif nightly_rate <= 7500:
-        gst_rate = Decimal('0.12')
-    else:
-        gst_rate = Decimal('0.18')
-
-    total_gst = (taxable_amount * gst_rate).quantize(Decimal('0.01'))
-    cgst = (total_gst / Decimal('2.00')).quantize(Decimal('0.01'))
-    sgst = (total_gst - cgst).quantize(Decimal('0.01'))
-    grand_total = (taxable_amount + total_gst).quantize(Decimal('0.01'))
-
-    return {
-        'nightly_rate': nightly_rate,
-        'gross_total': gross_total,
-        'discount_amount': discount_amount,
-        'taxable_amount': taxable_amount,
-        'cgst': cgst,
-        'sgst': sgst,
-        'total_gst': total_gst,
-        'grand_total': grand_total,
-    }
-
 # Homepage and search filter
 def index(request):
     city = request.GET.get('city', 'All')
@@ -88,7 +45,8 @@ def index(request):
     property_type = request.GET.get('property_type', '')
     min_rating = request.GET.get('min_rating', '')
 
-    hotels = Hotel.objects.filter(is_active=True).prefetch_related('room_types', 'reviews', 'media_gallery')
+    # NEW: is_verified=True add kar diya taaki fake/unapproved properties public homepage par na dikhein
+    hotels = Hotel.objects.filter(is_active=True, is_verified=True).prefetch_related('room_types', 'reviews', 'media_gallery')
 
     if city and city != 'All':
         hotels = hotels.filter(city__iexact=city)
@@ -111,7 +69,7 @@ def index(request):
         'request': request,
     })
 
-# Booking engine with dynamic pricing, meal plan, auto offers, and GST
+# Booking engine with dynamic pricing, meal plan, auto offers, GST & direct voucher redirect
 def book_hotel(request):
     if request.method == 'POST':
         hotel_id = request.POST.get('hotel_id')
@@ -122,7 +80,6 @@ def book_hotel(request):
         guest_email = request.POST.get('guest_email', '').strip()
         check_in_str = request.POST.get('check_in')
         check_out_str = request.POST.get('check_out')
-
         adults_count = int(request.POST.get('adults_count', 2))
         children_count = int(request.POST.get('children_count', 0))
         total_guests = adults_count + children_count if (adults_count + children_count) > 0 else 2
@@ -131,7 +88,7 @@ def book_hotel(request):
         room_type = RoomType.objects.filter(id=room_type_id).first() if room_type_id else hotel.room_types.first()
         base_rate = room_type.base_price if room_type else Decimal('1800.00')
 
-        # Flexible Meal Plan Resolution (Numeric PK & string codes: EP, CP, MAP, AP)
+        # Flexible Meal Plan Resolution
         meal_plan = None
         meal_extra = Decimal('0.00')
         if meal_plan_id:
@@ -155,9 +112,9 @@ def book_hotel(request):
                 meal_extra = fallback_rates.get(cleaned_val.upper(), Decimal('0.00'))
 
         # Calculate stay duration
-        nights = 1
         check_in_date = None
         check_out_date = None
+        nights = 1
         if check_in_str and check_out_str:
             try:
                 check_in_date = datetime.strptime(check_in_str, '%Y-%m-%d').date()
@@ -201,21 +158,20 @@ def book_hotel(request):
             else:
                 messages.warning(request, f"Coupon '{coupon_input}' is either invalid or expired.")
 
-        # Compute bill via calculator
+        # Compute bill via calculator (with weekend surge engine)
         rooms_count = 1
         bill = calculate_stay_pricing(
             base_price=base_rate,
             meal_extra=meal_extra,
-            nights=nights,
+            check_in=check_in_date,
+            check_out=check_out_date,
             rooms=rooms_count,
             discount_percent=discount_percentage,
-            flat_discount=flat_discount_amount
+            flat_discount=flat_discount_amount,
+            surge_percent=20  # 20% surge for Friday & Saturday nights
         )
-        custom_booking_id = f"MMY-HTL-{uuid.uuid4().hex[:4].upper()}"
 
-        # Clean Breakdown Amounts
-        pure_room_base = (base_rate * Decimal(nights) * Decimal(rooms_count)).quantize(Decimal('0.01'))
-        total_meal_plan_amount = (meal_extra * Decimal(nights) * Decimal(rooms_count)).quantize(Decimal('0.01'))
+        custom_booking_id = f"MMY-HTL-{uuid.uuid4().hex[:4].upper()}"
 
         # 1. Create and save booking in DB
         booking = Booking.objects.create(
@@ -235,8 +191,8 @@ def book_hotel(request):
             adults_count=adults_count,
             children_count=children_count,
             coupon=applied_coupon_obj,
-            base_amount=pure_room_base,                       
-            meal_plan_amount=total_meal_plan_amount,       
+            base_amount=bill['pure_room_base'],             # Reflects surge pricing
+            meal_plan_amount=bill['total_meal_amount'],     
             discount_amount=bill['discount_amount'],
             cgst_amount=bill['cgst'],
             sgst_amount=bill['sgst'],
@@ -247,44 +203,98 @@ def book_hotel(request):
             status='CONFIRMED',
             transaction_id=f"TXN-{uuid.uuid4().hex[:8].upper()}"
         )
-
-        # 2. Multi-channel alerts dispatch (BEFORE rendering template)
-        send_booking_sms(booking)
-        send_booking_email(booking)
-        send_whatsapp_notification(booking)
-
-        # 3. Render success page to user
-        return render(request, 'booking_success.html', {
-            'booking': booking,
-            'hotel': hotel,
-            'guest_name': guest_name,
-            'guest_phone': guest_phone,
-            'guest_email': guest_email,
-            'check_in': check_in_str,
-            'check_out': check_out_str,
-            'offer_applied': offer_name,
-            'discount_amount': bill['discount_amount'],
-        })
-
+        # 2. Multi-channel alerts dispatch (Safe try-except block)
+        try:
+            send_booking_sms(booking)
+            send_booking_email(booking)
+            send_whatsapp_notification(booking)
+        except Exception:
+            pass
+        # 3. Direct Redirect to Printable Tax Voucher / Invoice
+        messages.success(request, f"Booking #{booking.booking_id} confirmed! Here is your official travel pass.")
+        return redirect('booking_voucher', booking_id=booking.booking_id)
     return redirect('index')
 
-# Helpdesk and traveler support
+
+def is_admin(user):
+    return user.is_staff or user.is_superuser
+# Helpdesk and traveler support (Guest Facing Form)
 def support_request(request):
     if request.method == 'POST':
-        name = request.POST.get('name')
-        phone = request.POST.get('phone')
-        location = request.POST.get('location', '')
+        name = request.POST.get('name', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        location = request.POST.get('location', '').strip()
         details = request.POST.get('details') or request.POST.get('issue', '')
+
+        if not name or not phone:
+            messages.error(request, 'Please provide both your name and contact phone number.')
+            return redirect('support_request')
+
         EmergencySupport.objects.create(
             name=name,
             phone=phone,
             location=location,
-            issue_details=details
+            issue_details=details,
+            status='PENDING'
         )
         messages.success(request, 'Your emergency assistance request has been received. Our team will contact you shortly.')
         return redirect('support_request')
+        
     return render(request, 'traveler_help.html')
 
+@login_required
+@user_passes_test(is_admin)
+def portal_urgent_help(request):
+    purge_expired_emergency_requests(retention_days=30)
+
+    current_filter = request.GET.get('filter', 'all').strip().lower()
+
+    if current_filter == 'resolved':
+        # Sirf Resolved (case-insensitive)
+        supports = EmergencySupport.objects.filter(status__iexact='RESOLVED').order_by('-resolved_at', '-created_at')
+    elif current_filter == 'pending':
+        # Sirf Pending / Action Needed (case-insensitive)
+        supports = EmergencySupport.objects.exclude(status__iexact='RESOLVED').order_by('-created_at')
+    else:
+        current_filter = 'all'
+        supports = EmergencySupport.objects.all().order_by('-created_at')
+
+    total_count = EmergencySupport.objects.count()
+    resolved_count = EmergencySupport.objects.filter(status__iexact='RESOLVED').count()
+    pending_count = EmergencySupport.objects.exclude(status__iexact='RESOLVED').count()
+
+    return render(request, 'custom_admin/urgent_help.html', {
+        'supports': supports,
+        'current_filter': current_filter,
+        'total_count': total_count,
+        'resolved_count': resolved_count,
+        'pending_count': pending_count,
+    })
+
+
+@login_required
+@user_passes_test(is_admin)
+def portal_urgent_help_resolve(request, support_id):
+    # Hamesha standard uppercase 'RESOLVED' save hoga
+    EmergencySupport.objects.filter(id=support_id).update(
+        status='RESOLVED',
+        resolved_at=timezone.now()
+    )
+    
+    current_filter = request.GET.get('filter') or request.POST.get('filter') or 'all'
+    messages.success(request, f"Ticket #{support_id} marked as RESOLVED.")
+    return redirect(f"/portal/urgent-help/?filter={current_filter}")
+
+# 3. Manual Immediate Delete Action View (Spam / Instant Trash)
+@login_required
+@user_passes_test(is_admin)
+def portal_urgent_help_delete(request, support_id):
+    req_item = get_object_or_404(EmergencySupport, id=support_id)
+    guest_display_name = getattr(req_item, 'name', None) or getattr(req_item, 'guest_name', 'Guest')
+    
+    req_item.delete()
+    messages.success(request, f"Emergency ticket #{support_id} for {guest_display_name} deleted successfully.")
+    return redirect('portal_urgent_help')
 
 # Admin portal login and logout
 def portal_login(request):
@@ -652,13 +662,34 @@ def portal_booking_update(request, booking_id):
         form = BookingStatusForm(instance=booking)
     return render(request, 'custom_admin/booking_update.html', {'form': form, 'booking': booking})
 
-# Printable Tax Voucher View
 def booking_voucher(request, booking_id):
+    lookup = Q(booking_id=booking_id)
+    if str(booking_id).isdigit():
+        lookup |= Q(id=int(booking_id))
+
     booking = get_object_or_404(
         Booking.objects.select_related('hotel', 'room_type', 'meal_plan'),
-        booking_id=booking_id
+        lookup
     )
-    return render(request, 'booking_voucher.html', {'booking': booking})
+
+    # Calculate nights
+    nights = 1
+    if booking.check_in and booking.check_out:
+        delta = (booking.check_out - booking.check_in).days
+        nights = max(delta, 1)
+
+    # Invoice / Voucher reference data
+    invoice_number = f"INV-{booking.booking_id}"
+    invoice_date = booking.created_at.date() if booking.created_at else date.today()
+
+    context = {
+        'booking': booking,
+        'hotel': booking.hotel,
+        'nights': nights,
+        'invoice_number': invoice_number,
+        'invoice_date': invoice_date,
+    }
+    return render(request, 'custom_admin/invoice_print.html', context)
 
 # Export bookings report to Excel
 @login_required(login_url='portal_login')
@@ -826,62 +857,367 @@ def track_booking(request):
         'contact_info': contact_info
     })
 
-# Hotel partner portal login
-def partner_login(request):
+# 1. Partner Registration (Account Creation)
+
+def partner_register(request):
     if request.user.is_authenticated:
         return redirect('partner_dashboard')
+
+    if request.method == 'POST':
+        full_name = request.POST.get('full_name', '').strip()
+        email = request.POST.get('email', '').strip().lower()
+        phone = request.POST.get('phone', '').strip()
+        password = request.POST.get('password', '').strip()
+        confirm_password = request.POST.get('confirm_password', '').strip()
+
+        if password != confirm_password:
+            messages.error(request, 'Passwords do not match.')
+            return render(request, 'partner/register.html')
+
+        if User.objects.filter(username=email).exists():
+            messages.error(request, 'An account with this email already exists. Please login.')
+            return redirect('partner_login')
+
+        # Create Partner User
+        user = User.objects.create_user(
+            username=email,
+            email=email,
+            first_name=full_name,
+            password=password
+        )
+        
+        # Auto login after registration
+        login(request, user)
+        messages.success(request, 'Welcome! Now complete your property formalities.')
+        return redirect('add_property')
+
+    return render(request, 'partner/register.html')
+
+@login_required(login_url='partner_login')
+def add_property(request):
+    if request.method == 'POST':
+        name = request.POST.get('hotel_name', '').strip()
+        city = request.POST.get('city', '').strip()
+        category = request.POST.get('category', 'budget')
+        star_rating = request.POST.get('star_rating', '3')
+        address = request.POST.get('address', '').strip()
+        price_val = request.POST.get('base_price', '1850')
+        description = request.POST.get('description', '').strip()
+        
+        # Geolocation & Maps
+        latitude = request.POST.get('latitude', '').strip()
+        longitude = request.POST.get('longitude', '').strip()
+        google_maps_url = request.POST.get('google_maps_url', '').strip()
+
+        # Contact info
+        owner_name = request.POST.get('owner_name', '').strip()
+        owner_phone = request.POST.get('owner_phone', '').strip()
+        owner_email = request.POST.get('owner_email', '').strip()
+
+        # Amenities Booleans
+        has_wifi = 'has_wifi' in request.POST
+        has_ac = 'has_ac' in request.POST
+        has_parking = 'has_parking' in request.POST
+        has_restaurant = 'has_restaurant' in request.POST
+        has_breakfast = 'has_breakfast' in request.POST
+        has_heater = 'has_heater' in request.POST
+        has_pool = 'has_pool' in request.POST
+
+        # File Uploads
+        verification_doc = request.FILES.get('verification_doc')
+        cover_file = request.FILES.get('cover_file')
+        cover_image_url = request.POST.get('cover_image', '').strip()
+
+        if not name or not city or not address:
+            messages.error(request, 'Please provide property name, destination district, and full address.')
+            return render(request, 'partner/add_property.html')
+
+        hotel_fields = [f.name for f in Hotel._meta.get_fields()]
+        
+        hotel_data = {
+            'name': name,
+            'city': city,
+            'address': address,
+            'owner': request.user,
+        }
+
+        # Safe attribute mapping
+        if 'category' in hotel_fields:
+            hotel_data['category'] = category
+        if 'star_rating' in hotel_fields:
+            hotel_data['star_rating'] = int(star_rating)
+        if 'description' in hotel_fields:
+            hotel_data['description'] = description
+        if 'owner_name' in hotel_fields:
+            hotel_data['owner_name'] = owner_name or request.user.username
+        if 'owner_phone' in hotel_fields:
+            hotel_data['owner_phone'] = owner_phone
+        if 'owner_email' in hotel_fields:
+            hotel_data['owner_email'] = owner_email or request.user.email
+
+        # Amenities mapping
+        for amenity_field in ['has_wifi', 'has_ac', 'has_parking', 'has_restaurant', 'has_breakfast', 'has_heater', 'has_pool']:
+            if amenity_field in hotel_fields:
+                hotel_data[amenity_field] = locals()[amenity_field]
+
+        # GPS & Maps
+        if latitude and 'latitude' in hotel_fields:
+            hotel_data['latitude'] = latitude
+        if longitude and 'longitude' in hotel_fields:
+            hotel_data['longitude'] = longitude
+        if google_maps_url and 'google_maps_url' in hotel_fields:
+            hotel_data['google_maps_url'] = google_maps_url
+
+        # Verification & Security (Requires admin review before going live)
+        if 'is_verified' in hotel_fields:
+            hotel_data['is_verified'] = False
+        if verification_doc and 'verification_doc' in hotel_fields:
+            hotel_data['verification_doc'] = verification_doc
+
+        # Cover image handling
+        if cover_file and 'cover_image' in hotel_fields:
+            # Agar file upload support model me hai
+            hotel_data['cover_image'] = cover_file
+        elif cover_image_url and 'cover_image' in hotel_fields:
+            hotel_data['cover_image'] = cover_image_url
+
+        # Price check
+        if 'price_per_night' in hotel_fields:
+            hotel_data['price_per_night'] = price_val
+        elif 'base_price' in hotel_fields:
+            hotel_data['base_price'] = price_val
+
+        # Create Hotel record
+        hotel = Hotel.objects.create(**hotel_data)
+
+        # Default standard room create karo taaki partner dashboard par rates open/close ho sakein
+        try:
+            from .models import RoomType
+            room_fields = [f.name for f in RoomType._meta.get_fields()]
+            room_data = {'hotel': hotel}
+            if 'name' in room_fields:
+                room_data['name'] = 'Standard Deluxe Room'
+            if 'base_price' in room_fields:
+                room_data['base_price'] = price_val
+            elif 'price' in room_fields:
+                room_data['price'] = price_val
+            RoomType.objects.create(**room_data)
+        except Exception:
+            pass
+
+        messages.success(request, f'Stay "{name}" successfully onboarded! Verification review is pending with the operations desk.')
+        return redirect('partner_dashboard')
+
+    return render(request, 'partner/add_property.html')
+
+# 3. Partner Login (with Admin Protection )
+def partner_login(request):
+    #if user is already logged in, redirect to appropriate dashboard
+    if request.user.is_authenticated:
+        if request.user.is_staff or request.user.is_superuser:
+            return redirect('portal_dashboard')
+        return redirect('partner_dashboard')
+
     if request.method == 'POST':
         u = request.POST.get('username')
         p = request.POST.get('password')
         user = authenticate(request, username=u, password=p)
         if user is not None:
+            # if user is admin, prevent partner portal login
+            if user.is_staff or user.is_superuser:
+                messages.error(request, 'Cannot be used to login to the partner portal.')
+                return render(request, 'partner/login.html')
+
             login(request, user)
+            # if user has no hotel yet, redirect to add_property page
+            if not Hotel.objects.filter(owner=user).exists():
+                return redirect('add_property')
             return redirect('partner_dashboard')
         else:
-            messages.error(request, 'Invalid hotel partner credentials.')
+            messages.error(request, 'Invalid credentials.')
     return render(request, 'partner/login.html')
 
-# Hotel partner operations dashboard
-@login_required(login_url='partner_login')
+# 4. Partner Dashboard
+@login_required
 def partner_dashboard(request):
-    partner_hotels = Hotel.objects.filter(owner=request.user)
-    if not partner_hotels.exists() and request.user.is_staff:
-        partner_hotels = Hotel.objects.all()[:1]
-    bookings = Booking.objects.filter(hotel__in=partner_hotels).select_related('hotel').order_by('-created_at')
-    partner_revenue = bookings.filter(payment_status='CONFIRMED').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+    # 1. Fetch all hotels owned by the partner
+    hotels = Hotel.objects.filter(owner=request.user).prefetch_related('room_types')
 
-    context = {
-        'hotels': partner_hotels,
+    # 2. Bookings fetch for the partner's hotels
+    bookings = Booking.objects.filter(hotel__owner=request.user).select_related('hotel', 'room_type').order_by('-created_at')
+
+    # 3. Active Bookings (Gross Revenue reduction logic)
+    active_bookings = bookings.exclude(status__in=['CANCELLED', 'CANCELLED_BY_PARTNER', 'CANCELLED_BY_GUEST'])
+    partner_revenue = active_bookings.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
+
+    # 4. Cancelled deductions
+    cancelled_partner_bookings = bookings.filter(status='CANCELLED_BY_PARTNER')
+    deducted_revenue = cancelled_partner_bookings.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
+    cancelled_count = cancelled_partner_bookings.count()
+
+    # 5. Commission & Net Payout
+    platform_commission = round(partner_revenue * Decimal('0.15'), 2)
+    net_payout = partner_revenue - platform_commission
+
+    total_bookings = bookings.count()
+    active_bookings_count = active_bookings.count()
+
+    return render(request, "partner/dashboard.html", {
+        'hotels': hotels,
         'bookings': bookings,
-        'total_bookings': bookings.count(),
+        'total_bookings': total_bookings,
+        'active_bookings_count': active_bookings_count,
         'partner_revenue': partner_revenue,
-    }
-    return render(request, 'partner/dashboard.html', context)
+        'deducted_revenue': deducted_revenue,
+        'cancelled_count': cancelled_count,
+        'platform_commission': platform_commission,
+        'net_payout': net_payout,
+    })
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from .models import Hotel
+
+@login_required
+def partner_edit_property(request, hotel_id):
+    # Security: Ensure hotel logged-in partner ka hi ho
+    hotel = get_object_or_404(Hotel, id=hotel_id, owner=request.user)
+    if request.method == "POST":
+        # 1. Basic Details
+        hotel.name = request.POST.get("name", hotel.name).strip()
+        hotel.category = request.POST.get("category", hotel.category)
+        hotel.city = request.POST.get("city", hotel.city).strip()
+        hotel.address = request.POST.get("address", hotel.address).strip()
+        hotel.google_maps_url = request.POST.get("google_maps_url", "").strip() or None
+
+        # 2. Geolocation (Optional)
+        lat = request.POST.get("latitude", "").strip()
+        lng = request.POST.get("longitude", "").strip()
+        hotel.latitude = lat if lat else None
+        hotel.longitude = lng if lng else None
+
+        # 3. Contact Details
+        hotel.owner_name = request.POST.get("owner_name", hotel.owner_name).strip()
+        hotel.owner_phone = request.POST.get("owner_phone", hotel.owner_phone).strip()
+        hotel.owner_email = request.POST.get("owner_email", hotel.owner_email).strip()
+
+        # 4. Amenities Checklist (HTML checkboxes return 'on' only if checked)
+        hotel.has_wifi = "has_wifi" in request.POST
+        hotel.has_ac = "has_ac" in request.POST
+        hotel.has_heater = "has_heater" in request.POST
+        hotel.has_parking = "has_parking" in request.POST
+        hotel.has_restaurant = "has_restaurant" in request.POST
+        hotel.has_breakfast = "has_breakfast" in request.POST
+        hotel.has_pool = "has_pool" in request.POST
+
+        hotel.save()
+        messages.success(request, f"Property '{hotel.name}' details updated successfully!")
+        return redirect("partner_dashboard")
+
+    return render(request, "partner/edit_property.html", {
+        "hotel": hotel,
+        "categories": Hotel.CATEGORY_CHOICES,
+    })
+
+@login_required(login_url='partner_login')
+def partner_update_booking_status(request, booking_id, new_status):
+    booking = get_object_or_404(Booking, booking_id=booking_id, hotel__owner=request.user)
+    
+    valid_transitions = ['CHECKED_IN', 'CHECKED_OUT', 'CANCELLED']
+    if new_status in valid_transitions:
+        booking.status = new_status
+        if new_status == 'CANCELLED':
+            booking.cancellation_reason = 'Cancelled by partner front desk'
+        booking.save()
+        messages.success(request, f"Booking {booking.booking_id} status updated to {new_status}.")
+    else:
+        messages.error(request, "Invalid status transition.")
+        
+    return redirect('partner_dashboard')
+
+#partner delete hotel
+@login_required
+def delete_hotel(request, hotel_id):
+    hotel = get_object_or_404(Hotel, id=hotel_id, owner=request.user)
+    has_active_bookings = hotel.bookings.filter(
+        status__in=['CONFIRMED', 'CHECKED_IN']
+    ).exists()
+
+    if has_active_bookings:
+        messages.error(
+            request, 
+            f"Cannot delete '{hotel.name}'. It has active or upcoming guest reservations."
+        )
+        return redirect('partner_dashboard')
+    hotel_name = hotel.name
+    hotel.delete()
+    messages.success(request, f"Property '{hotel_name}' has been permanently deleted.")
+    return redirect('partner_dashboard')
+
+# Partner Logout
+def partner_logout(request):
+    logout(request)
+    messages.info(request, 'Logged out successfully.')
+    return redirect('partner_login')
 
 # NEW MODULES: REVIEWS, RATINGS & MEDIA GALLERY MANAGEMENT
 
-# 1. Public Review Submission
 def submit_hotel_review(request, hotel_id):
     if request.method == 'POST':
         hotel = get_object_or_404(Hotel, id=hotel_id)
-        guest_name = request.POST.get('guest_name', 'Verified Guest')
+        
+        booking_id = request.POST.get('booking_id', '').strip()
         rating_val = request.POST.get('rating', '5')
         comment = request.POST.get('comment', '').strip()
 
+        # 1. Booking ID Validation
+        if not booking_id:
+            messages.error(request, "Please enter your Booking ID (MMY-HTL-XXXX).")
+            return redirect('index')
+
+        # Check: this Booking ID is valid for this hotel and has completed stay
+        valid_booking = Booking.objects.filter(
+            booking_id__iexact=booking_id,
+            hotel=hotel,
+            status__in=['CHECKED_OUT', 'Confirmed']
+        ).first()
+
+        if not valid_booking:
+            messages.error(request, "Invalid Booking ID! Ya toh yeh ID is hotel ki nahi hai, ya stay verified nahi hai.")
+            return redirect('index')
+
+        # 2. Check if review already exists for this booking
+        # for security, we can check if the HotelReview model has a booking_id field
+        if hasattr(HotelReview, 'booking_id') and HotelReview.objects.filter(booking_id=booking_id).exists():
+            messages.warning(request, f"Booking ID {booking_id} par pehle hi review diya ja chuka hai.")
+            return redirect('index')
+
+        # 3. Rating & Comment Validation
         try:
             rating = max(1, min(5, int(rating_val)))
         except ValueError:
             rating = 5
 
-        if comment:
-            HotelReview.objects.create(
-                hotel=hotel,
-                guest_name=guest_name,
-                rating=rating,
-                comment=comment,
-                is_approved=True
-            )
-            messages.success(request, f"Thank you, {guest_name}! Your review has been submitted.")
+        if not comment:
+            messages.error(request, "Please enter your review comment.")
+            return redirect('index')
+
+        # 4. Create Review
+        # Guest name is fetched from the booking record; if not available, fallback to user full name or generic "Verified Guest"
+        guest_name = getattr(valid_booking, 'guest_name', None) or (valid_booking.user.get_full_name() if valid_booking.user else "Verified Guest")
+
+        HotelReview.objects.create(
+            hotel=hotel,
+            guest_name=guest_name,
+            rating=rating,
+            comment=comment,
+            is_approved=True
+        )
+
+        messages.success(request, f"Thank you {guest_name}! Your verified review has been submitted.")
+        return redirect('index')
+
     return redirect('index')
 
 # 2. Admin Reviews List & Moderation
@@ -991,83 +1327,86 @@ def portal_room_delete(request, hotel_id, room_id):
     messages.success(request, "Room category removed.")
     return redirect('portal_room_manage', hotel_id=hotel_id)
 
+
+# Helper to fetch booking by string UUID or numeric ID
+def _get_booking_lookup(booking_id):
+    lookup = Q(booking_id=booking_id)
+    if str(booking_id).isdigit():
+        lookup |= Q(id=int(booking_id))
+    return lookup
+
 # Reusable PDF Helper
 def render_to_pdf(template_src, context_dict={}):
-  template = get_template(template_src)
-  html = template.render(context_dict)
-  result = io.BytesIO()
-  pdf = pisa.pisaDocument(io.BytesIO(html.encode('UTF-8')), result)
-  if not pdf.err:
-    return result.getvalue()
-  return None
+    template = get_template(template_src)
+    html = template.render(context_dict)
+    result = io.BytesIO()
+    pdf = pisa.pisaDocument(io.BytesIO(html.encode('UTF-8')), result)
+    if not pdf.err:
+        return result.getvalue()
+    return None
 
-# 1. Customer View (Success page se click karne ke liye, no portal login needed)
+# 1. Customer PDF Download View
 def download_customer_voucher(request, booking_id):
-  booking = get_object_or_404(
-      Booking.objects.select_related('hotel', 'room_type', 'meal_plan'),
-      booking_id=booking_id,
-  )
-
-  nights = 1
-  if booking.check_in and booking.check_out:
-    nights = max((booking.check_out - booking.check_in).days, 1)
-
-  context = {
-      'booking': booking,
-      'hotel': booking.hotel,
-      'nights': nights,
-      'invoice_number': f'INV-{booking.booking_id}',
-      'invoice_date': (
-          booking.created_at.date()
-          if hasattr(booking, 'created_at')
-          else timezone.localdate()
-      ),
-  }
-
-  pdf = render_to_pdf('custom_admin/invoice_print.html', context)
-  if pdf:
-    response = HttpResponse(pdf, content_type='application/pdf')
-    response['Content-Disposition'] = (
-        f'attachment; filename="Voucher_{booking.booking_id}.pdf"'
+    booking = get_object_or_404(
+        Booking.objects.select_related('hotel', 'room_type', 'meal_plan'),
+        _get_booking_lookup(booking_id)
     )
-    return response
 
-  return HttpResponse('Error generating voucher PDF', status=500)
+    nights = 1
+    if booking.check_in and booking.check_out:
+        nights = max((booking.check_out - booking.check_in).days, 1)
 
+    context = {
+        'booking': booking,
+        'hotel': booking.hotel,
+        'nights': nights,
+        'invoice_number': f'INV-{booking.booking_id}',
+        'invoice_date': (
+            booking.created_at.date()
+            if hasattr(booking, 'created_at') and booking.created_at
+            else timezone.localdate()
+        ),
+    }
 
-# 2. Admin Portal View 
+    pdf = render_to_pdf('custom_admin/invoice_print.html', context)
+    if pdf:
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="Voucher_{booking.booking_id}.pdf"'
+        return response
+
+    return HttpResponse('Error generating voucher PDF', status=500)
+
+# 2. Admin / Partner Portal PDF Download View
 @login_required(login_url='portal_login')
 def portal_booking_invoice(request, booking_id):
-  booking = get_object_or_404(
-      Booking.objects.select_related('hotel', 'room_type', 'meal_plan'),
-      booking_id=booking_id,
-  )
-
-  nights = 1
-  if booking.check_in and booking.check_out:
-    nights = max((booking.check_out - booking.check_in).days, 1)
-
-  context = {
-      'booking': booking,
-      'hotel': booking.hotel,
-      'nights': nights,
-      'invoice_number': f'INV-{booking.booking_id}',
-      'invoice_date': (
-          booking.created_at.date()
-          if hasattr(booking, 'created_at')
-          else timezone.localdate()
-      ),
-  }
-
-  pdf = render_to_pdf('custom_admin/invoice_print.html', context)
-  if pdf:
-    response = HttpResponse(pdf, content_type='application/pdf')
-    response['Content-Disposition'] = (
-        f'attachment; filename="Invoice_{booking.booking_id}.pdf"'
+    booking = get_object_or_404(
+        Booking.objects.select_related('hotel', 'room_type', 'meal_plan'),
+        _get_booking_lookup(booking_id)
     )
-    return response
 
-  return HttpResponse('Error generating invoice PDF', status=500)
+    nights = 1
+    if booking.check_in and booking.check_out:
+        nights = max((booking.check_out - booking.check_in).days, 1)
+
+    context = {
+        'booking': booking,
+        'hotel': booking.hotel,
+        'nights': nights,
+        'invoice_number': f'INV-{booking.booking_id}',
+        'invoice_date': (
+            booking.created_at.date()
+            if hasattr(booking, 'created_at') and booking.created_at
+            else timezone.localdate()
+        ),
+    }
+
+    pdf = render_to_pdf('custom_admin/invoice_print.html', context)
+    if pdf:
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="Invoice_{booking.booking_id}.pdf"'
+        return response
+
+    return HttpResponse('Error generating invoice PDF', status=500)
 
 # 2. Click Instant Room Toggle (Open/Close Room for Bookings)
 @user_passes_test(is_admin, login_url='portal_login')
@@ -1291,6 +1630,39 @@ def portal_revenue_report(request):
     }
     return render(request, 'custom_admin/revenue_report.html', context)
 
+def cancel_booking(request, booking_id):
+    # Booking find karo
+    if booking_id.isdigit():
+        booking = get_object_or_404(Booking, id=int(booking_id))
+    else:
+        booking = get_object_or_404(Booking, booking_id=booking_id)
+
+    # Agar pehle se cancelled hai toh wapas track page par bhej do
+    booking_ref = booking.booking_id if hasattr(booking, 'booking_id') else booking.id
+    if booking.status == 'CANCELLED':
+        messages.info(request, "This booking is already cancelled.")
+        return redirect(f"/track-booking/?booking_id={booking_ref}")
+
+    if request.method == 'POST':
+        cancellation_reason = request.POST.get('cancellation_reason', 'Cancelled by guest')
+        
+        booking.status = 'CANCELLED'
+        if hasattr(booking, 'cancellation_reason'):
+            booking.cancellation_reason = cancellation_reason
+        booking.save()
+
+        # Room availability wapas inventory mein add karo
+        if hasattr(booking, 'room_type') and hasattr(booking.room_type, 'available_rooms'):
+            booking.room_type.available_rooms += 1
+            booking.room_type.save()
+
+        messages.success(request, f"Your reservation #{booking_ref} has been cancelled successfully.")
+        
+        # Cancel hone ke baad Guest wapas apne Track Booking page par jayega (Admin panel nahi)
+        return redirect(f"/track-booking/?booking_id={booking_ref}")
+
+    # Guest-facing template render karo
+    return render(request, 'guest_cancel_confirm.html', {'booking': booking})
 
 def calculate_cancellation_refund(booking):
   """Calculates refund and deduction based on hours left until check-in date."""
@@ -1318,7 +1690,6 @@ def calculate_cancellation_refund(booking):
 
   return refund_amount, cancellation_fee, policy_note
 
-
 @login_required(login_url='portal_login')
 def portal_booking_cancel(request, booking_id):
   booking = get_object_or_404(Booking, booking_id=booking_id)
@@ -1339,3 +1710,104 @@ def portal_booking_cancel(request, booking_id):
       f' ₹{refund_amt} | Fee: ₹{cancel_fee} ({note})',
   )
   return redirect('portal_bookings')
+
+@login_required(login_url='partner_login')
+def partner_quick_update_room(request, room_id):
+    room = get_object_or_404(RoomType, id=room_id, hotel__owner=request.user)
+    if request.method == 'POST':
+        base_price = request.POST.get('base_price')
+        is_open = request.POST.get('is_open') == 'on'
+        
+        if base_price:
+            try:
+                room.base_price = Decimal(base_price)
+                room.is_open = is_open
+                room.is_available = is_open
+                room.save()
+                messages.success(request, f"Updated pricing and availability for {room.name}.")
+            except Exception:
+                messages.error(request, "Invalid price format.")
+    return redirect('partner_dashboard')
+
+# Property listing
+@user_passes_test(is_admin, login_url='portal_login')
+def portal_hotels(request):
+    hotels = Hotel.objects.all().order_by('-id')
+    return render(request, 'custom_admin/hotel_list.html', {'hotels': hotels})
+
+# 1-Click Verification / Approval Toggle
+@user_passes_test(is_admin, login_url='portal_login')
+def portal_toggle_hotel_verification(request, hotel_id):
+    hotel = get_object_or_404(Hotel, id=hotel_id)
+    hotel.is_verified = not hotel.is_verified
+    hotel.save()
+    
+    if hotel.is_verified:
+        messages.success(request, f'Stay "{hotel.name}" is now Approved & Live on MakesMyYatra!')
+    else:
+        messages.warning(request, f'Stay "{hotel.name}" has been Unverified (Hidden from public search).')
+        
+    return redirect('portal_hotels')
+
+@login_required
+def partner_manage_gallery(request, hotel_id):
+    # Admin ya property ka owner dono upload kar sakein
+    if request.user.is_staff or request.user.is_superuser:
+        hotel = get_object_or_404(Hotel, id=hotel_id)
+    else:
+        hotel = get_object_or_404(Hotel, id=hotel_id, owner=request.user)
+
+    # Multi-Photo Upload Handler
+    if request.method == 'POST':
+        files = request.FILES.getlist('gallery_photos')
+        if files:
+            from .models import HotelMedia
+            for f in files:
+                HotelMedia.objects.create(hotel=hotel, image_file=f)
+            messages.success(request, f"{len(files)} new photo(s) added to gallery successfully!")
+        else:
+            messages.warning(request, "No photos were selected for upload.")
+        return redirect(request.path)
+
+    # Gallery items fetch
+    media_items = hotel.media_gallery.all().order_by('-id')
+    return render(request, 'partner/manage_gallery.html', {
+        'hotel': hotel,
+        'media_items': media_items,
+    })
+
+
+# 1. Partner Cancellation Action View
+@login_required
+def partner_cancel_booking(request, booking_id):
+    if request.method == "POST":
+        # Check ensure karein ki booking partner ke hi hotel ki ho
+        booking = get_object_or_404(Booking, id=booking_id, hotel__owner=request.user)
+        reason = request.POST.get("reason", "Property unavailable / Overbooking").strip()
+
+        # Step 2 ka utility logic call
+        success, msg = partner_cancel_booking_logic(booking, reason=reason)
+
+        if success:
+            messages.warning(
+                request, 
+                f"Booking #{booking.booking_id} cancelled. Gross booking price reduced by ₹{booking.total_amount}."
+            )
+        else:
+            messages.error(request, msg)
+
+    return redirect(request.META.get("HTTP_REFERER", "partner_dashboard"))
+
+
+@login_required
+def partner_gallery_image_delete(request, media_id):
+    from .models import HotelMedia
+    if request.user.is_staff or request.user.is_superuser:
+        media_item = get_object_or_404(HotelMedia, id=media_id)
+    else:
+        media_item = get_object_or_404(HotelMedia, id=media_id, hotel__owner=request.user)
+
+    hotel_id = media_item.hotel.id
+    media_item.delete()
+    messages.success(request, "Photo deleted successfully.")
+    return redirect('partner_manage_gallery', hotel_id=hotel_id)
