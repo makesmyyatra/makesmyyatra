@@ -130,50 +130,47 @@ def send_whatsapp_notification(booking):
 # 3. EMAIL DISPATCH (Django SMTP / Console)
 # ==========================================
 def send_booking_email(booking):
-    """Customer ko standard email invoice & confirmation dispatch karta hai bina website block kiye."""
+    """Customer ko email invoice dispatch karta hai bina website ko hang kiye."""
     if not getattr(booking, 'guest_email', None):
         return False
 
-    # Check agar email credentials settings me configured hain ya nahi
     email_user = getattr(settings, 'EMAIL_HOST_USER', '')
     email_pass = getattr(settings, 'EMAIL_HOST_PASSWORD', '')
 
-    # Agar Render par abhi password nahi daala hai, toh timeout se bachne ke liye direct console par log karo
+    # AGAR CREDENTIALS KHALI HAIN TOH CONNECTION KOSHISH HI MAT KARO
     if not email_user or not email_pass:
-        print(f"\n[EMAIL SKIPPED] Email credentials not set in environment. Booking #{booking.booking_id} email skipped safely.\n")
+        print(f"[EMAIL SKIPPED] No credentials found. Booking #{booking.booking_id} processed safely.")
         return False
 
     subject = f"Booking Confirmed: #{booking.booking_id} - {booking.hotel.name} | MakesMyYatra"
-
+    
     check_in_str = booking.check_in.strftime('%d %b %Y') if hasattr(booking.check_in, 'strftime') else str(booking.check_in)
     check_out_str = booking.check_out.strftime('%d %b %Y') if hasattr(booking.check_out, 'strftime') else str(booking.check_out)
 
     message = (
         f"Dear {booking.guest_name},\n\n"
         f"Your booking for '{booking.hotel.name}' has been successfully confirmed.\n\n"
-        f"--- BOOKING SUMMARY ---\n"
         f"Booking ID: #{booking.booking_id}\n"
-        f"Property: {booking.hotel.name}\n"
-        f"City: {booking.hotel.city}, Himachal Pradesh\n"
-        f"Check-In Date: {check_in_str}\n"
-        f"Check-Out Date: {check_out_str}\n"
         f"Total Amount: Rs. {booking.total_amount}\n"
-        f"Payment Mode: {booking.get_payment_mode_display() if hasattr(booking, 'get_payment_mode_display') else booking.payment_mode}\n\n"
-        f"Address / Reach Out: {booking.hotel.address or booking.hotel.city}\n\n"
-        f"Have a wonderful trip!\n"
-        f"Team MakesMyYatra\n"
-        f"Helpline: +91 98160 00000"
+        f"Dates: {check_in_str} to {check_out_str}\n\n"
+        f"Team MakesMyYatra"
     )
 
     try:
+        import socket
+        # Timeout set to 3 seconds max taaki Gunicorn kabhi kill na ho
+        original_timeout = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(3.0)
+        
         send_mail(
             subject=subject,
             message=message,
-            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'support@makesmyyatra.com'),
+            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'bookings@makesmyyatra.com'),
             recipient_list=[booking.guest_email],
             fail_silently=True,
         )
+        socket.setdefaulttimeout(original_timeout)
         return True
     except Exception as e:
-        print(f"[Email Dispatch Error]: {e}")
+        print(f"[Email Dispatch Timeout/Error]: {e}")
         return False
