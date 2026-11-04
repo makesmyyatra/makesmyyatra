@@ -126,13 +126,21 @@ def send_whatsapp_notification(booking):
 
     return True, wa_link
 
-
 # ==========================================
 # 3. EMAIL DISPATCH (Django SMTP / Console)
 # ==========================================
 def send_booking_email(booking):
-    """Customer ko standard email invoice & confirmation dispatch karta hai."""
-    if not booking.guest_email:
+    """Customer ko standard email invoice & confirmation dispatch karta hai bina website block kiye."""
+    if not getattr(booking, 'guest_email', None):
+        return False
+
+    # Check agar email credentials settings me configured hain ya nahi
+    email_user = getattr(settings, 'EMAIL_HOST_USER', '')
+    email_pass = getattr(settings, 'EMAIL_HOST_PASSWORD', '')
+
+    # Agar Render par abhi password nahi daala hai, toh timeout se bachne ke liye direct console par log karo
+    if not email_user or not email_pass:
+        print(f"\n[EMAIL SKIPPED] Email credentials not set in environment. Booking #{booking.booking_id} email skipped safely.\n")
         return False
 
     subject = f"Booking Confirmed: #{booking.booking_id} - {booking.hotel.name} | MakesMyYatra"
