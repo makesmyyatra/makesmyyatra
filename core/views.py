@@ -220,9 +220,12 @@ def book_hotel(request):
         # 2. Multi-channel alerts dispatch (Safe try-except block)
         try:
             send_booking_sms(booking)
-            send_booking_email(booking)
+            try:
+                send_booking_email(booking)
+            except Exception as email_err:
+                print(f"Skipping email dispatch due to network timeout: {email_err}")
             send_whatsapp_notification(booking)
-        except Exception:
+        except Exception as sms_err:
             pass
         # 3. Direct Redirect to Printable Tax Voucher / Invoice
         messages.success(request, f"Booking #{booking.booking_id} confirmed! Here is your official travel pass.")
