@@ -78,6 +78,7 @@
     .table-layout {
       width: 100%;
       border-collapse: collapse;
+      table-layout: fixed;
     }
 
     .header-table td {
@@ -143,18 +144,18 @@
       border: 1px solid #cbd5e1;
       border-radius: 8px;
       overflow: hidden;
-      margin-top: 14px;
-      margin-bottom: 14px;
+      margin-top: 16px;
+      margin-bottom: 16px;
     }
 
     .schedule-cell {
       text-align: center;
-      padding: 8px 6px;
+      padding: 10px 8px;
       border-right: 1px solid #e2e8f0;
     }
 
     .item-table {
-      margin-top: 14px;
+      margin-top: 16px;
       border: 1px solid #cbd5e1;
       border-radius: 8px;
       overflow: hidden;
@@ -166,25 +167,25 @@
       font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
-      padding: 8px 12px;
+      padding: 9px 12px;
       border-bottom: 1px solid #cbd5e1;
     }
 
     .item-table td {
-      padding: 10px 12px;
+      padding: 12px;
       border-bottom: 1px solid #f1f5f9;
       font-size: 10.5px;
     }
 
     .calc-table {
-      width: 52%;
+      width: 60%;
       margin-left: auto;
-      margin-top: 14px;
+      margin-top: 16px;
       border-collapse: collapse;
     }
 
     .calc-table td {
-      padding: 4px 8px;
+      padding: 5px 8px;
       font-size: 10.5px;
     }
 
@@ -195,7 +196,7 @@
 
     .taxable-border td {
       border-top: 1px solid #cbd5e1;
-      padding-top: 6px;
+      padding-top: 7px;
       font-weight: 700;
       color: #0f172a;
     }
@@ -207,11 +208,11 @@
       font-size: 13px;
       font-weight: 800;
       color: #1d4ed8;
-      padding: 8px;
+      padding: 9px 8px;
     }
 
     .footer-table {
-      margin-top: 24px;
+      margin-top: 26px;
       border-top: 1px solid #e2e8f0;
       padding-top: 12px;
     }
@@ -222,7 +223,7 @@
       vertical-align: top;
     }
 
-    /* Dedicated Print Styling */
+    /* Print View Rules */
     @media print {
       @page {
         size: a4 portrait;
@@ -246,6 +247,7 @@
 </head>
 <body>
 
+  <!-- Screen Action Bar -->
   <div class="action-bar no-print">
     <a href="/" class="btn-back">&larr; Back to Home</a>
     <div style="display: flex; gap: 8px;">
@@ -258,10 +260,10 @@
     </div>
   </div>
 
-  <!-- A4 Printable Card Container -->
+  <!-- A4 Card -->
   <div class="invoice-card">
 
-    <!-- Header -->
+    <!-- Header Section -->
     <table class="table-layout header-table">
       <tr>
         <td style="width: 55%;">
@@ -278,86 +280,115 @@
       </tr>
     </table>
 
-    <!-- Billed To & Stay Destination -->
+    <!-- Guest & Hotel Section -->
     <table class="table-layout" style="margin-top: 14px;">
       <tr>
         <td style="width: 48%;" class="info-card">
-          <div class="card-label">Customer / Guest (Billed To)</div>
+          <div class="card-label">Customer / Primary Guest (Billed To)</div>
           <div style="font-size: 12px; font-weight: 700; color: #0f172a;">{{ booking.guest_name }}</div>
-          <div style="color: #475569; font-family: monospace; font-size: 10.5px;">Phone: {{ booking.guest_phone|default:"N/A" }}</div>
+          <div style="color: #475569; font-family: monospace; font-size: 10.5px; margin-top: 2px;">Phone: {{ booking.guest_phone|default:"N/A" }}</div>
           {% if booking.guest_email %}
-          <div style="color: #64748b; font-size: 10px;">Email: {{ booking.guest_email }}</div>
+          <div style="color: #64748b; font-size: 10px; margin-top: 2px;">Email: {{ booking.guest_email }}</div>
           {% endif %}
         </td>
         <td style="width: 4%;"></td>
         <td style="width: 48%;" class="info-card">
           <div class="card-label">Reserved Stay &amp; Location</div>
           <div style="font-size: 12px; font-weight: 700; color: #0f172a;">{{ hotel.name }}</div>
-          <div style="color: #475569;">{{ hotel.address|default:hotel.city }}</div>
-          <div style="color: #64748b;">Destination: <b>{{ hotel.city }}, Himachal Pradesh</b></div>
+          <div style="color: #475569; margin-top: 2px;">{{ hotel.address|default:hotel.city }}</div>
+          <div style="color: #64748b; font-size: 10px; margin-top: 2px;">Destination: <b>{{ hotel.city }}, Himachal Pradesh</b></div>
         </td>
       </tr>
     </table>
 
-    <!-- Stay Schedule Grid -->
+    <!-- Stay Schedule & Guest Breakdown Grid -->
     <table class="table-layout schedule-table">
       <tr>
-        <td style="width: 25%;" class="schedule-cell">
+        <td style="width: 20%;" class="schedule-cell">
           <div class="card-label">Check-In</div>
           <div style="font-weight: 700; color: #0f172a;">{{ booking.check_in|date:"d M Y" }}</div>
         </td>
-        <td style="width: 25%;" class="schedule-cell">
+        <td style="width: 20%;" class="schedule-cell">
           <div class="card-label">Check-Out</div>
           <div style="font-weight: 700; color: #0f172a;">{{ booking.check_out|date:"d M Y" }}</div>
         </td>
-        <td style="width: 25%;" class="schedule-cell">
+        <td style="width: 16%;" class="schedule-cell">
           <div class="card-label">Stay Duration</div>
-          <div style="font-weight: 700; color: #2563eb;">{{ nights }} Night(s)</div>
+          <div style="font-weight: 700; color: #2563eb;">{{ nights }} Night{{ nights|pluralize }}</div>
         </td>
-        <td style="width: 25%; text-align: center; padding: 8px 6px;">
+        <td style="width: 26%;" class="schedule-cell">
+          <div class="card-label">Rooms &amp; Occupancy</div>
+          <div style="font-weight: 700; color: #0f172a;">
+            {{ booking.rooms_count|default:1 }} Room{{ booking.rooms_count|pluralize }}, 
+            {{ booking.adults_count|default:2 }} Adult{{ booking.adults_count|pluralize }}
+            {% if booking.children_count and booking.children_count > 0 %}
+              , {{ booking.children_count }} Child{% if booking.children_count > 1 %}ren{% endif %}
+            {% endif %}
+          </div>
+        </td>
+        <td style="width: 18%; text-align: center; padding: 10px 8px;">
           <div class="card-label">Payment Mode</div>
-          <div style="font-weight: 700; color: #0f172a;">{{ booking.get_payment_mode_display|default:booking.payment_mode }}</div>
+          <div style="font-weight: 700; color: #0f172a;">{{ booking.get_payment_mode_display|default:booking.payment_mode|default:"Pay at Hotel" }}</div>
         </td>
       </tr>
     </table>
 
-    <!-- Tariff & Description Table -->
+    <!-- Items Table -->
     <table class="table-layout item-table">
       <thead>
         <tr>
-          <th style="text-align: left; width: 45%;">Item Description</th>
-          <th style="text-align: center; width: 20%;">Plan</th>
-          <th style="text-align: center; width: 10%;">Nights</th>
-          <th style="text-align: right; width: 25%;">Gross Tariff</th>
+          <th style="text-align: left; width: 42%;">Item Description</th>
+          <th style="text-align: center; width: 28%;">Meal Package</th>
+          <th style="text-align: center; width: 12%;">Duration</th>
+          <th style="text-align: right; width: 18%;">Base Tariff</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <td>
-            <div style="font-weight: 700; color: #0f172a;">{{ booking.room_type.name|default:"Standard Suite" }}</div>
-            <div class="text-muted">Base Accommodation at {{ hotel.name }}</div>
+            <div style="font-weight: 700; color: #0f172a;">{{ booking.room_type.name|default:"Standard Deluxe Room" }}</div>
+            <div class="text-muted">Accommodation at {{ hotel.name }} ({{ booking.rooms_count|default:1 }} Room{{ booking.rooms_count|pluralize }})</div>
           </td>
           <td style="text-align: center;">
-            <span style="background-color: #f1f5f9; padding: 2px 6px; font-size: 9px; font-weight: 700; border-radius: 4px;">
-              {% if booking.meal_plan %}{{ booking.meal_plan.plan_code }}{% else %}EP (Room Only){% endif %}
-            </span>
+            {% if booking.meal_plan %}
+              <span style="background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 3px 8px; font-size: 9px; font-weight: 700; border-radius: 4px; display: inline-block;">
+                🍽️ {{ booking.meal_plan.get_plan_code_display|default:booking.meal_plan.plan_code|default:booking.meal_plan }}
+              </span>
+            {% else %}
+              <span style="background-color: #f1f5f9; color: #475569; padding: 3px 8px; font-size: 9px; font-weight: 700; border-radius: 4px; display: inline-block;">
+                🍽️ Room Only (EP)
+              </span>
+            {% endif %}
           </td>
-          <td style="text-align: center; font-weight: 700;">{{ nights }}</td>
+          <td style="text-align: center; font-weight: 700; color: #334155;">
+            {{ nights }}N
+          </td>
           <td style="text-align: right; font-weight: 700; color: #0f172a;">
-            Rs. {{ booking.base_amount|add:booking.discount_amount }}
+            Rs. {{ booking.base_amount }}
           </td>
         </tr>
       </tbody>
     </table>
 
-    <!-- Tax & Grand Total Summary -->
+    <!-- Calculations Breakdown -->
     <table class="calc-table">
       <tr>
-        <td style="color: #475569;">Gross Tariff Subtotal:</td>
+        <td style="color: #475569;">Room Base Tariff ({{ booking.rooms_count|default:1 }}R × {{ nights }}N):</td>
         <td style="text-align: right; font-weight: 700;">
-          Rs. {{ booking.base_amount|add:booking.discount_amount }}
+          Rs. {{ booking.base_amount }}
         </td>
       </tr>
+
+      {% if booking.meal_plan_amount and booking.meal_plan_amount > 0 %}
+      <tr>
+        <td style="color: #047857; font-weight: 600;">
+          Meal Plan Charges ({{ booking.adults_count|default:2 }} Adults{% if booking.children_count and booking.children_count > 0 %} + {{ booking.children_count }} Child{% if booking.children_count > 1 %}ren{% endif %}{% endif %}):
+        </td>
+        <td style="text-align: right; font-weight: 700; color: #047857;">
+          + Rs. {{ booking.meal_plan_amount }}
+        </td>
+      </tr>
+      {% endif %}
 
       {% if booking.discount_amount and booking.discount_amount > 0 %}
       <tr class="discount-row">
@@ -371,20 +402,22 @@
       {% endif %}
 
       <tr class="taxable-border">
-        <td>Taxable Base Value:</td>
-        <td style="text-align: right;">Rs. {{ booking.base_amount }}</td>
+        <td>Total Taxable Value:</td>
+        <td style="text-align: right;">
+          Rs. {{ booking.base_amount|add:booking.meal_plan_amount }}
+        </td>
       </tr>
 
       <tr>
-        <td style="color: #475569;">Central GST (CGST):</td>
+        <td style="color: #475569;">Central GST (CGST - 6%):</td>
         <td style="text-align: right; font-weight: 700;">Rs. {{ booking.cgst_amount|default:"0.00" }}</td>
       </tr>
       <tr>
-        <td style="color: #475569;">State GST (SGST):</td>
+        <td style="color: #475569;">State GST (SGST - 6%):</td>
         <td style="text-align: right; font-weight: 700;">Rs. {{ booking.sgst_amount|default:"0.00" }}</td>
       </tr>
       <tr>
-        <td style="color: #475569;">Total GST (Combined):</td>
+        <td style="color: #475569;">Total GST (12% Combined):</td>
         <td style="text-align: right; font-weight: 700;">Rs. {{ booking.gst_amount|default:"0.00" }}</td>
       </tr>
 
@@ -394,7 +427,7 @@
       </tr>
     </table>
 
-    <!-- Footer Terms & Helpline -->
+    <!-- Footer -->
     <table class="table-layout footer-table">
       <tr>
         <td style="width: 55%;">
@@ -403,7 +436,7 @@
         </td>
         <td style="width: 45%; text-align: right;">
           <div style="font-weight: 700; color: #334155;">MakesMyYatra Operations Desk</div>
-          <div>Helpline: +91 98160 00000 | helpdesk@makesmyyatra.com</div>
+          <div>Helpline: +91 98160 00000 | booking@makesmyyatra.com</div>
         </td>
       </tr>
     </table>

@@ -232,8 +232,9 @@ class Booking(models.Model):
     destination_title = models.CharField(max_length=200, blank=True, default="")
     travel_date = models.DateField(null=True, blank=True)
     guests_count = models.PositiveIntegerField(default=2)
-    adults_count = models.PositiveSmallIntegerField(default=2)
-    children_count = models.PositiveSmallIntegerField(default=0)
+    rooms_count = models.PositiveIntegerField(default=1)
+    adults_count = models.PositiveIntegerField(default=2)
+    children_count = models.PositiveIntegerField(default=0)
     
     # Pricing Breakdown Fields
     base_amount = models.DecimalField(

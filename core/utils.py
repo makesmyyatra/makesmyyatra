@@ -6,7 +6,6 @@ from .models import EmergencySupport, Booking
 from decimal import Decimal
 from django.db.models import Sum, Count, Q
 
-
 def calculate_stay_pricing(
     base_price,
     meal_extra=Decimal('0.00'),
@@ -14,6 +13,8 @@ def calculate_stay_pricing(
     check_out=None,
     nights=1,
     rooms=1,
+    adults=2,
+    children=0,
     discount_percent=Decimal('0.00'),
     flat_discount=Decimal('0.00'),
     surge_percent=20,
@@ -24,10 +25,13 @@ def calculate_stay_pricing(
     base_price = Decimal(str(base_price or 0))
     meal_extra = Decimal(str(meal_extra or 0))
     rooms = int(rooms) if int(rooms or 1) > 0 else 1
+    adults = int(adults) if int(adults or 1) > 0 else 1
+    children = int(children) if int(children or 0) >= 0 else 0
     discount_percent = Decimal(str(discount_percent or 0))
     flat_discount = Decimal(str(flat_discount or 0))
     surge_multiplier = Decimal('1.00') + (Decimal(str(surge_percent)) / Decimal('100'))
 
+    # 1. PEHLE NIGHTS CALCULATE HOGI
     total_nights = 0
     weekend_nights = 0
     weekday_nights = 0
@@ -47,15 +51,19 @@ def calculate_stay_pricing(
         weekday_nights = total_nights
         weekend_nights = 0
 
-    # Room Tariff with Weekend Surge
+    # 2. ROOM TARIFF WITH WEEKEND SURGE
     weekday_cost = Decimal(str(weekday_nights)) * base_price
     weekend_cost = Decimal(str(weekend_nights)) * (base_price * surge_multiplier)
     pure_room_base = (weekday_cost + weekend_cost) * Decimal(str(rooms))
 
-    total_meal_amount = meal_extra * Decimal(str(total_nights)) * Decimal(str(rooms))
+    # 3. REAL-WORLD MEAL CHARGES (Adults 100%, Children 50% * Nights)
+    child_meal_rate = meal_extra * Decimal('0.5')
+    total_meal_amount = ((Decimal(str(adults)) * meal_extra) + (Decimal(str(children)) * child_meal_rate)) * Decimal(str(total_nights))
+
+    # 4. GROSS TOTAL
     gross_total = pure_room_base + total_meal_amount
 
-    # Discounts
+    # 5. DISCOUNTS
     if flat_discount > Decimal('0.00'):
         discount_amount = min(flat_discount, gross_total).quantize(Decimal('0.01'))
     elif discount_percent > Decimal('0.00'):
@@ -65,7 +73,7 @@ def calculate_stay_pricing(
 
     taxable_amount = max(Decimal('0.00'), gross_total - discount_amount)
 
-    # 12% GST Calculation
+    # 6. 12% GST CALCULATION (CGST 6% + SGST 6%)
     total_gst = (taxable_amount * Decimal(str(tax_rate))).quantize(Decimal('0.01'))
     cgst = (total_gst / Decimal('2.00')).quantize(Decimal('0.01'))
     sgst = (total_gst - cgst).quantize(Decimal('0.01'))
@@ -86,7 +94,6 @@ def calculate_stay_pricing(
         'total_gst': total_gst,
         'grand_total': grand_total,
     }
-
 
 def purge_expired_emergency_requests(retention_days=30):
     """

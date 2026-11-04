@@ -82,6 +82,10 @@ def book_hotel(request):
         check_out_str = request.POST.get('check_out')
         adults_count = int(request.POST.get('adults_count', 2))
         children_count = int(request.POST.get('children_count', 0))
+        rooms_count = int(request.POST.get('rooms_count', 1))
+        adults_count = int(request.POST.get('adults_count', 2))
+        children_count = int(request.POST.get('children_count', 0))
+        meal_plan = request.POST.get('meal_plan', 'EP')
         total_guests = adults_count + children_count if (adults_count + children_count) > 0 else 2
 
         hotel = get_object_or_404(Hotel, id=hotel_id)
@@ -109,8 +113,15 @@ def book_hotel(request):
                     'MAP': Decimal('750.00'),
                     'AP': Decimal('1200.00'),
                 }
-                meal_extra = fallback_rates.get(cleaned_val.upper(), Decimal('0.00'))
-
+                code_upper = cleaned_val.upper()
+                meal_extra = fallback_rates.get(code_upper, Decimal('0.00'))
+                # if room_type exists, create a new MealPlan entry dynamically
+                if room_type:
+                    meal_plan, _ = MealPlan.objects.get_or_create(
+                        room_type=room_type,
+                        plan_code=code_upper,
+                        defaults={'additional_price': meal_extra, 'is_active': True}
+                    )
         # Calculate stay duration
         check_in_date = None
         check_out_date = None
@@ -167,6 +178,8 @@ def book_hotel(request):
             check_out=check_out_date,
             rooms=rooms_count,
             discount_percent=discount_percentage,
+            adults=adults_count,
+            children=children_count,
             flat_discount=flat_discount_amount,
             surge_percent=20  # 20% surge for Friday & Saturday nights
         )
@@ -198,6 +211,7 @@ def book_hotel(request):
             sgst_amount=bill['sgst'],
             gst_amount=bill['total_gst'],
             total_amount=bill['grand_total'],
+            rooms_count=rooms_count,
             payment_mode='PAY_AT_HOTEL',
             payment_status='CONFIRMED',
             status='CONFIRMED',
@@ -1485,12 +1499,17 @@ def apply_coupon_ajax(request):
 
     flat_disc = coupon.discount_value if coupon.discount_type == 'flat' else 0
     pct_disc = coupon.discount_value if coupon.discount_type == 'percentage' else 0
+    rooms_count = int(request.POST.get('rooms_count', 1))
+    adults_count = int(request.POST.get('adults_count', 2))
+    children_count = int(request.POST.get('children_count', 0))
 
     bill = calculate_stay_pricing(
         base_price=base_rate,
         meal_extra=meal_extra,
         nights=nights,
-        rooms=1,
+        rooms=rooms_count,
+        adults=adults_count,
+        children=children_count,
         discount_percent=pct_disc,
         flat_discount=flat_disc
     )
