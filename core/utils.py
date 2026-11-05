@@ -6,6 +6,18 @@ from .models import EmergencySupport, Booking
 from decimal import Decimal
 from django.db.models import Sum, Count, Q
 
+def hotel_gst_rate(night_rate):
+    """GST on hotel rooms is decided per room, per night, on the declared room tariff
+    (rates in force since 22 Sep 2025 - confirm with your CA):
+    up to Rs 1,000 = 0%, Rs 1,001 to Rs 7,500 = 5%, above Rs 7,500 = 18%."""
+    night_rate = Decimal(str(night_rate))
+    if night_rate <= Decimal('1000'):
+        return Decimal('0.00')
+    if night_rate <= Decimal('7500'):
+        return Decimal('0.05')
+    return Decimal('0.18')
+
+
 def calculate_stay_pricing(
     base_price,
     meal_extra=Decimal('0.00'),
@@ -18,7 +30,7 @@ def calculate_stay_pricing(
     discount_percent=Decimal('0.00'),
     flat_discount=Decimal('0.00'),
     surge_percent=20,
-    tax_rate=Decimal('0.12'),  # 12% GST (6% CGST + 6% SGST)
+    tax_rate=None,  # None = slab-wise GST per night. Pass a Decimal (e.g. Decimal('0.12')) to force a flat rate.
     *args,
     **kwargs
 ):
@@ -30,9 +42,10 @@ def calculate_stay_pricing(
     discount_percent = Decimal(str(discount_percent or 0))
     flat_discount = Decimal(str(flat_discount or 0))
     surge_multiplier = Decimal('1.00') + (Decimal(str(surge_percent)) / Decimal('100'))
+    surge_rate = base_price * surge_multiplier
 
-    # 1. PEHLE NIGHTS CALCULATE HOGI
-    total_nights = 0
+    # 1. Nights and the declared room rate of each night (Fri/Sat = surge)
+    night_rates = []
     weekend_nights = 0
     weekday_nights = 0
 
@@ -42,28 +55,30 @@ def calculate_stay_pricing(
             # 4 = Friday, 5 = Saturday
             if cur.weekday() in [4, 5]:
                 weekend_nights += 1
+                night_rates.append(surge_rate)
             else:
                 weekday_nights += 1
+                night_rates.append(base_price)
             cur += datetime.timedelta(days=1)
         total_nights = weekday_nights + weekend_nights
     else:
-        total_nights = int(nights or 1)
+        total_nights = max(int(nights or 1), 1)
         weekday_nights = total_nights
         weekend_nights = 0
+        night_rates = [base_price] * total_nights
 
-    # 2. ROOM TARIFF WITH WEEKEND SURGE
-    weekday_cost = Decimal(str(weekday_nights)) * base_price
-    weekend_cost = Decimal(str(weekend_nights)) * (base_price * surge_multiplier)
-    pure_room_base = (weekday_cost + weekend_cost) * Decimal(str(rooms))
+    # 2. Room tariff with weekend surge
+    pure_room_base = (Decimal(str(weekday_nights)) * base_price + Decimal(str(weekend_nights)) * surge_rate) * Decimal(str(rooms))
 
-    # 3. REAL-WORLD MEAL CHARGES (Adults 100%, Children 50% * Nights)
+    # 3. Meal charges (adults 100%, children 50%, per night)
     child_meal_rate = meal_extra * Decimal('0.5')
-    total_meal_amount = ((Decimal(str(adults)) * meal_extra) + (Decimal(str(children)) * child_meal_rate)) * Decimal(str(total_nights))
+    meal_per_night = (Decimal(str(adults)) * meal_extra) + (Decimal(str(children)) * child_meal_rate)
+    total_meal_amount = meal_per_night * Decimal(str(total_nights))
 
-    # 4. GROSS TOTAL
+    # 4. Gross total
     gross_total = pure_room_base + total_meal_amount
 
-    # 5. DISCOUNTS
+    # 5. Discounts
     if flat_discount > Decimal('0.00'):
         discount_amount = min(flat_discount, gross_total).quantize(Decimal('0.01'))
     elif discount_percent > Decimal('0.00'):
@@ -73,11 +88,22 @@ def calculate_stay_pricing(
 
     taxable_amount = max(Decimal('0.00'), gross_total - discount_amount)
 
-    # 6. 12% GST CALCULATION (CGST 6% + SGST 6%)
-    total_gst = (taxable_amount * Decimal(str(tax_rate))).quantize(Decimal('0.01'))
+    # 6. GST: slab chosen by each night's declared room rate, charged on that night's share after discount
+    if tax_rate is not None:
+        gst_raw = taxable_amount * Decimal(str(tax_rate))
+    else:
+        gst_raw = Decimal('0.00')
+        for rate in night_rates:
+            night_gross = rate * Decimal(str(rooms)) + meal_per_night
+            share = (night_gross / gross_total) if gross_total > 0 else Decimal('0.00')
+            night_taxable = night_gross - (discount_amount * share)
+            gst_raw += max(Decimal('0.00'), night_taxable) * hotel_gst_rate(rate)
+
+    total_gst = gst_raw.quantize(Decimal('0.01'))
     cgst = (total_gst / Decimal('2.00')).quantize(Decimal('0.01'))
     sgst = (total_gst - cgst).quantize(Decimal('0.01'))
     grand_total = (taxable_amount + total_gst).quantize(Decimal('0.01'))
+    gst_percent = ((total_gst / taxable_amount) * Decimal('100')).quantize(Decimal('0.1')) if taxable_amount > 0 else Decimal('0.0')
 
     return {
         'total_nights': total_nights,
@@ -89,6 +115,7 @@ def calculate_stay_pricing(
         'gross_total': gross_total,
         'discount_amount': discount_amount,
         'taxable_amount': taxable_amount,
+        'gst_percent': gst_percent,
         'cgst': cgst,
         'sgst': sgst,
         'total_gst': total_gst,
@@ -96,13 +123,11 @@ def calculate_stay_pricing(
     }
 
 def purge_expired_emergency_requests(retention_days=30):
-    """
-    Autopilot: 30 din purane RESOLVED tickets ko database se auto delete karta hai.
-    """
     cutoff_time = timezone.now() - timedelta(days=retention_days)
+    # Check if resolved_at exists, otherwise fallback to created_at
     deleted_count, _ = EmergencySupport.objects.filter(
-        status='RESOLVED',
-        resolved_at__lt=cutoff_time
+        status__iexact='RESOLVED',
+        created_at__lt=cutoff_time
     ).delete()
     return deleted_count
 

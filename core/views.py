@@ -1,4 +1,5 @@
 import io
+import secrets
 from xhtml2pdf import pisa
 import uuid
 import openpyxl
@@ -22,7 +23,8 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_POST
-from .models import Hotel, RoomType, MealPlan, Booking, EmergencySupport, HotelReview, HotelMedia, Coupon
+from .models import Hotel, RoomType, MealPlan, Booking, EmergencySupport, HotelReview, HotelMedia, Coupon, generate_mmy_booking_id
+from django.db.models import Prefetch
 from .forms import HotelForm, RoomTypeForm, BookingStatusForm
 from django.template.loader import get_template
 from .utils import calculate_stay_pricing, partner_cancel_booking_logic, get_partner_booking_metrics
@@ -38,6 +40,53 @@ from .notifications import (
 def is_admin(user):
     return user.is_authenticated and (user.is_staff or user.is_superuser)
 
+MEAL_FALLBACK_RATES = {'EP': Decimal('0.00'), 'CP': Decimal('350.00'), 'MAP': Decimal('750.00'), 'AP': Decimal('1200.00')}
+
+def _to_int(value, default, lo=0, hi=100):
+    try:
+        return max(lo, min(hi, int(value)))
+    except (TypeError, ValueError):
+        return default
+
+def _normalize_phone(value):
+    digits = ''.join(ch for ch in str(value or '') if ch.isdigit())
+    return digits[-10:]
+
+def _contact_matches(booking, contact):
+    """True only if the given phone (last 10 digits) or email exactly matches the booking."""
+    contact = (contact or '').strip()
+    if not contact:
+        return False
+    if '@' in contact:
+        return bool(booking.guest_email) and contact.lower() == booking.guest_email.strip().lower()
+    phone = _normalize_phone(contact)
+    return len(phone) == 10 and phone == _normalize_phone(booking.guest_phone)
+
+def _remember_booking(request, booking):
+    ids = request.session.get('allowed_bookings', [])
+    if booking.booking_id not in ids:
+        ids.append(booking.booking_id)
+        request.session['allowed_bookings'] = ids[-20:]
+
+def _can_access_booking(request, booking):
+    """Admin, hotel owner, booking owner, same-session guest, or matching phone/email."""
+    u = request.user
+    if u.is_authenticated:
+        if u.is_staff or u.is_superuser or booking.user_id == u.id:
+            return True
+        if booking.hotel_id and booking.hotel.owner_id == u.id:
+            return True
+    if booking.booking_id in request.session.get('allowed_bookings', []):
+        return True
+    if _contact_matches(booking, request.GET.get('contact') or request.POST.get('contact_info')):
+        _remember_booking(request, booking)
+        return True
+    return False
+
+def _deny_booking_access(request, booking_id):
+    messages.error(request, "Please enter the phone number or email used for this booking to continue.")
+    return redirect(f"/track-booking/?booking_id={urllib.parse.quote(str(booking_id))}")
+
 # Homepage and search filter
 def index(request):
     city = request.GET.get('city', 'All')
@@ -46,10 +95,19 @@ def index(request):
     min_rating = request.GET.get('min_rating', '')
 
     # NEW: is_verified=True add kar diya taaki fake/unapproved properties public homepage par na dikhein
-    hotels = Hotel.objects.filter(is_active=True, is_verified=True).prefetch_related('room_types', 'reviews', 'media_gallery')
+    hotels = Hotel.objects.filter(is_active=True, is_verified=True).prefetch_related(
+        'room_types',
+        Prefetch('reviews', queryset=HotelReview.objects.filter(is_approved=True).order_by('-created_at')),
+        'media_gallery',
+    )
 
     if city and city != 'All':
-        hotels = hotels.filter(city__iexact=city)
+        city = city.strip()
+        exact = hotels.filter(Q(city__iexact=city) | Q(state__iexact=city))
+        # typed text like "goa beach" or part of a hotel name -> fall back to a fuzzy search
+        hotels = exact if exact.exists() else hotels.filter(
+            Q(city__icontains=city) | Q(state__icontains=city) | Q(name__icontains=city) | Q(address__icontains=city)
+        )
     if property_type:
         hotels = hotels.filter(category__iexact=property_type)
     if min_rating:
@@ -60,6 +118,17 @@ def index(request):
     if max_price:
         try:
             hotels = hotels.filter(room_types__base_price__lte=Decimal(max_price)).distinct()
+        except Exception:
+            pass
+
+    price_range = request.GET.get('price_range', '').strip()
+    if price_range:
+        try:
+            if price_range.endswith('+'):
+                hotels = hotels.filter(room_types__base_price__gte=Decimal(price_range[:-1])).distinct()
+            else:
+                lo, hi = price_range.split('-')
+                hotels = hotels.filter(room_types__base_price__gte=Decimal(lo), room_types__base_price__lte=Decimal(hi)).distinct()
         except Exception:
             pass
 
@@ -80,16 +149,13 @@ def book_hotel(request):
         guest_email = request.POST.get('guest_email', '').strip()
         check_in_str = request.POST.get('check_in')
         check_out_str = request.POST.get('check_out')
-        adults_count = int(request.POST.get('adults_count', 2))
-        children_count = int(request.POST.get('children_count', 0))
-        rooms_count = int(request.POST.get('rooms_count', 1))
-        adults_count = int(request.POST.get('adults_count', 2))
-        children_count = int(request.POST.get('children_count', 0))
-        meal_plan = request.POST.get('meal_plan', 'EP')
+        adults_count = _to_int(request.POST.get('adults_count'), 2, 1, 20)
+        children_count = _to_int(request.POST.get('children_count'), 0, 0, 10)
+        rooms_count = _to_int(request.POST.get('rooms_count'), 1, 1, 10)
         total_guests = adults_count + children_count if (adults_count + children_count) > 0 else 2
 
-        hotel = get_object_or_404(Hotel, id=hotel_id)
-        room_type = RoomType.objects.filter(id=room_type_id).first() if room_type_id else hotel.room_types.first()
+        hotel = get_object_or_404(Hotel, id=hotel_id, is_active=True, is_verified=True)
+        room_type = (RoomType.objects.filter(id=room_type_id, hotel=hotel).first() if room_type_id else None) or hotel.room_types.first()
         base_rate = room_type.base_price if room_type else Decimal('1800.00')
 
         # Flexible Meal Plan Resolution
@@ -116,7 +182,7 @@ def book_hotel(request):
                 code_upper = cleaned_val.upper()
                 meal_extra = fallback_rates.get(code_upper, Decimal('0.00'))
                 # if room_type exists, create a new MealPlan entry dynamically
-                if room_type:
+                if room_type and code_upper in fallback_rates:
                     meal_plan, _ = MealPlan.objects.get_or_create(
                         room_type=room_type,
                         plan_code=code_upper,
@@ -126,13 +192,19 @@ def book_hotel(request):
         check_in_date = None
         check_out_date = None
         nights = 1
-        if check_in_str and check_out_str:
-            try:
-                check_in_date = datetime.strptime(check_in_str, '%Y-%m-%d').date()
-                check_out_date = datetime.strptime(check_out_str, '%Y-%m-%d').date()
-                nights = max((check_out_date - check_in_date).days, 1)
-            except ValueError:
-                pass
+        try:
+            check_in_date = datetime.strptime(check_in_str or '', '%Y-%m-%d').date()
+            check_out_date = datetime.strptime(check_out_str or '', '%Y-%m-%d').date()
+            nights = (check_out_date - check_in_date).days
+        except ValueError:
+            check_in_date = check_out_date = None
+
+        if not check_in_date or check_in_date < timezone.localdate() or nights < 1 or nights > 30:
+            messages.error(request, "Please select valid check-in and check-out dates (maximum 30 nights).")
+            return redirect('index')
+        if len(_normalize_phone(guest_phone)) < 10 or '@' not in guest_email or not guest_name:
+            messages.error(request, "Please enter a valid name, 10-digit phone number and email address.")
+            return redirect('index')
 
         # --- Automatic Offer & Dynamic DB Coupon Evaluation ---
         discount_percentage = Decimal('0.00')
@@ -170,7 +242,6 @@ def book_hotel(request):
                 messages.warning(request, f"Coupon '{coupon_input}' is either invalid or expired.")
 
         # Compute bill via calculator (with weekend surge engine)
-        rooms_count = 1
         bill = calculate_stay_pricing(
             base_price=base_rate,
             meal_extra=meal_extra,
@@ -184,7 +255,9 @@ def book_hotel(request):
             surge_percent=20  # 20% surge for Friday & Saturday nights
         )
 
-        custom_booking_id = f"MMY-HTL-{uuid.uuid4().hex[:4].upper()}"
+        custom_booking_id = generate_mmy_booking_id()
+        while Booking.objects.filter(booking_id=custom_booking_id).exists():
+            custom_booking_id = generate_mmy_booking_id()
 
         # 1. Create and save booking in DB
         booking = Booking.objects.create(
@@ -227,14 +300,13 @@ def book_hotel(request):
             send_whatsapp_notification(booking)
         except Exception as sms_err:
             pass
+        _remember_booking(request, booking)  # lets this guest open their own voucher
         # 3. Direct Redirect to Printable Tax Voucher / Invoice
         messages.success(request, f"Booking #{booking.booking_id} confirmed! Here is your official travel pass.")
         return redirect('booking_voucher', booking_id=booking.booking_id)
     return redirect('index')
 
 
-def is_admin(user):
-    return user.is_staff or user.is_superuser
 # Helpdesk and traveler support (Guest Facing Form)
 def support_request(request):
     if request.method == 'POST':
@@ -259,18 +331,19 @@ def support_request(request):
         
     return render(request, 'traveler_help.html')
 
-@login_required
-@user_passes_test(is_admin)
+@user_passes_test(is_admin, login_url='portal_login')
 def portal_urgent_help(request):
-    purge_expired_emergency_requests(retention_days=30)
+    try:
+        purge_expired_emergency_requests(retention_days=30)
+    except Exception:
+        pass
 
     current_filter = request.GET.get('filter', 'all').strip().lower()
 
     if current_filter == 'resolved':
-        # Sirf Resolved (case-insensitive)
-        supports = EmergencySupport.objects.filter(status__iexact='RESOLVED').order_by('-resolved_at', '-created_at')
+        # resolved_at ki jagah '-created_at' use karein
+        supports = EmergencySupport.objects.filter(status__iexact='RESOLVED').order_by('-created_at')
     elif current_filter == 'pending':
-        # Sirf Pending / Action Needed (case-insensitive)
         supports = EmergencySupport.objects.exclude(status__iexact='RESOLVED').order_by('-created_at')
     else:
         current_filter = 'all'
@@ -289,22 +362,18 @@ def portal_urgent_help(request):
     })
 
 
-@login_required
-@user_passes_test(is_admin)
+@user_passes_test(is_admin, login_url='portal_login')
 def portal_urgent_help_resolve(request, support_id):
-    # Hamesha standard uppercase 'RESOLVED' save hoga
+    # Model me resolved_at field nahi hai, isliye sirf status update hoga
     EmergencySupport.objects.filter(id=support_id).update(
-        status='RESOLVED',
-        resolved_at=timezone.now()
+        status='RESOLVED'
     )
-    
     current_filter = request.GET.get('filter') or request.POST.get('filter') or 'all'
     messages.success(request, f"Ticket #{support_id} marked as RESOLVED.")
     return redirect(f"/portal/urgent-help/?filter={current_filter}")
 
 # 3. Manual Immediate Delete Action View (Spam / Instant Trash)
-@login_required
-@user_passes_test(is_admin)
+@user_passes_test(is_admin, login_url='portal_login')
 def portal_urgent_help_delete(request, support_id):
     req_item = get_object_or_404(EmergencySupport, id=support_id)
     guest_display_name = getattr(req_item, 'name', None) or getattr(req_item, 'guest_name', 'Guest')
@@ -403,6 +472,7 @@ def portal_dashboard(request):
   return render(request, "custom_admin/dashboard.html", context)
 
 # Bulk delete & clear actions
+@user_passes_test(is_admin, login_url='portal_login')
 def portal_booking_actions(request):
     if request.method == "POST":
         action = request.POST.get("action")
@@ -421,6 +491,7 @@ def portal_booking_actions(request):
 
 
 # Individual Booking Deletion
+@user_passes_test(is_admin, login_url='portal_login')
 def portal_booking_delete(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id)
     booking.delete()
@@ -471,7 +542,8 @@ def portal_hotel_add(request):
         # Basic fields
         name = request.POST.get('name', '').strip()
         category = request.POST.get('category', 'budget')
-        city = request.POST.get('city', 'Shimla')
+        city = request.POST.get('city', '').strip()
+        state = request.POST.get('state', '').strip()
         star_rating = int(request.POST.get('star_rating', 3))
         address = request.POST.get('address', '').strip()
         google_maps_url = request.POST.get('google_maps_url', '').strip()
@@ -482,6 +554,7 @@ def portal_hotel_add(request):
             name=name,
             category=category,
             city=city,
+            state=state,
             star_rating=star_rating,
             address=address,
             google_maps_url=google_maps_url if google_maps_url else None,
@@ -536,14 +609,15 @@ def portal_hotel_add(request):
     return render(request, 'custom_admin/hotel_add.html', {'is_edit': False})
 
 # Edit hotel
-@login_required(login_url='portal_login')
+@user_passes_test(is_admin, login_url='portal_login')
 def portal_hotel_edit(request, hotel_id):
     hotel = get_object_or_404(Hotel, id=hotel_id)
     
     if request.method == 'POST':
         hotel.name = request.POST.get('name', hotel.name).strip()
         hotel.category = request.POST.get('category', hotel.category)
-        hotel.city = request.POST.get('city', hotel.city)
+        hotel.city = request.POST.get('city', hotel.city).strip()
+        hotel.state = request.POST.get('state', hotel.state).strip()
         hotel.star_rating = int(request.POST.get('star_rating', hotel.star_rating))
         hotel.address = request.POST.get('address', hotel.address).strip()
         
@@ -605,14 +679,14 @@ def portal_hotel_delete(request, hotel_id):
 
 
 # Bookings view
-@login_required(login_url='portal_login')
+@user_passes_test(is_admin, login_url='portal_login')
 def portal_bookings(request):
     bookings = Booking.objects.select_related('hotel', 'room_type', 'meal_plan').order_by('-created_at')
     return render(request, 'custom_admin/bookings.html', {'bookings': bookings})
 
 
 # Quick booking status toggle
-@login_required(login_url='portal_login')
+@user_passes_test(is_admin, login_url='portal_login')
 def portal_booking_status_change(request, booking_id, new_status):
     booking = get_object_or_404(Booking, booking_id=booking_id)
     valid_statuses = ['PENDING', 'CONFIRMED', 'CHECKED_IN', 'CHECKED_OUT', 'CANCELLED']
@@ -624,13 +698,13 @@ def portal_booking_status_change(request, booking_id, new_status):
             subject = f"Booking Confirmed! MakesMyYatra Pass #{booking.booking_id}"
             message = f"""Dear {booking.guest_name},
 
-Great news! Your mountain stay reservation has been officially CONFIRMED.
+Great news! Your stay reservation has been officially CONFIRMED.
 ==============================================
              BOOKING CONFIRMATION
 ==============================================
 Reservation ID : {booking.booking_id}
 Hotel Name     : {booking.hotel.name if booking.hotel else 'MakesMyYatra Stay'}
-Destination    : {booking.hotel.city if booking.hotel else 'Himachal Pradesh'}
+Destination    : {booking.hotel.city if booking.hotel else 'India'}
 Check-In Date  : {booking.check_in}
 Check-Out Date : {booking.check_out}
 Amount Payable : Rs. {booking.total_amount} (Pay at Hotel)
@@ -654,7 +728,7 @@ MakesMyYatra 24x7 Operations Desk: +91 98160XXXXX
     return redirect('portal_bookings')
 
 # Booking status update via form
-@login_required(login_url='portal_login')
+@user_passes_test(is_admin, login_url='portal_login')
 def portal_booking_status(request, booking_id):
     if request.method == 'POST':
         booking = get_object_or_404(Booking, id=booking_id)
@@ -666,7 +740,7 @@ def portal_booking_status(request, booking_id):
     return redirect('portal_bookings')
 
 # Edit booking details
-@login_required(login_url='portal_login')
+@user_passes_test(is_admin, login_url='portal_login')
 def portal_booking_update(request, booking_id):
     booking = get_object_or_404(Booking, booking_id=booking_id)
     if request.method == 'POST':
@@ -680,14 +754,12 @@ def portal_booking_update(request, booking_id):
     return render(request, 'custom_admin/booking_update.html', {'form': form, 'booking': booking})
 
 def booking_voucher(request, booking_id):
-    lookup = Q(booking_id=booking_id)
-    if str(booking_id).isdigit():
-        lookup |= Q(id=int(booking_id))
-
     booking = get_object_or_404(
         Booking.objects.select_related('hotel', 'room_type', 'meal_plan'),
-        lookup
+        booking_id=booking_id
     )
+    if not _can_access_booking(request, booking):
+        return _deny_booking_access(request, booking_id)
 
     # Calculate nights
     nights = 1
@@ -709,7 +781,7 @@ def booking_voucher(request, booking_id):
     return render(request, 'custom_admin/invoice_print.html', context)
 
 # Export bookings report to Excel
-@login_required(login_url='portal_login')
+@user_passes_test(is_admin, login_url='portal_login')
 def export_bookings_excel(request):
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -761,22 +833,8 @@ def export_bookings_excel(request):
     return response
 
 # Emergency helpdesk list
-@login_required(login_url='portal_login')
-def portal_urgent_help(request):
-    supports = EmergencySupport.objects.all().order_by('-created_at')
-    return render(request, 'custom_admin/urgent_help.html', {'supports': supports})
-
-# Resolve support ticket
-@login_required(login_url='portal_login')
-def portal_urgent_help_resolve(request, support_id):
-    item = get_object_or_404(EmergencySupport, id=support_id)
-    item.status = 'resolved'
-    item.save()
-    messages.success(request, f"Urgent request from {item.name} marked as resolved.")
-    return redirect('portal_urgent_help')
-
 # User personal dashboard
-@login_required(login_url='login')
+@login_required(login_url='partner_login')
 def user_dashboard(request):
     bookings = Booking.objects.filter(user=request.user).order_by('-created_at')
     context = {
@@ -793,7 +851,7 @@ def taxi(request):
     return render(request, 'taxi.html')
 
 # Operations command dashboard
-@login_required
+@user_passes_test(is_admin, login_url='portal_login')
 def admin_operations_dashboard(request):
     today = timezone.localdate()
     bookings = Booking.objects.all().order_by('-created_at')
@@ -832,7 +890,7 @@ def admin_operations_dashboard(request):
     return render(request, 'admin/operations_dashboard.html', context)
 
 # Authenticated User Booking Details
-@login_required(login_url='login')
+@login_required(login_url='partner_login')
 def booking_detail(request, booking_id):
     booking = get_object_or_404(
         Booking.objects.select_related('hotel', 'room_type'),
@@ -849,24 +907,20 @@ def track_booking(request):
 
     if query_id:
         clean_id = query_id.replace('#', '').strip()
-        booking = Booking.objects.select_related('hotel', 'room_type').filter(
-            booking_id__iexact=clean_id
-        ).first()
-
-        if not booking and clean_id.isdigit():
-            booking = Booking.objects.select_related('hotel', 'room_type').filter(
-                id=int(clean_id)
-            ).first()
-
-        if booking and contact_info:
-            phone_match = bool(booking.guest_phone and contact_info in booking.guest_phone)
-            email_match = bool(booking.guest_email and contact_info.lower() == booking.guest_email.lower())
-            if not (phone_match or email_match):
-                booking = None
-                messages.error(request, "Booking reference found, but the provided phone number or email does not match.")
-
-        if not booking and not messages.get_messages(request):
-            messages.error(request, f"No reservation found for Booking ID '{query_id}'. Please check your details and try again.")
+        found = Booking.objects.select_related('hotel', 'room_type').filter(booking_id__iexact=clean_id).first()
+        u = request.user
+        allowed = bool(found) and (
+            (u.is_authenticated and (u.is_staff or u.is_superuser))
+            or found.booking_id in request.session.get('allowed_bookings', [])
+            or _contact_matches(found, contact_info)
+        )
+        if allowed:
+            booking = found
+            _remember_booking(request, found)
+        elif found and not contact_info:
+            messages.error(request, "Please enter the phone number or email used for this booking.")
+        else:
+            messages.error(request, "No reservation found with these details. Please check and try again.")
 
     return render(request, 'track_booking.html', {
         'booking': booking,
@@ -915,6 +969,7 @@ def add_property(request):
     if request.method == 'POST':
         name = request.POST.get('hotel_name', '').strip()
         city = request.POST.get('city', '').strip()
+        state = request.POST.get('state', '').strip()
         category = request.POST.get('category', 'budget')
         star_rating = request.POST.get('star_rating', '3')
         address = request.POST.get('address', '').strip()
@@ -946,7 +1001,7 @@ def add_property(request):
         cover_image_url = request.POST.get('cover_image', '').strip()
 
         if not name or not city or not address:
-            messages.error(request, 'Please provide property name, destination district, and full address.')
+            messages.error(request, 'Please provide property name, city, state and full address.')
             return render(request, 'partner/add_property.html')
 
         hotel_fields = [f.name for f in Hotel._meta.get_fields()]
@@ -954,6 +1009,7 @@ def add_property(request):
         hotel_data = {
             'name': name,
             'city': city,
+            'state': state,
             'address': address,
             'owner': request.user,
         }
@@ -1105,6 +1161,7 @@ def partner_edit_property(request, hotel_id):
         hotel.name = request.POST.get("name", hotel.name).strip()
         hotel.category = request.POST.get("category", hotel.category)
         hotel.city = request.POST.get("city", hotel.city).strip()
+        hotel.state = request.POST.get("state", hotel.state).strip()
         hotel.address = request.POST.get("address", hotel.address).strip()
         hotel.google_maps_url = request.POST.get("google_maps_url", "").strip() or None
 
@@ -1197,7 +1254,7 @@ def submit_hotel_review(request, hotel_id):
         valid_booking = Booking.objects.filter(
             booking_id__iexact=booking_id,
             hotel=hotel,
-            status__in=['CHECKED_OUT', 'Confirmed']
+            status='CHECKED_OUT'
         ).first()
 
         if not valid_booking:
@@ -1206,8 +1263,8 @@ def submit_hotel_review(request, hotel_id):
 
         # 2. Check if review already exists for this booking
         # for security, we can check if the HotelReview model has a booking_id field
-        if hasattr(HotelReview, 'booking_id') and HotelReview.objects.filter(booking_id=booking_id).exists():
-            messages.warning(request, f"Booking ID {booking_id} par pehle hi review diya ja chuka hai.")
+        if HotelReview.objects.filter(booking_ref=valid_booking.booking_id).exists():
+            messages.warning(request, f"A review has already been submitted for booking {valid_booking.booking_id}.")
             return redirect('index')
 
         # 3. Rating & Comment Validation
@@ -1229,6 +1286,7 @@ def submit_hotel_review(request, hotel_id):
             guest_name=guest_name,
             rating=rating,
             comment=comment,
+            booking_ref=valid_booking.booking_id,
             is_approved=True
         )
 
@@ -1266,8 +1324,6 @@ def hotel_gallery(request, hotel_id):
     media_items = hotel.media_gallery.all().order_by('-created_at')
     return render(request, 'hotel_gallery.html', {'hotel': hotel, 'media_items': media_items})
 
-def is_admin(user):
-    return user.is_authenticated and (user.is_staff or user.is_superuser)
 
 # Multiple photo upload
 @user_passes_test(is_admin, login_url='portal_login')
@@ -1310,6 +1366,7 @@ def portal_gallery_image_delete(request, media_id):
     return redirect('portal_hotel_gallery_manage', hotel_id=hotel_id)
 
 
+@user_passes_test(is_admin, login_url='portal_login')
 def portal_room_create(request, hotel_id):
     hotel = get_object_or_404(Hotel, id=hotel_id)
     if request.method == 'POST':
@@ -1338,6 +1395,7 @@ def portal_room_create(request, hotel_id):
         messages.success(request, f"New room type '{name}' added successfully!")
     return redirect('portal_room_manage', hotel_id=hotel.id)
 
+@user_passes_test(is_admin, login_url='portal_login')
 def portal_room_delete(request, hotel_id, room_id):
     room = get_object_or_404(RoomType, id=room_id, hotel_id=hotel_id)
     room.delete()
@@ -1366,8 +1424,10 @@ def render_to_pdf(template_src, context_dict={}):
 def download_customer_voucher(request, booking_id):
     booking = get_object_or_404(
         Booking.objects.select_related('hotel', 'room_type', 'meal_plan'),
-        _get_booking_lookup(booking_id)
+        booking_id=booking_id
     )
+    if not _can_access_booking(request, booking):
+        return _deny_booking_access(request, booking_id)
 
     nights = 1
     if booking.check_in and booking.check_out:
@@ -1394,7 +1454,7 @@ def download_customer_voucher(request, booking_id):
     return HttpResponse('Error generating voucher PDF', status=500)
 
 # 2. Admin / Partner Portal PDF Download View
-@login_required(login_url='portal_login')
+@user_passes_test(is_admin, login_url='portal_login')
 def portal_booking_invoice(request, booking_id):
     booking = get_object_or_404(
         Booking.objects.select_related('hotel', 'room_type', 'meal_plan'),
@@ -1436,7 +1496,7 @@ def portal_room_toggle_status(request, room_id):
     messages.success(request, f"Inventory status for '{room.name}' updated to {status_label}.")
     return redirect('portal_room_manage', hotel_id=room.hotel.id)
 
-@login_required(login_url='portal_login')
+@user_passes_test(is_admin, login_url='portal_login')
 def portal_booking_send_whatsapp(request, booking_id):
     """
     Triggers all 3 communication channels at once:
@@ -1485,38 +1545,61 @@ def portal_booking_send_whatsapp(request, booking_id):
 
 @require_POST
 def apply_coupon_ajax(request):
+    """Preview only. Rate, meal price, offers and surge are read from the DB, never from the client."""
     coupon_code = request.POST.get('coupon_code', '').strip()
-    base_rate = request.POST.get('base_rate', 0)
-    meal_extra = request.POST.get('meal_extra', 0)
-    nights = request.POST.get('nights', 1)
-
     if not coupon_code:
         return JsonResponse({'success': False, 'message': 'Please enter a coupon code.'}, status=400)
 
-    coupon = Coupon.objects.filter(code__iexact=coupon_code, is_active=True).first()
     today = timezone.localdate()
-    
-
+    coupon = Coupon.objects.filter(code__iexact=coupon_code, is_active=True).first()
     if not coupon or (coupon.valid_till and coupon.valid_till < today):
         return JsonResponse({'success': False, 'message': 'Invalid or expired coupon.'}, status=400)
 
-    flat_disc = coupon.discount_value if coupon.discount_type == 'flat' else 0
-    pct_disc = coupon.discount_value if coupon.discount_type == 'percentage' else 0
-    rooms_count = int(request.POST.get('rooms_count', 1))
-    adults_count = int(request.POST.get('adults_count', 2))
-    children_count = int(request.POST.get('children_count', 0))
+    hotel = Hotel.objects.filter(id=_to_int(request.POST.get('hotel_id'), 0, 0, 10**9), is_active=True).first()
+    if not hotel:
+        return JsonResponse({'success': False, 'message': 'Hotel not found.'}, status=400)
+    try:
+        check_in = datetime.strptime(request.POST.get('check_in', ''), '%Y-%m-%d').date()
+        check_out = datetime.strptime(request.POST.get('check_out', ''), '%Y-%m-%d').date()
+    except ValueError:
+        return JsonResponse({'success': False, 'message': 'Please select valid dates first.'}, status=400)
+    nights = (check_out - check_in).days
+    if nights < 1 or nights > 30:
+        return JsonResponse({'success': False, 'message': 'Please select valid dates first.'}, status=400)
+
+    room_type = hotel.room_types.first()
+    base_rate = room_type.base_price if room_type else Decimal('1800.00')
+    code = (request.POST.get('meal_plan_id') or '').strip().upper()
+    meal_extra = Decimal('0.00')
+    if code:
+        plan = MealPlan.objects.filter(room_type=room_type, plan_code__iexact=code).first() if room_type else None
+        meal_extra = plan.additional_price if plan else MEAL_FALLBACK_RATES.get(code, Decimal('0.00'))
+
+    # same offer rules as book_hotel
+    discount_percentage = Decimal('0.00')
+    if (check_in - today).days >= 7:
+        discount_percentage = Decimal('10.00')
+    if nights >= 3:
+        discount_percentage = Decimal('15.00')
+    flat_discount = Decimal('0.00')
+    if coupon.discount_type == 'flat':
+        flat_discount = coupon.discount_value
+        discount_percentage = Decimal('0.00')
+    elif coupon.discount_value > discount_percentage:
+        discount_percentage = coupon.discount_value
 
     bill = calculate_stay_pricing(
         base_price=base_rate,
         meal_extra=meal_extra,
-        nights=nights,
-        rooms=rooms_count,
-        adults=adults_count,
-        children=children_count,
-        discount_percent=pct_disc,
-        flat_discount=flat_disc
+        check_in=check_in,
+        check_out=check_out,
+        rooms=_to_int(request.POST.get('rooms_count'), 1, 1, 10),
+        adults=_to_int(request.POST.get('adults_count'), 2, 1, 20),
+        children=_to_int(request.POST.get('children_count'), 0, 0, 10),
+        discount_percent=discount_percentage,
+        flat_discount=flat_discount,
+        surge_percent=20,
     )
-
     return JsonResponse({
         'success': True,
         'message': f"Coupon '{coupon.code}' applied!",
@@ -1569,7 +1652,7 @@ def portal_meal_plans(request):
     return render(request, 'custom_admin/meal_plans.html', {'meal_plans': meal_plans})
 
 
-@login_required(login_url='portal_login')
+@user_passes_test(is_admin, login_url='portal_login')
 def portal_revenue_report(request):
     hotels = Hotel.objects.all().order_by('name')
     
@@ -1653,11 +1736,12 @@ def portal_revenue_report(request):
     return render(request, 'custom_admin/revenue_report.html', context)
 
 def cancel_booking(request, booking_id):
-    # Booking find karo
-    if booking_id.isdigit():
-        booking = get_object_or_404(Booking, id=int(booking_id))
-    else:
-        booking = get_object_or_404(Booking, booking_id=booking_id)
+    booking = get_object_or_404(Booking.objects.select_related('hotel'), booking_id=booking_id)
+    if not _can_access_booking(request, booking):
+        return _deny_booking_access(request, booking_id)
+    if booking.status in ('CHECKED_IN', 'CHECKED_OUT'):
+        messages.error(request, "This stay has already started or completed and cannot be cancelled online.")
+        return redirect(f"/track-booking/?booking_id={booking.booking_id}")
 
     # Agar pehle se cancelled hai toh wapas track page par bhej do
     booking_ref = booking.booking_id if hasattr(booking, 'booking_id') else booking.id
@@ -1712,7 +1796,7 @@ def calculate_cancellation_refund(booking):
 
   return refund_amount, cancellation_fee, policy_note
 
-@login_required(login_url='portal_login')
+@user_passes_test(is_admin, login_url='portal_login')
 def portal_booking_cancel(request, booking_id):
   booking = get_object_or_404(Booking, booking_id=booking_id)
 
@@ -1752,10 +1836,6 @@ def partner_quick_update_room(request, room_id):
     return redirect('partner_dashboard')
 
 # Property listing
-@user_passes_test(is_admin, login_url='portal_login')
-def portal_hotels(request):
-    hotels = Hotel.objects.all().order_by('-id')
-    return render(request, 'custom_admin/hotel_list.html', {'hotels': hotels})
 
 # 1-Click Verification / Approval Toggle
 @user_passes_test(is_admin, login_url='portal_login')

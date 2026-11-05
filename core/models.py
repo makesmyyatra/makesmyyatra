@@ -33,7 +33,8 @@ class Hotel(models.Model):
     category = models.CharField(
         max_length=50, choices=CATEGORY_CHOICES, default="budget"
     )
-    city = models.CharField(max_length=100, default="Una")
+    city = models.CharField(max_length=100, default="", db_index=True)
+    state = models.CharField(max_length=100, blank=True, default="", db_index=True)
     address = models.TextField(blank=True, default="")
     google_maps_url = models.URLField(max_length=500, blank=True, null=True)
 
@@ -308,7 +309,7 @@ class EmergencySupport(models.Model):
     ]
     name = models.CharField(max_length=150, default="User")
     phone = models.CharField(max_length=20, default="")
-    location = models.CharField(max_length=200, default="Himachal Pradesh")
+    location = models.CharField(max_length=200, default="")
     issue_details = models.TextField(blank=True, default="")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="open")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -338,6 +339,7 @@ class HotelReview(models.Model):
     guest_name = models.CharField(max_length=120)
     rating = models.PositiveSmallIntegerField(default=5)
     comment = models.TextField()
+    booking_ref = models.CharField(max_length=50, blank=True, default="", db_index=True)  # one review per booking
     is_approved = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

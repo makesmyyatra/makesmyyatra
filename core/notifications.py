@@ -70,13 +70,14 @@ def get_whatsapp_booking_text(booking):
 
     check_in_str = booking.check_in.strftime('%d %b %Y') if hasattr(booking.check_in, 'strftime') else str(booking.check_in)
     check_out_str = booking.check_out.strftime('%d %b %Y') if hasattr(booking.check_out, 'strftime') else str(booking.check_out)
-
+    state_text = f", {booking.hotel.state}" if booking.hotel.state else ""
+    location_text = f"{booking.hotel.city}{state_text}, India"
     return (
         f"🏔️ *MakesMyYatra Booking Confirmation*\n\n"
         f"Dear *{booking.guest_name}*,\n"
-        f"Your mountain stay has been successfully confirmed!\n\n"
+        f"Your stay has been successfully confirmed!\n\n"
         f"🏨 *Property:* {booking.hotel.name}\n"
-        f"📍 *Location:* {booking.hotel.city}, Himachal Pradesh\n"
+        f"📍 *Location:* {location_text}\n"
         f"🔖 *Booking ID:* #{booking.booking_id}\n"
         f"📅 *Dates:* {check_in_str} to {check_out_str}\n"
         f"🍽️ *Meal Plan:* {meal_display}\n"

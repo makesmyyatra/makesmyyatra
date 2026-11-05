@@ -76,24 +76,16 @@
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <!-- City / District Dropdown -->
+        <!-- City + State -->
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">Destination / District *</label>
-          <select name="city" required class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-700 focus:bg-white transition">
-            <option value="Hamirpur" {% if hotel.city == 'Hamirpur' %}selected{% endif %}>Hamirpur</option>
-            <option value="Una" {% if hotel.city == 'Una' %}selected{% endif %}>Una</option>
-            <option value="Kangra" {% if hotel.city == 'Kangra' %}selected{% endif %}>Kangra</option>
-            <option value="Dharamshala" {% if hotel.city == 'Dharamshala' %}selected{% endif %}>Dharamshala</option>
-            <option value="Mandi" {% if hotel.city == 'Mandi' %}selected{% endif %}>Mandi</option>
-            <option value="Solan" {% if hotel.city == 'Solan' %}selected{% endif %}>Solan</option>
-            <option value="Bilaspur" {% if hotel.city == 'Bilaspur' %}selected{% endif %}>Bilaspur</option>
-            <option value="Shimla" {% if hotel.city == 'Shimla' or not hotel %}selected{% endif %}>Shimla</option>
-            <option value="Manali" {% if hotel.city == 'Manali' %}selected{% endif %}>Manali</option>
-            <option value="Kullu" {% if hotel.city == 'Kullu' %}selected{% endif %}>Kullu</option>
-            <option value="Kasol" {% if hotel.city == 'Kasol' %}selected{% endif %}>Kasol</option>
-            <option value="Dalhousie" {% if hotel.city == 'Dalhousie' %}selected{% endif %}>Dalhousie</option>
-            <option value="Chamba" {% if hotel.city == 'Chamba' %}selected{% endif %}>Chamba</option>
-            <option value="Palampur" {% if hotel.city == 'Palampur' %}selected{% endif %}>Palampur</option>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">City / Destination *</label>
+          <input type="text" name="city" required list="cityList" value="{{ hotel.city|default:'' }}" placeholder="e.g. Jaipur" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-700 focus:bg-white transition">
+          {% include "partials/city_datalist.html" %}
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">State *</label>
+          <select name="state" required class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-700 focus:bg-white transition">
+            {% include "partials/state_options.html" with sel=hotel.state %}
           </select>
         </div>
 
@@ -121,7 +113,7 @@
         <!-- Detailed Address -->
         <div class="sm:col-span-2">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">Detailed Address / Landmark *</label>
-          <textarea name="address" rows="2" required placeholder="e.g. Near Mall Road, The Ridge, Shimla, Himachal Pradesh - 171001" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl p-3.5 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-emerald-700 focus:bg-white transition">{{ hotel.address|default:'' }}</textarea>
+          <textarea name="address" rows="2" required placeholder="e.g. Near City Palace, Old City, Jaipur, Rajasthan - 302002" class="w-full bg-[#faf8f5] border border-slate-200 rounded-xl p-3.5 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-emerald-700 focus:bg-white transition">{{ hotel.address|default:'' }}</textarea>
         </div>
       </div>
     </div>

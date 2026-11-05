@@ -268,7 +268,7 @@
       <tr>
         <td style="width: 55%;">
           <div class="brand-title">MAKES<span class="brand-highlight">MY</span>YATRA</div>
-          <div class="text-muted" style="margin-top: 4px;">Himachal's Premier Verified Stay Network</div>
+          <div class="text-muted" style="margin-top: 4px;">India's Verified Stay Network</div>
         </td>
         <td style="width: 45%; text-align: right;">
           <div class="badge">Official Tax Invoice</div>
@@ -296,7 +296,7 @@
           <div class="card-label">Reserved Stay &amp; Location</div>
           <div style="font-size: 12px; font-weight: 700; color: #0f172a;">{{ hotel.name }}</div>
           <div style="color: #475569; margin-top: 2px;">{{ hotel.address|default:hotel.city }}</div>
-          <div style="color: #64748b; font-size: 10px; margin-top: 2px;">Destination: <b>{{ hotel.city }}, Himachal Pradesh</b></div>
+          <div style="color: #64748b; font-size: 10px; margin-top: 2px;">Destination: <b>{{ hotel.city }}{% if hotel.state %}, {{ hotel.state }}{% endif %}</b></div>
         </td>
       </tr>
     </table>
@@ -409,15 +409,15 @@
       </tr>
 
       <tr>
-        <td style="color: #475569;">Central GST (CGST - 6%):</td>
+        <td style="color: #475569;">Central GST (CGST):</td>
         <td style="text-align: right; font-weight: 700;">Rs. {{ booking.cgst_amount|default:"0.00" }}</td>
       </tr>
       <tr>
-        <td style="color: #475569;">State GST (SGST - 6%):</td>
+        <td style="color: #475569;">State GST (SGST):</td>
         <td style="text-align: right; font-weight: 700;">Rs. {{ booking.sgst_amount|default:"0.00" }}</td>
       </tr>
       <tr>
-        <td style="color: #475569;">Total GST (12% Combined):</td>
+        <td style="color: #475569;">Total GST:</td>
         <td style="text-align: right; font-weight: 700;">Rs. {{ booking.gst_amount|default:"0.00" }}</td>
       </tr>
 

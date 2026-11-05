@@ -13,7 +13,7 @@ LOGIN_URL = 'partner_login'
 # Allowed Hosts & CSRF for Render / Custom Domain
 ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS',
-    default='*,localhost,127.0.0.1,makesmyyatra-1.onrender.com,makesmyyatra.com,www.makesmyyatra.com',
+    default='localhost,127.0.0.1,makesmyyatra-1.onrender.com,makesmyyatra.com,www.makesmyyatra.com',
     cast=Csv()
 )
 
@@ -99,6 +99,14 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Media Files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# HTTPS / cookie security (Render terminates TLS and forwards X-Forwarded-Proto)
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 86400  # raise to 31536000 once everything works on https
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

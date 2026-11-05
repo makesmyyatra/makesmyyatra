@@ -5,7 +5,7 @@ class HotelForm(forms.ModelForm):
     class Meta:
         model = Hotel
         fields = [
-            'name', 'category', 'city', 'address', 'google_maps_url',
+            'name', 'category', 'city', 'state', 'address', 'google_maps_url',
             'star_rating', 'cover_image', 'has_wifi', 'has_parking',
             'has_pool', 'has_restaurant', 'has_ac', 'has_heater',
             'owner_name', 'owner_phone', 'is_active'
@@ -14,6 +14,7 @@ class HotelForm(forms.ModelForm):
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'category': forms.Select(attrs={'class': 'form-select'}),
             'city': forms.TextInput(attrs={'class': 'form-control'}),
+            'state': forms.TextInput(attrs={'class': 'form-control'}),
             'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'google_maps_url': forms.URLInput(attrs={'class': 'form-control'}),
             'star_rating': forms.NumberInput(attrs={'class': 'form-control'}),

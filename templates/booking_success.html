@@ -20,7 +20,7 @@
       </div>
       <span class="text-[10px] font-black tracking-widest text-emerald-600 uppercase bg-emerald-50 px-3 py-1 rounded-full">Reservation Confirmed</span>
       <h2 class="text-2xl font-black text-slate-900 mt-2">Booking Voucher</h2>
-      <p class="text-xs text-slate-500 mt-0.5">Your stay has been confirmed in Himachal Pradesh.</p>
+      <p class="text-xs text-slate-500 mt-0.5">Your stay has been confirmed.</p>
     </div>
 
     <!-- Booking Details Summary -->
@@ -37,7 +37,7 @@
 
       <div class="flex justify-between items-center text-xs">
         <span class="text-slate-500 font-medium">Destination</span>
-        <span class="font-bold text-slate-900">{{ hotel.city }}, Himachal Pradesh</span>
+        <span class="font-bold text-slate-900">{{ hotel.city }}{% if hotel.state %}, {{ hotel.state }}{% endif %}</span>
       </div>
 
       <div class="flex justify-between items-center text-xs">
@@ -97,7 +97,7 @@
         {% endif %}
 
         <div class="flex justify-between text-slate-500">
-          -<span>Taxes & GST (12%):</span>
+          -<span>Taxes & GST:</span>
           <span>+₹{{ booking.gst_amount|floatformat:2 }}</span>
         </div>
       </div>
