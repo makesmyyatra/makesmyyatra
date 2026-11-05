@@ -130,14 +130,14 @@ def send_whatsapp_notification(booking):
 # 3. EMAIL DISPATCH (Django SMTP / Console)
 # ==========================================
 def send_booking_email(booking):
-    """Customer ko email invoice dispatch karta hai bina website ko hang kiye."""
+    """ Email invoice are dispatched to customer without hanging the website ."""
     if not getattr(booking, 'guest_email', None):
         return False
 
     email_user = getattr(settings, 'EMAIL_HOST_USER', '')
     email_pass = getattr(settings, 'EMAIL_HOST_PASSWORD', '')
 
-    # AGAR CREDENTIALS KHALI HAIN TOH CONNECTION KOSHISH HI MAT KARO
+    # if credentials missing, skip email dispatch to avoid crash
     if not email_user or not email_pass:
         print(f"[EMAIL SKIPPED] No credentials found. Booking #{booking.booking_id} processed safely.")
         return False
