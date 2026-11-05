@@ -126,47 +126,49 @@
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-  /* --- ONLY FOR MOBILE (MAX-WIDTH 768px) --- */
   @media (max-width: 768px) {
-    html, body {
-      overflow-x: hidden !important;
-      width: 100% !important;
-    }
-    
-    /* Mobile me 16 icons horizontal scroll honge bina desktop chhede */
-    .mmt-nav-pill-wrapper {
-      width: 94vw !important;
-      overflow-x: auto !important;
-      -webkit-overflow-scrolling: touch;
-      border-radius: 9999px;
-      padding: 4px 8px;
-      transform: translateY(16px);
-      justify-content: flex-start !important;
-    }
-    
-    .mmt-nav-item {
-      flex: 0 0 auto !important;
-      padding: 6px 12px;
-      font-size: 12px;
-    }
-    
-    .mmt-search-card {
-      padding: 24px 14px 18px 14px;
-      border-radius: 16px;
-      margin-top: 6px;
-    }
-
-    .mmt-search-btn {
-      width: 100%;
-      padding: 12px 24px;
-    }
-    
-    /* Top contact bar wrap for phone */
-    .hero-bg > div:first-child {
-      flex-wrap: wrap !important;
-      font-size: 11px !important;
-    }
+  /* 1. Pill container ko single horizontal row banana */
+  .mmt-nav-pill-wrapper {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    width: 95% !important;
+    max-width: 95vw !important;
+    border-radius: 9999px !important;
+    padding: 6px 12px !important;
+    margin: 0 auto !important;
+    transform: translateY(18px) !important;
+    justify-content: flex-start !important;
+    scrollbar-width: none !important; /* Firefox */
   }
+
+  .mmt-nav-pill-wrapper::-webkit-scrollbar {
+    display: none !important; /* Chrome / Safari */
+  }
+
+  /* 2. Har ek icon button ko squeeze hone se rokna */
+  .mmt-nav-pill-wrapper > * ,
+  .mmt-nav-item {
+    display: inline-flex !important;
+    flex: 0 0 auto !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 6px 14px !important;
+    white-space: nowrap !important;
+    font-size: 11px !important;
+  }
+
+  .mmt-nav-item svg,
+  .mmt-nav-item img,
+  .mmt-nav-item i {
+    width: 22px !important;
+    height: 22px !important;
+    margin-bottom: 3px !important;
+  }
+}
 </style>
 </head>
 <body class="text-slate-800 antialiased flex flex-col min-h-screen justify-between">
