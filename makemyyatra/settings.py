@@ -11,10 +11,18 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 LOGIN_URL = 'partner_login' 
 
 # Allowed Hosts & CSRF for Render / Custom Domain
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*,localhost,127.0.0.1,makemyyatra.onrender.com', cast=Csv())
+ALLOWED_HOSTS = config(
+    'ALLOWED_HOSTS',
+    default='*,localhost,127.0.0.1,makesmyyatra-1.onrender.com,makesmyyatra.com,www.makesmyyatra.com',
+    cast=Csv()
+)
+
 CSRF_TRUSTED_ORIGINS = [
     'https://makemyyatra.onrender.com',
+    'https://makesmyyatra-1.onrender.com',
     'https://*.onrender.com',
+    'https://makesmyyatra.com',
+    'https://www.makesmyyatra.com',
 ]
 
 # Application definition
