@@ -30,7 +30,7 @@
   .mmt-nav-item:hover, .mmt-nav-item.active-pill { color:#008cff; }
   .mmt-nav-item.active-pill { background:#eaf5ff; font-weight:800; }
 
-  .mmt-search-card { background:#fff; border-radius:20px; box-shadow:0 8px 35px rgba(0,0,0,.16); border:1px solid #e2e8f0; padding:44px 32px 32px; position:relative; z-index:10; min-height:280px; }
+  .mmt-search-card { background:#fff; border-radius:20px; box-shadow:0 8px 35px rgba(0,0,0,.16); border:1px solid #e2e8f0; padding:44px 32px 32px; position:relative; z-index:10; min-height:280px; scroll-margin-top:16px; }
   .mmt-input-col { padding:10px 14px; border:1px solid #cbd5e1; border-radius:12px; background:#fff; transition:border-color .2s, box-shadow .2s; }
   .mmt-input-col:hover, .mmt-input-col:focus-within { border-color:#008cff; box-shadow:0 0 0 1px #008cff; }
   .mmt-search-btn { background:linear-gradient(93deg,#53b2fe,#065af3); box-shadow:0 3px 12px rgba(6,90,243,.4); border-radius:34px; color:#fff; font-weight:900; letter-spacing:1px; padding:12px 64px; margin:0 auto; display:block; transition:transform .15s, box-shadow .15s; }
@@ -46,13 +46,36 @@
   .modal-backdrop { padding-top: max(1rem, env(safe-area-inset-top, 0px)); padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)); }
   footer { padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px)); }
 
-  @media (max-width:768px) {
+  /* ---- Mobile service tiles (MMT style) ---- */
+  .m-tile { display:flex; flex-direction:column; align-items:center; text-align:center; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .m-ico { display:flex; align-items:center; justify-content:center; border-radius:16px; background:linear-gradient(145deg,#eaf5ff,#cfe6ff); color:#0a63d6; transition:box-shadow .15s, transform .15s; }
+  .m-tile:active .m-ico { transform:scale(.94); }
+  .m-tile.m-active .m-ico { box-shadow:0 0 0 2.5px #008cff; background:#dcedff; }
+  .m-tile.m-active .m-lbl { color:#008cff; }
+  .m-top { background:#fff; border-radius:16px; padding:12px 4px 10px; box-shadow:0 2px 10px rgba(0,0,0,.12); }
+  .m-top .m-ico { width:46px; height:46px; margin-bottom:6px; }
+  .m-top .m-lbl { font-size:12.5px; font-weight:800; color:#0f172a; line-height:1.15; }
+  .m-grid-item { padding:6px 2px; }
+  .m-grid-item .m-ico { width:46px; height:46px; margin-bottom:6px; }
+  .m-grid-item .m-lbl { font-size:11.5px; font-weight:600; color:#475569; line-height:1.2; }
+
+  .m-bottom-nav { position:fixed; left:0; right:0; bottom:0; z-index:45; background:#fff; border-radius:20px 20px 0 0; box-shadow:0 -4px 20px rgba(0,0,0,.12); display:flex; padding:8px 8px calc(8px + env(safe-area-inset-bottom, 0px)); }
+  .m-bottom-nav a, .m-bottom-nav button { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:11px; font-weight:700; color:#64748b; background:none; border:0; }
+  .m-bottom-nav .on { color:#008cff; }
+
+  /* Placeholder for empty date inputs (Android shows nothing) */
+  .date-wrap { position:relative; }
+  .date-ph { display:none; }
+
+  @media (max-width:767px) {
     /* 16px stops iOS Safari auto-zoom on focus */
     input, select, textarea { font-size: 16px !important; }
-    .mmt-nav-pill-wrapper { width:95%; max-width:95vw; padding:6px 12px; transform:translateY(18px); overflow-x:auto; }
-    .mmt-nav-item { padding:6px 14px; font-size:11px; }
-    .mmt-nav-item svg { width:22px; height:22px; margin-bottom:3px; }
-    .mmt-search-card { padding:36px 16px 24px; }
+    body { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+    .mmt-nav-pill-wrapper { display:none; }
+    .mmt-search-card { padding:20px 16px 24px; }
+    .date-ph { display:block; position:absolute; left:0; top:6px; font-size:16px; font-weight:700; color:#94a3b8; pointer-events:none; }
+    .date-wrap.has-val .date-ph { display:none; }
+    .date-wrap input { min-height:30px; }
   }
 </style>
 </head>
@@ -74,30 +97,30 @@
 <!-- ============ ADVISORY BAR ============ -->
 <div class="bg-[#030d17] text-slate-300 text-xs py-2.5 px-4 border-b border-slate-800">
   <div class="max-w-[1200px] mx-auto flex items-center justify-between gap-3">
-    <div class="flex items-center gap-2">
+    <div class="hidden sm:flex items-center gap-2">
       <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
       <span class="text-white font-bold">Himachal Verified Network:</span>
-      <span class="hidden sm:inline">Instant confirmation &amp; verified local stays across all 12 districts.</span>
+      <span class="hidden md:inline">Instant confirmation &amp; verified local stays across all 12 districts.</span>
     </div>
-    <a href="tel:+919816000000" class="text-slate-300 hover:text-white font-semibold flex items-center gap-1 transition text-[11px] whitespace-nowrap">
+    <a href="tel:+919816000000" class="text-slate-300 hover:text-white font-semibold flex items-center gap-1 transition text-[11px] whitespace-nowrap max-sm:mx-auto">
       <i data-lucide="phone-call" class="w-3.5 h-3.5 text-emerald-400"></i> 24x7 Helpline: +91 98160 XXXXX
     </a>
   </div>
 </div>
 
 <!-- ============ HERO ============ -->
-<header class="hero-bg relative pt-6 pb-28 px-4">
+<header class="hero-bg relative pt-4 md:pt-6 pb-6 md:pb-28 px-4">
   <div class="max-w-[1200px] mx-auto">
     <div class="flex items-center justify-between mb-4">
-      <a href="{% url 'index' %}" class="flex items-center gap-2.5">
-        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 text-2xl">⛰️</div>
-        <div>
-          <span class="text-2xl font-black tracking-tight text-white">MAKES<span class="text-blue-400">MY</span>YATRA</span>
-          <span class="block text-[9px] uppercase font-bold tracking-widest text-slate-300">Himachal Travel Super-App</span>
+      <a href="{% url 'index' %}" class="flex items-center gap-2 md:gap-2.5 min-w-0">
+        <div class="w-9 h-9 md:w-11 md:h-11 flex-shrink-0 rounded-xl md:rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 text-xl md:text-2xl">⛰️</div>
+        <div class="min-w-0">
+          <span class="text-lg md:text-2xl font-black tracking-tight text-white whitespace-nowrap">MAKES<span class="text-blue-400">MY</span>YATRA</span>
+          <span class="hidden md:block text-[9px] uppercase font-bold tracking-widest text-slate-300">Himachal Travel Super-App</span>
         </div>
       </a>
 
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 flex-shrink-0">
         <a href="{% url 'partner_register' %}" class="hidden md:flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-400/30 text-xs font-bold transition group">
           <div class="w-7 h-7 rounded-xl bg-emerald-500/30 flex items-center justify-center"><i data-lucide="building-2" class="w-4 h-4 group-hover:scale-110 transition"></i></div>
           <div>
@@ -108,20 +131,26 @@
         <a href="{% url 'partner_login' %}" class="hidden lg:flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10 text-xs font-bold transition">
           <i data-lucide="key-round" class="w-3.5 h-3.5 text-emerald-400"></i> Partner Login
         </a>
-        <a href="{% url 'track_booking' %}" class="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/20 transition group">
+        <a href="{% url 'track_booking' %}" class="flex items-center gap-2 px-2 md:px-3.5 py-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/20 transition group" aria-label="My Trips">
           <div class="w-7 h-7 rounded-xl bg-amber-400 text-slate-900 flex items-center justify-center"><i data-lucide="ticket" class="w-4 h-4"></i></div>
           <div class="text-left hidden sm:block">
             <span class="block text-xs font-black group-hover:text-amber-300 transition leading-tight">My Trips</span>
             <span class="block text-[9px] text-slate-300 font-medium">Track Booking</span>
           </div>
         </a>
-        <a href="{% url 'portal_login' %}" class="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl border border-slate-700/80 bg-slate-900/60 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition">
+        <a href="{% url 'portal_login' %}" class="hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-2xl border border-slate-700/80 bg-slate-900/60 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition">
           <i data-lucide="lock" class="w-3.5 h-3.5 text-blue-400"></i> Admin
         </a>
       </div>
     </div>
 
-    <!-- Floating pill nav (rendered from TABS) -->
+    <!-- Mobile only: MMT-style service tiles (rendered from TABS) -->
+    <div class="md:hidden mb-4 space-y-3">
+      <div id="mTopTiles" class="grid grid-cols-4 gap-2"></div>
+      <div id="mGridTiles" class="grid grid-cols-4 gap-y-2 gap-x-1 bg-white rounded-3xl p-3 shadow-lg"></div>
+    </div>
+
+    <!-- Desktop only: floating pill nav (rendered from TABS) -->
     <div class="mmt-nav-pill-wrapper">
       <nav id="pillNav" class="px-3 py-1 flex items-center justify-start overflow-x-auto no-scrollbar gap-1"></nav>
     </div>
@@ -159,11 +188,17 @@
           <!-- Dates -->
           <div class="md:col-span-2 mmt-input-col">
             <label class="label" for="searchCheckIn">Check-In</label>
-            <input type="date" name="check_in" id="searchCheckIn" value="{{ request.GET.check_in }}" class="w-full bg-transparent font-black text-sm text-slate-900 outline-none mt-1 cursor-pointer">
+            <div class="date-wrap">
+              <input type="date" name="check_in" id="searchCheckIn" value="{{ request.GET.check_in }}" class="w-full bg-transparent font-black text-sm text-slate-900 outline-none mt-1 cursor-pointer">
+              <span class="date-ph">Select date</span>
+            </div>
           </div>
           <div class="md:col-span-2 mmt-input-col">
             <label class="label" for="searchCheckOut">Check-Out</label>
-            <input type="date" name="check_out" id="searchCheckOut" value="{{ request.GET.check_out }}" class="w-full bg-transparent font-black text-sm text-slate-900 outline-none mt-1 cursor-pointer">
+            <div class="date-wrap">
+              <input type="date" name="check_out" id="searchCheckOut" value="{{ request.GET.check_out }}" class="w-full bg-transparent font-black text-sm text-slate-900 outline-none mt-1 cursor-pointer">
+              <span class="date-ph">Select date</span>
+            </div>
           </div>
 
           <!-- Rooms & Guests -->
@@ -176,7 +211,7 @@
             <input type="hidden" name="children_count" id="childrenCountInput" value="0">
             <input type="hidden" name="with_pets" id="withPetsInput" value="false">
 
-            <div id="guestsSelectionModal" onclick="event.stopPropagation()" class="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 p-5 z-50 hidden text-left cursor-default">
+            <div id="guestsSelectionModal" onclick="event.stopPropagation()" class="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-3rem)] bg-white rounded-2xl shadow-2xl border border-slate-200 p-5 z-50 hidden text-left cursor-default">
               <div id="counterRows"></div>
               <p class="text-[10px] text-slate-400 leading-tight pb-3">Please provide right number of children along with their right age for best options and prices.</p>
               <label class="border border-slate-200 rounded-xl p-3 bg-slate-50/50 flex items-center justify-between gap-2.5 mb-4 cursor-pointer">
@@ -254,17 +289,17 @@
 </header>
 
 <!-- ============ OFFERS ============ -->
-<section class="max-w-[1200px] mx-auto px-4 mt-8 mb-6 w-full">
+<section id="offersSection" class="max-w-[1200px] mx-auto px-4 mt-8 mb-6 w-full scroll-mt-4">
   <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
     <div class="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-slate-100 gap-4">
       <div class="flex items-center gap-6">
         <h3 class="text-2xl font-black text-slate-900">Offers</h3>
         <div class="flex items-center gap-2 overflow-x-auto no-scrollbar text-xs font-bold">
           <button type="button" class="px-3 py-1 rounded-full bg-slate-900 text-white">All Offers</button>
-          <button type="button" onclick="switchTab('flights')" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Flights</button>
-          <button type="button" onclick="switchTab('hotels')" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Hotels</button>
-          <button type="button" onclick="switchTab('trains')" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Trains</button>
-          <button type="button" onclick="switchTab('outstation-cabs')" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Cabs</button>
+          <button type="button" onclick="mobileTab('flights')" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Flights</button>
+          <button type="button" onclick="mobileTab('hotels')" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Hotels</button>
+          <button type="button" onclick="mobileTab('trains')" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Trains</button>
+          <button type="button" onclick="mobileTab('outstation-cabs')" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Cabs</button>
         </div>
       </div>
     </div>
@@ -574,6 +609,14 @@
   </div>
 </footer>
 
+<!-- ============ MOBILE BOTTOM NAV ============ -->
+<nav class="m-bottom-nav md:hidden" aria-label="Main">
+  <button type="button" class="on" onclick="window.scrollTo({top:0,behavior:'smooth'})"><i data-lucide="house" class="w-6 h-6"></i>Home</button>
+  <a href="{% url 'track_booking' %}"><i data-lucide="briefcase" class="w-6 h-6"></i>My Trips</a>
+  <button type="button" onclick="document.getElementById('offersSection').scrollIntoView({behavior:'smooth'})"><i data-lucide="percent" class="w-6 h-6"></i>Offers</button>
+  <a href="{% url 'support_request' %}"><i data-lucide="headset" class="w-6 h-6"></i>Help</a>
+</nav>
+
 <script>
 /* ================= CONFIG ================= */
 const SURGE_PERCENT = 20;   // Fri & Sat nights
@@ -601,6 +644,10 @@ const TABS = [
   ['giftcards','Gift Cards','Gift Cards','gift','Gift memorable holidays, hotel stays and travel experiences to your family and friends.','MakesMyYatra Gift Cards'],
   ['pnr','PNR Status','PNR Status','receipt','Check your railway ticket booking status and access available train journey information.','Railway PNR Status Tracker'],
 ];
+
+// Mobile tiles: same order as MakeMyTrip's phone home screen
+const M_TOP = ['flights','hotels','trains','packages'];
+const M_GRID = ['airport-cabs','villas','buses','outstation-cabs','tours','hourly','forex','visa','insurance','pnr','giftcards','getaways'];
 
 // [value, label, hint]
 const CITIES = [
@@ -630,6 +677,17 @@ function renderNavs() {
     `<button type="button" data-tab="${k}" onclick="switchTab('${k}')" class="mmt-nav-item"><i data-lucide="${icon}" class="w-5 h-5 mb-0.5"></i><span class="text-[11px]">${label}</span></button>`).join('');
   $('stickyTabs').innerHTML = TABS.map(([k, , short]) =>
     `<button type="button" data-tab="${k}" onclick="switchTab('${k}')" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">${short}</button>`).join('');
+}
+
+function tileHtml(key, cls) {
+  const t = TABS.find(x => x[0] === key);
+  return `<button type="button" data-mtab="${key}" onclick="mobileTab('${key}')" class="m-tile ${cls}">
+    <span class="m-ico"><i data-lucide="${t[3]}" class="w-6 h-6"></i></span>
+    <span class="m-lbl">${t[1]}</span></button>`;
+}
+function renderMobileTiles() {
+  $('mTopTiles').innerHTML = M_TOP.map(k => tileHtml(k, 'm-top')).join('');
+  $('mGridTiles').innerHTML = M_GRID.map(k => tileHtml(k, 'm-grid-item')).join('');
 }
 
 function renderCities() {
@@ -665,6 +723,13 @@ function fillSelect(id, from, to, labelFn, selected) {
 /* ================= HELPERS ================= */
 function formatDateStr(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// Shows "Select date" on phones while a date box is empty
+function syncDatePlaceholders() {
+  document.querySelectorAll('.date-wrap').forEach(w => {
+    w.classList.toggle('has-val', !!w.querySelector('input').value);
+  });
 }
 
 /* ================= CITY SEARCH ================= */
@@ -772,7 +837,7 @@ function calculateBookingTotal() {
     const who = MEAL_LABELS.adults(adults) + (children ? ` + ${children} Child (50%)` : '');
     $('modalMealLabel').innerText = `${plan} (${nights}N, ${who}):`;
     $('modalMealAmount').innerText = `+ ${inr(mealTotal)}`;
-    mealRow.classList.replace('hidden', 'flex') || mealRow.classList.add('flex');
+    mealRow.classList.remove('hidden'); mealRow.classList.add('flex');
   } else {
     mealRow.classList.remove('flex'); mealRow.classList.add('hidden');
   }
@@ -918,13 +983,23 @@ function openReviewModal(btn) {
 function closeReviewModal() { $('reviewModal').classList.remove('open'); }
 
 /* ================= TABS ================= */
-function scrollToSearchCard() { $('mainSearchCard').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+function scrollToSearchCard() {
+  const isPhone = window.innerWidth < 768;
+  $('mainSearchCard').scrollIntoView({ behavior: 'smooth', block: isPhone ? 'start' : 'center' });
+}
+
+// Phone: tap a tile -> select that service and jump to its form
+function mobileTab(tab) {
+  switchTab(tab);
+  scrollToSearchCard();
+}
 
 function switchTab(tab) {
   const panels = ['hotelsSearchPanel', 'cabsSearchPanel', 'toursSearchPanel', 'dummySearchPanel'].map($);
   panels.forEach(p => p.classList.add('hidden'));
 
   document.querySelectorAll('.mmt-nav-item').forEach(b => b.classList.toggle('active-pill', b.dataset.tab === tab));
+  document.querySelectorAll('.m-tile').forEach(b => b.classList.toggle('m-active', b.dataset.mtab === tab));
   document.querySelectorAll('.sticky-tab-btn').forEach(b => {
     const on = b.dataset.tab === tab;
     b.classList.toggle('bg-blue-50', on);
@@ -959,6 +1034,7 @@ window.addEventListener('scroll', () => {
 
 /* ================= INIT ================= */
 renderNavs();
+renderMobileTiles();
 renderCities();
 renderDestPills();
 renderCounters();
@@ -969,7 +1045,12 @@ renderCounters();
   $('searchCheckIn').addEventListener('change', (e) => {
     $('searchCheckOut').min = e.target.value;
     if ($('searchCheckOut').value && $('searchCheckOut').value <= e.target.value) $('searchCheckOut').value = '';
+    syncDatePlaceholders();
   });
+  $('searchCheckOut').addEventListener('change', syncDatePlaceholders);
+  $('searchCheckIn').addEventListener('input', syncDatePlaceholders);
+  $('searchCheckOut').addEventListener('input', syncDatePlaceholders);
+  syncDatePlaceholders();
 })();
 switchTab('hotels');
 lucide.createIcons();
