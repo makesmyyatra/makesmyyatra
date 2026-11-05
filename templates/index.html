@@ -99,11 +99,11 @@
   <div class="max-w-[1200px] mx-auto flex items-center justify-between gap-3">
     <div class="hidden sm:flex items-center gap-2">
       <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-      <span class="text-white font-bold">Himachal Verified Network:</span>
-      <span class="hidden md:inline">Instant confirmation &amp; verified local stays across all 12 districts.</span>
+      <span class="text-white font-bold">All India Verified Network:</span>
+      <span class="hidden md:inline">Instant confirmation &amp; verified stays in top destinations across India.</span>
     </div>
     <a href="tel:+919816000000" class="text-slate-300 hover:text-white font-semibold flex items-center gap-1 transition text-[11px] whitespace-nowrap max-sm:mx-auto">
-      <i data-lucide="phone-call" class="w-3.5 h-3.5 text-emerald-400"></i> 24x7 Helpline: +91 98160 XXXXX
+      <i data-lucide="phone-call" class="w-3.5 h-3.5 text-emerald-400"></i> 24x7 Traveler Support: +91 98160 XXXXX
     </a>
   </div>
 </div>
@@ -116,7 +116,7 @@
         <div class="w-9 h-9 md:w-11 md:h-11 flex-shrink-0 rounded-xl md:rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 text-xl md:text-2xl">⛰️</div>
         <div class="min-w-0">
           <span class="text-lg md:text-2xl font-black tracking-tight text-white whitespace-nowrap">MAKES<span class="text-blue-400">MY</span>YATRA</span>
-          <span class="hidden md:block text-[9px] uppercase font-bold tracking-widest text-slate-300">Himachal Travel Super-App</span>
+          <span class="hidden md:block text-[9px] uppercase font-bold tracking-widest text-slate-300">Travel Super-App</span>
         </div>
       </a>
 
@@ -125,7 +125,7 @@
           <div class="w-7 h-7 rounded-xl bg-emerald-500/30 flex items-center justify-center"><i data-lucide="building-2" class="w-4 h-4 group-hover:scale-110 transition"></i></div>
           <div>
             <span class="block leading-tight text-white group-hover:text-emerald-200 transition">List Your Property</span>
-            <span class="text-[9px] font-medium">Grow your business!</span>
+            <span class="text-[9px] font-medium">Grow your business across India</span>
           </div>
         </a>
         <a href="{% url 'partner_login' %}" class="hidden lg:flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10 text-xs font-bold transition">
@@ -162,10 +162,10 @@
       <form id="hotelsSearchPanel" action="{% url 'index' %}" method="GET">
         <div class="mb-4 pb-2 border-b border-slate-100 flex items-center justify-between">
           <div>
-            <span id="searchFormHeading" class="text-xs font-black uppercase text-blue-600 tracking-wider block">Hotels &amp; Mountain Stays</span>
-            <p id="searchFormDesc" class="text-[11px] text-slate-500 font-medium mt-0.5">Discover and book comfortable hotels, resorts and budget-friendly stays across Himachal Pradesh.</p>
+            <span id="searchFormHeading" class="text-xs font-black uppercase text-blue-600 tracking-wider block">Hotels, Resorts &amp; Heritage Stays</span>
+            <p id="searchFormDesc" class="text-[11px] text-slate-500 font-medium mt-0.5">Book verified hotels, resorts, heritage stays and budget homestays across India.</p>
           </div>
-          <span class="text-[11px] text-slate-400 font-medium hidden sm:inline flex-shrink-0">Instant confirmation • 100% verified local stays</span>
+          <span class="text-[11px] text-slate-400 font-medium hidden sm:inline flex-shrink-0">Instant confirmation • Verified stays across India</span>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4">
@@ -173,14 +173,14 @@
           <div class="md:col-span-4 mmt-input-col relative cursor-pointer" onclick="document.getElementById('citySearchInput').focus()">
             <span class="label">City, Property Name Or Location</span>
             <input type="text" name="city" id="citySearchInput" autocomplete="off"
-                   placeholder="Where do you want to stay in Himachal?"
+                   placeholder="Where do you want to travel in India?"
                    value="{% if selected_city and selected_city != 'All' %}{{ selected_city }}{% endif %}"
                    class="w-full bg-transparent font-black text-lg sm:text-xl text-slate-900 outline-none placeholder:text-slate-400 placeholder:font-normal mt-0.5"
                    onfocus="showCitySuggestions()" oninput="filterCitySuggestions()">
-            <span class="block text-[11px] text-slate-400 truncate">Select district, valley or tourist spot</span>
+            <span class="block text-[11px] text-slate-400 truncate">Search city, state or tourist spot</span>
 
             <div id="citySuggestionsDropdown" class="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 p-2.5 z-50 hidden max-h-80 overflow-y-auto">
-              <div class="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">Himachal Pradesh All 12 Districts &amp; Top Spots</div>
+              <div class="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">Top Destinations &amp; Cities Across India</div>
               <ul id="citySuggestionsList" class="space-y-1"></ul>
             </div>
           </div>
@@ -243,11 +243,7 @@
 
         <div class="flex flex-wrap items-center gap-2 text-xs text-slate-400 pt-1 pb-4">
           <span class="font-bold text-slate-600">Trending Searches:</span>
-          <button type="button" onclick="selectCity('Manali')" class="hover:text-blue-600">Manali, Kullu</button> •
-          <button type="button" onclick="selectCity('Shimla')" class="hover:text-blue-600">Shimla, Mall Road</button> •
-          <button type="button" onclick="selectCity('Dharamshala')" class="hover:text-blue-600">Dharamshala, McLeodganj</button> •
-          <button type="button" onclick="selectCity('Spiti')" class="hover:text-blue-600">Spiti Valley</button> •
-          <button type="button" onclick="selectCity('Hamirpur')" class="hover:text-blue-600">Hamirpur, Barsar</button>
+          <span id="trendingList" class="flex flex-wrap items-center gap-2"></span>
         </div>
         <div class="text-center pt-2"><button type="submit" class="mmt-search-btn text-base uppercase">SEARCH</button></div>
       </form>
@@ -346,7 +342,7 @@
     <div>
       <span class="text-[11px] font-black uppercase tracking-wider text-blue-600">Verified Accommodations</span>
       <h2 class="text-2xl md:text-3xl font-black text-slate-900 mt-1">
-        {% if selected_city and selected_city != 'All' %}Stays in {{ selected_city }} ({{ hotels|length }} Verified){% else %}Handpicked Properties in Himachal Pradesh{% endif %}
+        {% if selected_city and selected_city != 'All' %}Stays in {{ selected_city }} ({{ hotels|length }} Verified){% else %}Handpicked Hotels &amp; Homestays Across India{% endif %}
       </h2>
     </div>
     <div id="destPills" class="flex flex-wrap gap-1.5 text-xs font-bold" data-selected="{{ selected_city|default:'All' }}" data-url="{% url 'index' %}"></div>
@@ -385,7 +381,7 @@
               <i data-lucide="map-pin" class="w-3.5 h-3.5 text-rose-500 flex-shrink-0"></i>
               <span class="truncate">{{ hotel.address|default:hotel.city }}</span>
             </p>
-            <a href="https://www.google.com/maps/search/?api=1&query={{ hotel.name|urlencode }}+{{ hotel.city|urlencode }}+Himachal+Pradesh" target="_blank" rel="noopener"
+            <a href="https://www.google.com/maps/search/?api=1&query={{ hotel.name|urlencode }}+{{ hotel.city|urlencode }}+India" target="_blank" rel="noopener"
                class="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 border border-blue-100 px-2.5 py-1 rounded-lg">
               Map <i data-lucide="external-link" class="w-3 h-3"></i>
             </a>
@@ -434,7 +430,7 @@
     <div class="col-span-full py-16 text-center bg-white rounded-3xl border border-slate-200">
       <i data-lucide="hotel" class="w-12 h-12 text-slate-300 mx-auto mb-3"></i>
       <h3 class="text-base font-black text-slate-800">No properties currently found</h3>
-      <p class="text-xs text-slate-500 mt-1">Try expanding your search across Himachal or clear your filters.</p>
+      <p class="text-xs text-slate-500 mt-1">Try another city or clear your filters.</p>
       <a href="{% url 'index' %}" class="inline-block mt-4 text-xs font-bold text-blue-600 underline">View all stays</a>
     </div>
     {% endfor %}
@@ -445,12 +441,12 @@
 <div id="bookingModal" class="modal-backdrop" onclick="if(event.target===this) closeBookingModal()">
   <div class="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl border border-slate-200 relative max-h-[90vh] overflow-y-auto">
     <button type="button" onclick="closeBookingModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600" aria-label="Close"><i data-lucide="x" class="w-5 h-5"></i></button>
-    <span class="text-[10px] font-black uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md">Instant Mountain Pass</span>
+    <span class="text-[10px] font-black uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md">Instant Booking Pass</span>
     <h3 id="modalHotelName" class="text-lg font-black text-slate-900 mt-2">Hotel Booking</h3>
     <div class="mt-3 mb-2 rounded-2xl overflow-hidden border border-slate-200 h-[120px]">
       <iframe id="modalMapFrame" title="Hotel location" class="w-full h-full block border-0" loading="lazy" src=""></iframe>
     </div>
-    <p id="modalHotelCity" class="text-xs text-slate-500 font-medium">Himachal Pradesh</p>
+    <p id="modalHotelCity" class="text-xs text-slate-500 font-medium">India</p>
 
     <form action="{% url 'book_hotel' %}" method="POST" class="mt-5 space-y-3">
       {% csrf_token %}
@@ -519,7 +515,7 @@
         <div class="flex justify-between border-t border-slate-200 pt-1.5"><span>Room Tariff (Subtotal):</span><span id="modalBaseSubtotal" class="font-bold text-slate-800"></span></div>
         <div id="mealChargesRow" class="hidden justify-between text-blue-700 font-semibold"><span id="modalMealLabel"></span><span id="modalMealAmount"></span></div>
         <div id="discountRow" class="hidden justify-between text-emerald-700 font-bold"><span id="modalDiscountLabel"></span><span id="modalDiscountAmount"></span></div>
-        <div class="flex justify-between"><span>Taxes &amp; GST (12%):</span><span id="modalGstAmount"></span></div>
+        <div class="flex justify-between"><span id="modalGstLabel">Taxes &amp; GST:</span><span id="modalGstAmount"></span></div>
         <div class="flex justify-between border-t border-slate-300 pt-2 text-sm font-black text-slate-900">
           <span class="flex items-center gap-1.5 text-blue-900"><i data-lucide="shield-check" class="w-4 h-4 text-blue-600"></i> Total Payable at Hotel</span>
           <span id="modalDisplayPrice" class="text-base text-blue-700"></span>
@@ -560,7 +556,7 @@
           <option value="1">⭐ (1 - Needs Improvement)</option>
         </select></div>
       <div><label class="flabel" for="reviewComment">Experience Review</label>
-        <textarea id="reviewComment" name="comment" rows="3" required placeholder="Tell us about the room quality, scenic view, cleanliness and hospitality..." class="finput"></textarea></div>
+        <textarea id="reviewComment" name="comment" rows="3" required placeholder="Tell us about the room quality, view, cleanliness and hospitality..." class="finput"></textarea></div>
       <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase tracking-wider py-3 rounded-xl transition shadow mt-2">Submit Verified Review</button>
     </form>
   </div>
@@ -570,12 +566,12 @@
 <footer class="bg-[#030d17] text-slate-400 text-xs pt-12 pb-8 border-t border-slate-800 mt-16">
   <div class="max-w-[1200px] mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
     <div>
-      <h4 class="text-white font-black uppercase tracking-wider text-[11px] mb-3">Popular Valleys</h4>
+      <h4 class="text-white font-black uppercase tracking-wider text-[11px] mb-3">Popular Destinations</h4>
       <ul class="space-y-1.5">
-        <li><a href="{% url 'index' %}?city=Shimla" class="hover:text-white transition">Hotels in Shimla</a></li>
+        <li><a href="{% url 'index' %}?city=Goa" class="hover:text-white transition">Hotels in Goa</a></li>
+        <li><a href="{% url 'index' %}?city=Jaipur" class="hover:text-white transition">Heritage Stays in Jaipur</a></li>
         <li><a href="{% url 'index' %}?city=Manali" class="hover:text-white transition">Resorts in Manali</a></li>
-        <li><a href="{% url 'index' %}?city=Dharamshala" class="hover:text-white transition">Homestays in Dharamshala</a></li>
-        <li><a href="{% url 'index' %}?city=Spiti" class="hover:text-white transition">Camps in Spiti Valley</a></li>
+        <li><a href="{% url 'index' %}?city=Shimla" class="hover:text-white transition">Hotels in Shimla</a></li>
       </ul>
     </div>
     <div>
@@ -589,14 +585,14 @@
     <div>
       <h4 class="text-white font-black uppercase tracking-wider text-[11px] mb-3">Quick Navigation</h4>
       <ul class="space-y-1.5">
-        <li><a href="{% url 'taxi' %}" class="hover:text-white transition">Himachal Outstation Cabs</a></li>
+        <li><a href="{% url 'taxi' %}" class="hover:text-white transition">Outstation Cabs</a></li>
         <li><a href="{% url 'track_booking' %}" class="hover:text-white transition">Search Booking ID</a></li>
-        <li><a href="{% url 'support_request' %}" class="hover:text-white transition">Mountain Traveler Helpdesk</a></li>
+        <li><a href="{% url 'support_request' %}" class="hover:text-white transition">Traveler Helpdesk</a></li>
       </ul>
     </div>
     <div>
       <h4 class="text-white font-black uppercase tracking-wider text-[11px] mb-3">Emergency Control Room</h4>
-      <p class="mb-2">Dedicated ground team for bookings, snow updates, and roadblocks across Himachal Pradesh.</p>
+      <p class="mb-2">Dedicated ground team for bookings, real-time travel updates and on-ground support across India.</p>
       <span class="text-white font-bold block">📞 +91 98160 XXXXX</span>
     </div>
   </div>
@@ -620,27 +616,29 @@
 <script>
 /* ================= CONFIG ================= */
 const SURGE_PERCENT = 20;   // Fri & Sat nights
-const GST_RATE = 0.12;      // TODO: confirm slab-wise GST; final calc must be server-side
+// GST on hotel rooms (per room, per night, on declared tariff): up to 1000 = 0%, 1001-7500 = 5%, above 7500 = 18%
+// (rates in force since 22 Sep 2025 - confirm with your CA). Final calculation is done on the server (pricing.py).
+function gstRateFor(nightRate) { return nightRate <= 1000 ? 0 : (nightRate <= 7500 ? 0.05 : 0.18); }
 const DEFAULT_RATE = 1850;
 const $ = (id) => document.getElementById(id);
 const inr = (n) => '₹' + Math.round(n).toLocaleString('en-IN');
 
 // [key, label, stickyLabel, icon, description, title]
 const TABS = [
-  ['flights','Flights','Flights','plane','Domestic flights connecting Dharamshala (Gaggal), Shimla (Jubbarhatti) and Kullu (Bhuntar).','Himachal Flights Booking'],
-  ['hotels','Hotels','Hotels','hotel','Discover and book comfortable hotels, resorts and budget-friendly stays across Himachal Pradesh.','Hotels & Mountain Stays'],
-  ['villas','Villas & Homestays','Homestays','home','Explore private villas, cozy homestays and scenic mountain retreats for a memorable stay.','Villas & Homestays in Himachal'],
-  ['packages','Holiday Packages','Holidays','palmtree','Explore curated holiday packages, sightseeing tours and customizable trips for families, couples and friends.','Himachal Holiday Packages'],
-  ['trains','Trains','Trains','train-track','Heritage toy train reservations and express railway connectivity to Himachal.','Kalka-Shimla & Rail Bookings'],
-  ['buses','Buses','Buses','bus','Direct state and luxury private Volvo buses connecting Delhi, Chandigarh and Himachal.','HRTC & Volvo Bus Bookings'],
-  ['airport-cabs','Airport Cabs','Airport Cabs','car-taxi-front','Book convenient airport transfers to hotels, tourist destinations and major cities across Himachal.','Airport Pickup & Drop Cabs'],
-  ['outstation-cabs','Outstation Cabs','Outstation Cabs','car','Book reliable one-way and round-trip cabs for intercity travel, sightseeing and mountain journeys.','Outstation Taxi Services'],
-  ['hourly','Hourly Stays','Hourly Stays','clock','Short-duration transit stays and hourly mountain rooms across key transit hubs.','Hourly Stays & Day Rooms'],
-  ['tours','Tours & Attractions','Tours','compass','Discover sightseeing tours, adventure activities, cultural experiences and popular attractions across Himachal.','Tours & Local Attractions'],
-  ['visa','Visa','Visa','stamp','Get guidance on applicable Inner Line Permits for Spiti and Kinnaur, along with international travel documentation.','Mountain Permits & Visa Desk'],
+  ['flights','Flights','Flights','plane','Domestic flights connecting metros, hill stations and tourist cities across India.','Domestic Flights Booking'],
+  ['hotels','Hotels','Hotels','hotel','Book verified hotels, resorts, heritage stays and budget homestays across India.','Hotels, Resorts & Heritage Stays'],
+  ['villas','Villas & Homestays','Homestays','home','Explore private villas, cozy homestays and scenic retreats across India.','Villas & Homestays in India'],
+  ['packages','Holiday Packages','Holidays','palmtree','Explore curated holiday packages, sightseeing tours and customizable trips for families, couples and friends.','India Holiday Packages'],
+  ['trains','Trains','Trains','train-track','Train reservations and railway connectivity across India, including heritage and toy trains.','Train Bookings'],
+  ['buses','Buses','Buses','bus','State transport and private Volvo buses connecting cities across India.','Bus Bookings'],
+  ['airport-cabs','Airport Cabs','Airport Cabs','car-taxi-front','Book convenient airport transfers to hotels, tourist destinations and major cities across India.','Airport Pickup & Drop Cabs'],
+  ['outstation-cabs','Outstation Cabs','Outstation Cabs','car','Book reliable one-way and round-trip cabs for intercity travel, sightseeing and long journeys.','Outstation Taxi Services'],
+  ['hourly','Hourly Stays','Hourly Stays','clock','Short-duration transit stays and hourly rooms near airports, stations and city centres.','Hourly Stays & Day Rooms'],
+  ['tours','Tours & Attractions','Tours','compass','Discover sightseeing tours, adventure activities, cultural experiences and popular attractions across India.','Tours & Local Attractions'],
+  ['visa','Visa','Visa','stamp','Get guidance on permits for restricted areas, along with international visa and travel documentation.','Permits & Visa Desk'],
   ['forex','Forex Card & Currency','Forex','coins','Explore foreign currency exchange options and prepaid forex cards for international travelers.','Forex Card & Currency Exchange'],
-  ['insurance','Travel Insurance','Insurance','shield-check','Explore travel insurance options for trip interruptions, medical emergencies and eligible adventure activities.','Mountain Travel Insurance'],
-  ['getaways','Nearby Getaways','Getaways','map','Plan refreshing weekend retreats, scenic escapes and offbeat adventures near Shimla, Kullu and Dharamshala.','Curated Nearby Getaways'],
+  ['insurance','Travel Insurance','Insurance','shield-check','Explore travel insurance options for trip interruptions, medical emergencies and eligible adventure activities.','Travel Insurance'],
+  ['getaways','Nearby Getaways','Getaways','map','Plan weekend retreats, scenic escapes and offbeat trips near your city.','Curated Nearby Getaways'],
   ['giftcards','Gift Cards','Gift Cards','gift','Gift memorable holidays, hotel stays and travel experiences to your family and friends.','MakesMyYatra Gift Cards'],
   ['pnr','PNR Status','PNR Status','receipt','Check your railway ticket booking status and access available train journey information.','Railway PNR Status Tracker'],
 ];
@@ -649,23 +647,44 @@ const TABS = [
 const M_TOP = ['flights','hotels','trains','packages'];
 const M_GRID = ['airport-cabs','villas','buses','outstation-cabs','tours','hourly','forex','visa','insurance','pnr','giftcards','getaways'];
 
-// [value, label, hint]
+// [value, label, hint]  (value = city name sent to your search view)
 const CITIES = [
-  ['All','All Across Himachal','All 12 Districts'],
-  ['Shimla','Shimla','District • Mall Road, Kufri, Narkanda'],
-  ['Manali','Kullu & Manali','District • Solang, Kasol, Jibhi, Tirthan'],
-  ['Dharamshala','Kangra (Dharamshala)','District • McLeodganj, Bir Billing'],
-  ['Spiti','Lahaul & Spiti','District • Kaza, Keylong, Tabo'],
-  ['Chamba','Chamba & Dalhousie','District • Khajjiar'],
-  ['Kinnaur','Kinnaur','District • Kalpa, Sangla, Chitkul'],
-  ['Hamirpur','Hamirpur','District • Barsar, Deotsidh, Nadaun'],
-  ['Mandi','Mandi','District • Prashar Lake, Barot Valley'],
-  ['Bilaspur','Bilaspur','District • Naina Devi, Govind Sagar'],
-  ['Solan','Solan & Kasauli','District • Chail'],
-  ['Una','Una','District • Chintpurni'],
-  ['Sirmaur','Sirmaur','District • Renuka Ji, Nahan'],
+  ['All','All Across India','Browse every destination'],
+  ['Goa','Goa','Beaches • Baga, Calangute, Palolem'],
+  ['Jaipur','Jaipur','Rajasthan • Heritage stays, Amer Fort'],
+  ['Udaipur','Udaipur','Rajasthan • Lake Pichola, City Palace'],
+  ['Jaisalmer','Jaisalmer','Rajasthan • Desert camps'],
+  ['Delhi','Delhi','Delhi NCR • Connaught Place, Aerocity'],
+  ['Mumbai','Mumbai','Maharashtra • Marine Drive, Juhu'],
+  ['Pune','Pune','Maharashtra • Koregaon Park, Hinjewadi'],
+  ['Bengaluru','Bengaluru','Karnataka • MG Road, Whitefield'],
+  ['Mysuru','Mysuru','Karnataka • Mysore Palace'],
+  ['Hyderabad','Hyderabad','Telangana • Hitech City, Charminar'],
+  ['Chennai','Chennai','Tamil Nadu • Marina Beach, T Nagar'],
+  ['Kochi','Kochi','Kerala • Fort Kochi, Backwaters'],
+  ['Munnar','Munnar','Kerala • Tea gardens'],
+  ['Alleppey','Alleppey','Kerala • Houseboats'],
+  ['Kolkata','Kolkata','West Bengal • Park Street, Salt Lake'],
+  ['Darjeeling','Darjeeling','West Bengal • Tea estates, Tiger Hill'],
+  ['Varanasi','Varanasi','Uttar Pradesh • Ghats, Kashi Vishwanath'],
+  ['Agra','Agra','Uttar Pradesh • Taj Mahal'],
+  ['Rishikesh','Rishikesh','Uttarakhand • Yoga, Rafting, Laxman Jhula'],
+  ['Mussoorie','Mussoorie','Uttarakhand • Mall Road, Landour'],
+  ['Nainital','Nainital','Uttarakhand • Naini Lake'],
+  ['Amritsar','Amritsar','Punjab • Golden Temple'],
+  ['Chandigarh','Chandigarh','Chandigarh • Sector 17, Rock Garden'],
+  ['Shimla','Shimla','Himachal Pradesh • Mall Road, Kufri'],
+  ['Manali','Manali','Himachal Pradesh • Solang, Kasol'],
+  ['Dharamshala','Dharamshala','Himachal Pradesh • McLeodganj, Bir'],
+  ['Leh','Leh','Ladakh • Pangong, Nubra Valley'],
+  ['Srinagar','Srinagar','Jammu & Kashmir • Dal Lake, Gulmarg'],
+  ['Gangtok','Gangtok','Sikkim • MG Marg, Tsomgo Lake'],
+  ['Shillong','Shillong','Meghalaya • Cherrapunji, Dawki'],
+  ['Puri','Puri','Odisha • Jagannath Temple, Beach'],
+  ['Hamirpur','Hamirpur','Himachal Pradesh • Barsar, Nadaun'],
 ];
-const QUICK_CITIES = ['Kullu','Spiti','Chamba','Mandi','Shimla','Manali','Una','Hamirpur','Dharamshala'];
+const QUICK_CITIES = ['Goa','Jaipur','Delhi','Mumbai','Manali','Shimla','Rishikesh','Udaipur','Kochi','Leh'];
+const TRENDING = [['Goa','Goa, Beaches'],['Jaipur','Jaipur, Rajasthan'],['Manali','Manali, Himachal'],['Rishikesh','Rishikesh, Uttarakhand'],['Kochi','Kochi, Kerala'],['Leh','Leh, Ladakh']];
 
 const MEAL_LABELS = { rooms: n => `${n} Room${n > 1 ? 's' : ''}`, adults: n => `${n} Adult${n > 1 ? 's' : ''}`, children: n => `${n} Child${n === 1 ? '' : 'ren'}` };
 let appliedCouponData = null;
@@ -688,6 +707,11 @@ function tileHtml(key, cls) {
 function renderMobileTiles() {
   $('mTopTiles').innerHTML = M_TOP.map(k => tileHtml(k, 'm-top')).join('');
   $('mGridTiles').innerHTML = M_GRID.map(k => tileHtml(k, 'm-grid-item')).join('');
+}
+
+function renderTrending() {
+  $('trendingList').innerHTML = TRENDING.map(([v, label], i) =>
+    `<button type="button" onclick="selectCity('${v}')" class="hover:text-blue-600">${label}</button>${i < TRENDING.length - 1 ? '<span>•</span>' : ''}`).join('');
 }
 
 function renderCities() {
@@ -793,13 +817,15 @@ function calculateBookingTotal() {
     co.value = formatDateStr(d2);
   }
 
+  const surgeRate = unitRate * (1 + SURGE_PERCENT / 100);
   let weekdayNights = 0, weekendNights = 0;
+  const nightRates = [];
   for (const cur = new Date(d1); cur < d2; cur.setDate(cur.getDate() + 1)) {
-    [5, 6].includes(cur.getDay()) ? weekendNights++ : weekdayNights++;
+    if ([5, 6].includes(cur.getDay())) { weekendNights++; nightRates.push(surgeRate); }
+    else { weekdayNights++; nightRates.push(unitRate); }
   }
   const nights = weekdayNights + weekendNights;
 
-  const surgeRate = unitRate * (1 + SURGE_PERCENT / 100);
   const roomTariff = (weekdayNights * unitRate + weekendNights * surgeRate) * rooms;
   const mealTotal = (adults * mealExtra + children * mealExtra * 0.5) * nights;
   const subtotal = roomTariff + mealTotal;
@@ -819,7 +845,15 @@ function calculateBookingTotal() {
   }
 
   const taxable = Math.max(0, subtotal - discount);
-  const gst = Math.round(taxable * GST_RATE);
+  // GST slab is decided by each night's declared room rate; tax is charged on that night's share after discount
+  let gstRaw = 0;
+  nightRates.forEach(r => {
+    const gross = r * rooms + (mealTotal / nights);
+    const share = subtotal > 0 ? gross / subtotal : 0;
+    gstRaw += Math.max(0, gross - discount * share) * gstRateFor(r);
+  });
+  const gst = Math.round(gstRaw);
+  const gstPct = taxable > 0 ? Math.round((gst / taxable) * 1000) / 10 : 0;
   const grand = taxable + gst;
   baseInput.value = taxable;
 
@@ -856,6 +890,7 @@ function calculateBookingTotal() {
     banner.classList.remove('flex'); banner.classList.add('hidden');
     discRow.classList.remove('flex'); discRow.classList.add('hidden');
   }
+  $('modalGstLabel').innerText = `Taxes & GST (${gstPct}%):`;
   $('modalGstAmount').innerText = `+ ${inr(gst)}`;
   $('modalDisplayPrice').innerText = inr(grand);
 }
@@ -943,9 +978,9 @@ function openBookingModal(btn) {
 
   $('modalHotelId').value = id;
   $('modalHotelName').innerText = name;
-  $('modalHotelCity').innerText = `${city}, Himachal Pradesh`;
+  $('modalHotelCity').innerText = `${city}, India`;
   $('modalBaseAmount').dataset.unitPrice = rate;
-  $('modalMapFrame').src = `https://maps.google.com/maps?q=${encodeURIComponent(`${name}, ${city}, Himachal Pradesh`)}&hl=en&z=15&output=embed`;
+  $('modalMapFrame').src = `https://maps.google.com/maps?q=${encodeURIComponent(`${name}, ${city}, India`)}&hl=en&z=15&output=embed`;
 
   appliedCouponData = null;
   $('modalCouponApplied').value = '';
@@ -1008,7 +1043,7 @@ function switchTab(tab) {
   });
 
   const data = TABS.find(t => t[0] === tab);
-  const [, , , , desc, title] = data || [tab, '', '', '', 'This service is currently being integrated for Himachal travelers.', tab.toUpperCase() + ' Services'];
+  const [, , , , desc, title] = data || [tab, '', '', '', 'This service is currently being integrated for Indian travelers.', tab.toUpperCase() + ' Services'];
 
   if (tab === 'hotels' || tab === 'villas') {
     $('hotelsSearchPanel').classList.remove('hidden');
@@ -1036,6 +1071,7 @@ window.addEventListener('scroll', () => {
 renderNavs();
 renderMobileTiles();
 renderCities();
+renderTrending();
 renderDestPills();
 renderCounters();
 (function initDates() {
