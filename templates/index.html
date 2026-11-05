@@ -7,167 +7,268 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
-  <style>
-    /* Universal Mobile & Overflow Control */
-    html, body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: #f2f4f8;
-      width: 100% !important;
-      max-width: 100vw !important;
-      overflow-x: hidden !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      box-sizing: border-box;
-    }
-    
-    *, *:before, *:after {
-      box-sizing: inherit;
-    }
-    
-    .hero-bg {
-      background: linear-gradient(180deg, #051322 0%, #0c2b4d 55%, #15457c 100%);
-      width: 100% !important;
+<style>
+  /* 1. Global Reset & Mobile Overflow Control */
+  *, *::before, *::after {
+    box-sizing: border-box !important;
+  }
+
+  html, body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: #f2f4f8;
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  img, svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .hero-bg {
+    background: linear-gradient(180deg, #051322 0%, #0c2b4d 55%, #15457c 100%);
+    width: 100% !important;
+  }
+
+  /* 2. Top Bar & Navigation Header */
+  .top-bar {
+    width: 100%;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  nav.navbar, .header-container {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Partner & Admin Action Buttons */
+  .header-actions, .navbar-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* 3. MMT Exact 16 Options Pill Wrapper - Desktop & Scrollable */
+  .mmt-nav-pill-wrapper {
+    background: #ffffff;
+    border-radius: 9999px;
+    box-shadow: 0 4px 25px 0 rgba(0, 0, 0, 0.2);
+    width: max-content;
+    max-width: 95vw;
+    margin: 0 auto;
+    transform: translateY(28px);
+    position: relative;
+    z-index: 30;
+    border: 1px solid #edf2f7;
+    display: flex;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mmt-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    cursor: pointer;
+    color: #555555;
+    text-decoration: none;
+    white-space: nowrap;
+    border-radius: 9999px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .mmt-nav-item:hover {
+    color: #008cff;
+  }
+
+  .mmt-nav-item.active-pill {
+    color: #008cff;
+    background: #eaf5ff;
+    font-weight: 800;
+  }
+
+  /* 4. Main Search Container */
+  .mmt-search-card {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 8px 35px 0 rgba(0, 0, 0, 0.16);
+    border: 1px solid #e2e8f0;
+    padding: 44px 32px 32px 32px;
+    position: relative;
+    z-index: 10;
+    min-height: 280px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .mmt-input-col {
+    padding: 10px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background: #ffffff;
+    width: 100%;
+  }
+
+  .mmt-input-col:hover, .mmt-input-col:focus-within {
+    border-color: #008cff;
+    box-shadow: 0 0 0 1px #008cff;
+  }
+
+  .mmt-search-btn {
+    background: linear-gradient(93deg, #53b2fe, #065af3);
+    box-shadow: 0 3px 12px 0 rgba(6, 90, 243, 0.4);
+    border-radius: 34px;
+    color: #ffffff;
+    font-weight: 900;
+    letter-spacing: 1px;
+    padding: 12px 64px;
+    margin: 0 auto;
+    display: block;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .mmt-search-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px 0 rgba(6, 90, 243, 0.5);
+  }
+
+  /* Sticky Top Mini-Navbar on Scroll */
+  .sticky-scroll-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    z-index: 50;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .sticky-scroll-nav.visible {
+    transform: translateY(0);
+  }
+
+  .counter-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #334155;
+    font-weight: 800;
+    transition: all 0.15s ease;
+  }
+
+  .counter-btn:hover {
+    border-color: #008cff;
+    color: #008cff;
+    background: #f0f7ff;
+  }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* 5. Mobile Responsiveness (< 768px) */
+  @media (max-width: 768px) {
+    /* Top notification bar wrapping */
+    .top-bar, 
+    header .d-flex.justify-content-between {
+      flex-wrap: wrap !important;
+      padding: 6px 12px !important;
+      font-size: 11px !important;
+      gap: 4px !important;
     }
 
-    /* MMT Exact 16 Options Pill Wrapper - Mobile Safe Scroll */
+    /* Navbar & Brand Title */
+    nav.navbar, 
+    .hero-bg nav, 
+    .navbar-container {
+      padding: 10px 12px !important;
+      display: flex !important;
+      flex-wrap: wrap !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 8px !important;
+    }
+
+    .navbar-brand, 
+    .hero-bg h1, 
+    .hero-bg .logo-text {
+      font-size: 16px !important;
+    }
+
+    /* Unhide Partner and Admin Buttons on Mobile */
+    .d-none.d-md-flex,
+    .d-none.d-md-inline-block,
+    .d-none.d-lg-flex {
+      display: inline-flex !important;
+    }
+
+    .header-actions,
+    nav .d-flex {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      gap: 6px !important;
+      align-items: center !important;
+    }
+
+    /* Compact Mobile Action Buttons */
+    nav a.btn, 
+    nav button, 
+    a[href*="partner"], 
+    a[href*="admin"],
+    a[href*="login"] {
+      display: inline-flex !important;
+      font-size: 11px !important;
+      padding: 4px 8px !important;
+      white-space: nowrap !important;
+      border-radius: 6px !important;
+      line-height: 1.2 !important;
+    }
+
+    /* Search Container & Pills */
     .mmt-nav-pill-wrapper {
-      background: #ffffff;
-      border-radius: 9999px;
-      box-shadow: 0 4px 25px 0 rgba(0, 0, 0, 0.2);
-      width: max-content;
-      max-width: 95vw;
-      margin: 0 auto;
-      transform: translateY(28px);
-      position: relative;
-      z-index: 30;
-      border: 1px solid #edf2f7;
-      display: flex;
-      overflow-x: auto !important;
-      -webkit-overflow-scrolling: touch;
+      border-radius: 14px;
+      transform: translateY(12px);
+      max-width: 94vw;
+      padding: 4px 6px;
     }
 
     .mmt-nav-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 16px;
-      cursor: pointer;
-      color: #555555;
-      text-decoration: none;
-      white-space: nowrap;
-      border-radius: 9999px;
-      transition: all 0.2s ease;
-      flex-shrink: 0;
-    }
-    .mmt-nav-item:hover {
-      color: #008cff;
-    }
-    .mmt-nav-item.active-pill {
-      color: #008cff;
-      background: #eaf5ff;
-      font-weight: 800;
+      padding: 6px 10px;
+      font-size: 12px;
     }
 
-    /* Main Search Container */
     .mmt-search-card {
-      background: #ffffff;
-      border-radius: 20px;
-      box-shadow: 0 8px 35px 0 rgba(0, 0, 0, 0.16);
-      border: 1px solid #e2e8f0;
-      padding: 44px 32px 32px 32px;
-      position: relative;
-      z-index: 10;
-      min-height: 280px;
-      width: 100%;
-      max-width: 100%;
+      padding: 24px 14px 18px 14px;
+      border-radius: 16px;
+      margin-top: 15px;
     }
-    .mmt-input-col {
-      padding: 10px 14px;
-      border: 1px solid #cbd5e1;
-      border-radius: 12px;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-      background: #ffffff;
-      width: 100%;
-    }
-    .mmt-input-col:hover, .mmt-input-col:focus-within {
-      border-color: #008cff;
-      box-shadow: 0 0 0 1px #008cff;
-    }
+
     .mmt-search-btn {
-      background: linear-gradient(93deg, #53b2fe, #065af3);
-      box-shadow: 0 3px 12px 0 rgba(6, 90, 243, 0.4);
-      border-radius: 34px;
-      color: #ffffff;
-      font-weight: 900;
-      letter-spacing: 1px;
-      padding: 12px 64px;
-      margin: 0 auto;
-      display: block;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-    .mmt-search-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px 0 rgba(6, 90, 243, 0.5);
+      width: 100%;
+      padding: 12px 20px;
     }
 
-    /* Sticky Top Mini-Navbar on Scroll */
-    .sticky-scroll-nav {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: #ffffff;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
-      z-index: 50;
-      transform: translateY(-100%);
-      transition: transform 0.3s ease-in-out;
+    .container, .container-fluid {
+      padding-left: 10px !important;
+      padding-right: 10px !important;
+      max-width: 100% !important;
     }
-    .sticky-scroll-nav.visible {
-      transform: translateY(0);
-    }
-    .counter-btn {
-      width: 32px;
-      height: 32px;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #334155;
-      font-weight: 800;
-      transition: all 0.15s ease;
-    }
-    .counter-btn:hover {
-      border-color: #008cff;
-      color: #008cff;
-      background: #f0f7ff;
-    }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-    /* Mobile Specific Tweaks (Screens below 768px) */
-    @media (max-width: 768px) {
-      .mmt-nav-pill-wrapper {
-        border-radius: 14px;
-        transform: translateY(12px);
-        max-width: 92vw;
-        padding: 4px 6px;
-      }
-      .mmt-nav-item {
-        padding: 6px 12px;
-        font-size: 13px;
-      }
-      .mmt-search-card {
-        padding: 24px 14px 18px 14px;
-        border-radius: 16px;
-        margin-top: 15px;
-      }
-      .mmt-search-btn {
-        width: 100%;
-        padding: 12px 20px;
-      }
-    }
+  }
 </style>
 </head>
 <body class="text-slate-800 antialiased flex flex-col min-h-screen justify-between">
