@@ -8,7 +8,7 @@ class HotelForm(forms.ModelForm):
             'name', 'category', 'city', 'state', 'address', 'google_maps_url',
             'star_rating', 'cover_image', 'has_wifi', 'has_parking',
             'has_pool', 'has_restaurant', 'has_ac', 'has_heater',
-            'owner_name', 'owner_phone', 'is_active'
+            'owner_name', 'owner_phone',
         ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
