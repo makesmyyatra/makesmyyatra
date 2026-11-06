@@ -2,13 +2,26 @@ import os
 from pathlib import Path
 import dj_database_url
 from decouple import config, Csv
+from django.core.exceptions import ImproperlyConfigured
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security Settings
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-makesmyyatra-local-dev-key')
+# Security Settings
 DEBUG = config('DEBUG', default=False, cast=bool)
-LOGIN_URL = 'partner_login' 
+
+SECRET_KEY = config('SECRET_KEY', default='')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'django-insecure-dev-only-not-for-production'
+    else:
+        raise ImproperlyConfigured(
+            'SECRET_KEY environment variable is required in production. '
+            'Set it in Render Dashboard → Environment → SECRET_KEY.'
+        )
+
+LOGIN_URL = 'partner_login'
 
 # Allowed Hosts & CSRF for Render / Custom Domain
 ALLOWED_HOSTS = config(
@@ -18,7 +31,7 @@ ALLOWED_HOSTS = config(
 )
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://makemyyatra.onrender.com',
+    'https://makesmyyatra.onrender.com',
     'https://makesmyyatra-1.onrender.com',
     'https://*.onrender.com',
     'https://makesmyyatra.com',
@@ -67,9 +80,18 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'makemyyatra.wsgi.application'
 
+DATABASE_URL = config('DATABASE_URL', default='')
+if not DATABASE_URL:
+    if DEBUG:
+        DATABASE_URL = 'sqlite:///' + str(BASE_DIR / 'db.sqlite3')
+    else:
+        raise ImproperlyConfigured(
+            'DATABASE_URL environment variable is required in production.'
+        )
+
 DATABASES = {
     'default': dj_database_url.config(
-        default=config('DATABASE_URL', default='sqlite:///' + str(BASE_DIR / 'db.sqlite3')),
+        default=DATABASE_URL,
         conn_max_age=600,
         conn_health_checks=True,
         ssl_require=not DEBUG
