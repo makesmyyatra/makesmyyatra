@@ -3,7 +3,7 @@ import uuid
 from django.contrib.auth.models import User
 from django.db import IntegrityError, models
 from django.utils import timezone
-
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 # Helper for Booking Reference
 def generate_mmy_booking_id():
@@ -278,12 +278,13 @@ class Booking(models.Model):
     payment_mode = models.CharField(
         max_length=20, choices=PAYMENT_MODES, default="PAY_AT_HOTEL"
     )
-    payment_status = models.CharField(max_length=20, default="CONFIRMED")
+    payment_status = models.CharField(max_length=20, default="PENDING")
     status = models.CharField(
         max_length=30, choices=STATUS_CHOICES, default="CONFIRMED"
     )
     transaction_id = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
         if not self.booking_id:
@@ -341,31 +342,26 @@ class HotelReview(models.Model):
         Hotel, on_delete=models.CASCADE, related_name="reviews"
     )
     guest_name = models.CharField(max_length=120)
-    rating = models.PositiveSmallIntegerField(default=5)
+    rating = models.PositiveSmallIntegerField(
+        default=5,
+        validators=[
+            MinValueValidator(1),
+            MaxValueValidator(5),
+        ]
+    )
     comment = models.TextField()
-    booking_ref = models.CharField(max_length=50, blank=True, default="", db_index=True)  # one review per booking
-    is_approved = models.BooleanField(default=True)
+    booking_ref = models.CharField(max_length=50, blank=True, default="", db_index=True)
+    is_approved = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['booking_ref'],
+                condition=models.Q(booking_ref__gt=''),
+                name='unique_review_per_booking'
+            )
+        ]
 
     def __str__(self):
         return f"{self.guest_name} ({self.rating}★) - {self.hotel.name}"
-
-
-class UrgentHelp(models.Model):
-    STATUS_CHOICES = [
-        ('PENDING', 'Pending Support'),
-        ('IN_PROGRESS', 'Calling / In Touch'),
-        ('RESOLVED', 'Issue Resolved'),
-    ]
-
-    guest_name = models.CharField(max_length=150)
-    guest_phone = models.CharField(max_length=20)
-    booking_id = models.CharField(max_length=50, blank=True, null=True)
-    issue_description = models.TextField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
-    admin_notes = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    resolved_at = models.DateTimeField(blank=True, null=True)
-
-    def __str__(self):
-        return f"{self.guest_name} - {self.guest_phone} ({self.status})"

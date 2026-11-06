@@ -9,3 +9,4 @@ dj-database-url>=2.1.0
 requests
 xhtml2pdf
 python-decouple
+django-ratelimit>=4.1.0

@@ -1,7 +1,10 @@
 from django.urls import path
+from core.views import health_check
 from . import views
 
 urlpatterns = [
+    
+    path('health/', health_check, name='health_check'),
     # --- Public Pages & Booking Engine ---
     path('', views.index, name='index'),
     path('dashboard/', views.user_dashboard, name='user_dashboard'),

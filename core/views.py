@@ -1,5 +1,7 @@
 import io
 import secrets
+from django_ratelimit.decorators import ratelimit
+from django_ratelimit.exceptions import Ratelimited
 from xhtml2pdf import pisa
 import uuid
 import openpyxl
@@ -35,6 +37,8 @@ from .notifications import (
     get_whatsapp_booking_text,
     send_whatsapp_notification
 )
+import logging
+logger = logging.getLogger(__name__)
 
 # Helper to verify admin permissions
 def is_admin(user):
@@ -139,6 +143,7 @@ def index(request):
     })
 
 # Booking engine with dynamic pricing, meal plan, auto offers, GST & direct voucher redirect
+@ratelimit(key='ip', rate='5/h', method='POST', block=True)
 def book_hotel(request):
     if request.method == 'POST':
         hotel_id = request.POST.get('hotel_id')
@@ -286,7 +291,7 @@ def book_hotel(request):
             total_amount=bill['grand_total'],
             rooms_count=rooms_count,
             payment_mode='PAY_AT_HOTEL',
-            payment_status='CONFIRMED',
+            payment_status='PENDING',
             status='CONFIRMED',
             transaction_id=f"TXN-{uuid.uuid4().hex[:8].upper()}"
         )
@@ -296,10 +301,16 @@ def book_hotel(request):
             try:
                 send_booking_email(booking)
             except Exception as email_err:
-                print(f"Skipping email dispatch due to network timeout: {email_err}")
+                logger.warning(
+                    f"Email dispatch failed for booking {booking.booking_id}: "
+                    f"{type(email_err).__name__}"
+                )
             send_whatsapp_notification(booking)
         except Exception as sms_err:
-            pass
+            logger.warning(
+                f"SMS dispatch failed for booking {booking.booking_id}: "
+                f"{type(sms_err).__name__}"
+            )
         _remember_booking(request, booking)  # lets this guest open their own voucher
         # 3. Direct Redirect to Printable Tax Voucher / Invoice
         messages.success(request, f"Booking #{booking.booking_id} confirmed! Here is your official travel pass.")
@@ -308,6 +319,7 @@ def book_hotel(request):
 
 
 # Helpdesk and traveler support (Guest Facing Form)
+@ratelimit(key='ip', rate='3/h', method='POST', block=True)
 def support_request(request):
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
@@ -324,7 +336,7 @@ def support_request(request):
             phone=phone,
             location=location,
             issue_details=details,
-            status='PENDING'
+            status='OPEN'
         )
         messages.success(request, 'Your emergency assistance request has been received. Our team will contact you shortly.')
         return redirect('support_request')
@@ -366,7 +378,7 @@ def portal_urgent_help(request):
 def portal_urgent_help_resolve(request, support_id):
     # Model me resolved_at field nahi hai, isliye sirf status update hoga
     EmergencySupport.objects.filter(id=support_id).update(
-        status='RESOLVED'
+        status='resolved',
     )
     current_filter = request.GET.get('filter') or request.POST.get('filter') or 'all'
     messages.success(request, f"Ticket #{support_id} marked as RESOLVED.")
@@ -839,8 +851,8 @@ def user_dashboard(request):
     bookings = Booking.objects.filter(user=request.user).order_by('-created_at')
     context = {
         'total_bookings': bookings.count(),
-        'confirmed_bookings': bookings.filter(payment_status='CONFIRMED').count(),
-        'pending_bookings': bookings.filter(payment_status='PENDING').count(),
+        'confirmed_bookings': bookings.filter(status='CONFIRMED').count(),
+        'pending_bookings': bookings.filter(status='PENDING').count(),
         'bookings': bookings,
     }
     return render(request, 'user_dashboard.html', context)
@@ -900,6 +912,7 @@ def booking_detail(request, booking_id):
     return render(request, 'booking_detail.html', {'booking': booking})
 
 # Public Booking Tracking Page
+@ratelimit(key='ip', rate='10/m', method='POST', block=True)
 def track_booking(request):
     booking = None
     query_id = (request.POST.get('booking_id') or request.GET.get('booking_id') or '').strip()
@@ -1544,6 +1557,7 @@ def portal_booking_send_whatsapp(request, booking_id):
     return redirect(whatsapp_url)
 
 @require_POST
+@ratelimit(key='ip', rate='20/m', method='POST', block=True)
 def apply_coupon_ajax(request):
     """Preview only. Rate, meal price, offers and surge are read from the DB, never from the client."""
     coupon_code = request.POST.get('coupon_code', '').strip()
@@ -1555,7 +1569,12 @@ def apply_coupon_ajax(request):
     if not coupon or (coupon.valid_till and coupon.valid_till < today):
         return JsonResponse({'success': False, 'message': 'Invalid or expired coupon.'}, status=400)
 
-    hotel = Hotel.objects.filter(id=_to_int(request.POST.get('hotel_id'), 0, 0, 10**9), is_active=True).first()
+    hotel = Hotel.objects.filter(
+        id=_to_int(request.POST.get('hotel_id'), 0, 0, 10**9),
+        is_active=True,
+        is_verified=True   
+    ).first()
+
     if not hotel:
         return JsonResponse({'success': False, 'message': 'Hotel not found.'}, status=400)
     try:
@@ -1913,3 +1932,15 @@ def partner_gallery_image_delete(request, media_id):
     media_item.delete()
     messages.success(request, "Photo deleted successfully.")
     return redirect('partner_manage_gallery', hotel_id=hotel_id)
+
+def ratelimited_error(request, exception=None):
+    """Custom 429 handler for rate-limited requests."""
+    return render(request, '429.html', status=429)
+
+def health_check(request):
+    """Health check endpoint for monitoring."""
+    return JsonResponse({
+        "status": "ok",
+        "service": "makesmyyatra",
+        "timestamp": timezone.now().isoformat(),
+    })

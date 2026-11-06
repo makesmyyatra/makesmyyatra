@@ -4,10 +4,54 @@ import dj_database_url
 from decouple import config, Csv
 from django.core.exceptions import ImproperlyConfigured
 
-
+RATELIMIT_VIEW = 'core.views.ratelimited_error'
+RATELIMIT_FAIL_OPEN = False 
 BASE_DIR = Path(__file__).resolve().parent.parent
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'makesmyyatra-ratelimit',
+    }
+}
 
-# Security Settings
+# Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{levelname}] {asctime} {name}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'core': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
 # Security Settings
 DEBUG = config('DEBUG', default=False, cast=bool)
 
@@ -31,9 +75,7 @@ ALLOWED_HOSTS = config(
 )
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://makesmyyatra.onrender.com',
     'https://makesmyyatra-1.onrender.com',
-    'https://*.onrender.com',
     'https://makesmyyatra.com',
     'https://www.makesmyyatra.com',
 ]
