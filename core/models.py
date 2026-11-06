@@ -1,15 +1,13 @@
 from decimal import Decimal
-import random
-import string
 import uuid
 from django.contrib.auth.models import User
-from django.db import models
+from django.db import IntegrityError, models
 from django.utils import timezone
 
 
 # Helper for Booking Reference
 def generate_mmy_booking_id():
-    random_code = "".join(random.choices(string.digits, k=4))
+    random_code = uuid.uuid4().hex[:10].upper()
     return f"MMY-HTL-{random_code}"
 
 
@@ -289,11 +287,17 @@ class Booking(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.booking_id:
-            while True:
-                new_id = generate_mmy_booking_id()
-                if not Booking.objects.filter(booking_id=new_id).exists():
-                    self.booking_id = new_id
-                    break
+            for _ in range(5):
+                self.booking_id = generate_mmy_booking_id()
+                try:
+                    super().save(*args, **kwargs)
+                    return
+                except IntegrityError:
+                    if Booking.objects.filter(booking_id=self.booking_id).exists():
+                        self.booking_id = None
+                        continue
+                    raise
+            raise IntegrityError("Failed to generate unique booking ID after 5 attempts")
         super().save(*args, **kwargs)
 
     def __str__(self):
