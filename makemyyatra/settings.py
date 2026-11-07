@@ -198,3 +198,5 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='MakesMyYatra <booking
 
 # Third-party APIs
 FAST2SMS_API_KEY = config('FAST2SMS_API_KEY', default='')
+# Admin URL — security through obscurity
+ADMIN_URL = os.environ.get('ADMIN_URL', 'admin/')

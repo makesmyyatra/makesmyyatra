@@ -3,9 +3,12 @@ from django.urls import path, include
 import django
 import sys
 from django.http import JsonResponse
+from django.conf import settings
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+
+
+    path(settings.ADMIN_URL, admin.site.urls),
     path('', include('core.urls')),
     
     # DEBUG — will be removed in production, just for checking versions
