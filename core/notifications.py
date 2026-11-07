@@ -1,9 +1,10 @@
 import os
 import urllib.parse
 import requests
+import logging
 from django.conf import settings
 from django.core.mail import send_mail
-
+logger = logging.getLogger(__name__)
 
 def clean_phone_number(phone_raw):
     """Mobile number se spaces aur country codes clean karne ke liye helper."""
@@ -13,7 +14,6 @@ def clean_phone_number(phone_raw):
     elif raw.startswith("91") and len(raw) == 12:
         return raw[2:]
     return raw
-
 
 # ==========================================
 # 1. SIMPLE MOBILE TEXT SMS (Fast2SMS / Console)
@@ -47,15 +47,16 @@ def send_booking_sms(booking):
             response = requests.post(url, data=payload, timeout=5)
             return response.status_code == 200
         except Exception as e:
-            print(f"[SMS Gateway Error]: {e}")
+            logger.error(
+                f"SMS gateway failed for booking {booking.booking_id}: {type(e).__name__}"
+            )
             return False
     else:
-        # Development / Fallback mode: Terminal console par clean output
-        print(f"\n==========================================")
-        print(f"📩 [OUTGOING NORMAL SMS]")
-        print(f"To: +91 {clean_phone}")
-        print(f"Message: {sms_text}")
-        print(f"==========================================\n")
+        # Development / Fallback mode: log only (no PII in production logs)
+        logger.info(
+            f"SMS fallback mode active for booking {booking.booking_id} — "
+            f"no FAST2SMS_API_KEY configured"
+        )
         return True
 
 
@@ -112,20 +113,20 @@ def send_whatsapp_notification(booking):
             )
             return True, "sent_via_api"
         except Exception as e:
-            print(f"[Twilio WA Error]: {e}")
-            pass
+            logger.error(
+                f"WhatsApp dispatch failed for booking {booking.booking_id}: {type(e).__name__}"
+            )
 
-    # Method B: Direct URL / Console Preview Fallback
+    # Method B: Direct URL / fallback
     encoded_text = urllib.parse.quote(text_msg)
     wa_link = f"https://wa.me/91{clean_phone}?text={encoded_text}"
-    
-    print(f"\n==========================================")
-    print(f"💬 [OUTGOING WHATSAPP ALERT]")
-    print(f"To: +91 {clean_phone}")
-    print(f"Direct Link: {wa_link}")
-    print(f"==========================================\n")
+
+    logger.info(
+        f"WhatsApp fallback link generated for booking {booking.booking_id}"
+    )
 
     return True, wa_link
+
 
 # ==========================================
 # 3. EMAIL DISPATCH (Django SMTP / Console)
@@ -140,11 +141,14 @@ def send_booking_email(booking):
 
     # if credentials missing, skip email dispatch to avoid crash
     if not email_user or not email_pass:
-        print(f"[EMAIL SKIPPED] No credentials found. Booking #{booking.booking_id} processed safely.")
+        logger.warning(
+            f"Email skipped for booking {booking.booking_id} — "
+            f"EMAIL_HOST_USER/PASSWORD not configured"
+        )
         return False
 
     subject = f"Booking Confirmed: #{booking.booking_id} - {booking.hotel.name} | MakesMyYatra"
-    
+
     check_in_str = booking.check_in.strftime('%d %b %Y') if hasattr(booking.check_in, 'strftime') else str(booking.check_in)
     check_out_str = booking.check_out.strftime('%d %b %Y') if hasattr(booking.check_out, 'strftime') else str(booking.check_out)
 
@@ -159,10 +163,10 @@ def send_booking_email(booking):
 
     try:
         import socket
-        # Timeout set to 3 seconds max taaki Gunicorn kabhi kill na ho
+        # Timeout set to 3 seconds to prevent from Gunicorn killing
         original_timeout = socket.getdefaulttimeout()
         socket.setdefaulttimeout(3.0)
-        
+
         send_mail(
             subject=subject,
             message=message,
@@ -173,5 +177,7 @@ def send_booking_email(booking):
         socket.setdefaulttimeout(original_timeout)
         return True
     except Exception as e:
-        print(f"[Email Dispatch Timeout/Error]: {e}")
+        logger.error(
+            f"Email dispatch failed for booking {booking.booking_id}: {type(e).__name__}"
+        )
         return False
