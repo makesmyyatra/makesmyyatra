@@ -336,7 +336,7 @@ def support_request(request):
             phone=phone,
             location=location,
             issue_details=details,
-            status='OPEN'
+            status='open'
         )
         messages.success(request, 'Your emergency assistance request has been received. Our team will contact you shortly.')
         return redirect('support_request')
