@@ -1,12 +1,23 @@
-asgiref>=3.7.0
-Django>=5.0.0
-gunicorn>=21.2.0
-whitenoise>=6.6.0
-Pillow>=10.0.0
-psycopg2-binary>=2.9.9
-openpyxl>=3.1.2
-dj-database-url>=2.1.0
-requests
-xhtml2pdf
-python-decouple
-django-ratelimit>=4.1.0
+# Core
+Django==5.2.19
+asgiref==3.13.0
+
+# Server
+gunicorn==26.2.0
+whitenoise==6.12.0
+
+# Database
+psycopg2-binary==2.9.13
+dj-database-url==3.1.2
+
+# Utilities
+python-decouple==3.8
+Pillow==13.0.0
+openpyxl==3.1.5
+
+# Rate limiting
+django-ratelimit==4.1.0
+
+# PDF & Requests
+xhtml2pdf==0.2.28
+requests==2.34.2
