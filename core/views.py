@@ -2,6 +2,7 @@ import io
 import secrets
 from django_ratelimit.decorators import ratelimit
 from django_ratelimit.exceptions import Ratelimited
+from django.db import transaction
 from xhtml2pdf import pisa
 import uuid
 import openpyxl
@@ -142,181 +143,188 @@ def index(request):
         'request': request,
     })
 
-# Booking engine with dynamic pricing, meal plan, auto offers, GST & direct voucher redirect
 @ratelimit(key='ip', rate='5/h', method='POST', block=True)
 def book_hotel(request):
-    if request.method == 'POST':
-        hotel_id = request.POST.get('hotel_id')
-        room_type_id = request.POST.get('room_type_id')
-        meal_plan_id = request.POST.get('meal_plan_id')
-        guest_name = request.POST.get('guest_name', 'Guest').strip()
-        guest_phone = request.POST.get('guest_phone', '').strip()
-        guest_email = request.POST.get('guest_email', '').strip()
-        check_in_str = request.POST.get('check_in')
-        check_out_str = request.POST.get('check_out')
-        adults_count = _to_int(request.POST.get('adults_count'), 2, 1, 20)
-        children_count = _to_int(request.POST.get('children_count'), 0, 0, 10)
-        rooms_count = _to_int(request.POST.get('rooms_count'), 1, 1, 10)
-        total_guests = adults_count + children_count if (adults_count + children_count) > 0 else 2
+    if request.method != 'POST':
+        return redirect('index')
+    
+    hotel_id = request.POST.get('hotel_id')
+    room_type_id = request.POST.get('room_type_id')
+    meal_plan_id = request.POST.get('meal_plan_id')
+    guest_name = request.POST.get('guest_name', 'Guest').strip()
+    guest_phone = request.POST.get('guest_phone', '').strip()
+    guest_email = request.POST.get('guest_email', '').strip()
+    check_in_str = request.POST.get('check_in')
+    check_out_str = request.POST.get('check_out')
+    adults_count = _to_int(request.POST.get('adults_count'), 2, 1, 20)
+    children_count = _to_int(request.POST.get('children_count'), 0, 0, 10)
+    rooms_count = _to_int(request.POST.get('rooms_count'), 1, 1, 10)
+    total_guests = adults_count + children_count if (adults_count + children_count) > 0 else 2
 
-        hotel = get_object_or_404(Hotel, id=hotel_id, is_active=True, is_verified=True)
-        room_type = (RoomType.objects.filter(id=room_type_id, hotel=hotel).first() if room_type_id else None) or hotel.room_types.first()
-        base_rate = room_type.base_price if room_type else Decimal('1800.00')
+    hotel = get_object_or_404(Hotel, id=hotel_id, is_active=True, is_verified=True)
+    room_type = (RoomType.objects.filter(id=room_type_id, hotel=hotel).first() if room_type_id else None) or hotel.room_types.first()
+    base_rate = room_type.base_price if room_type else Decimal('1800.00')
 
-        # Flexible Meal Plan Resolution
-        meal_plan = None
-        meal_extra = Decimal('0.00')
-        if meal_plan_id:
-            cleaned_val = str(meal_plan_id).strip()
-            if cleaned_val.isdigit():
-                meal_plan = MealPlan.objects.filter(id=int(cleaned_val), room_type=room_type).first()
-            else:
-                meal_plan = MealPlan.objects.filter(plan_code__iexact=cleaned_val, room_type=room_type).first()
-                if not meal_plan:
-                    meal_plan = MealPlan.objects.filter(plan_code__iexact=cleaned_val).first()
+    # Flexible Meal Plan Resolution
+    meal_plan = None
+    meal_extra = Decimal('0.00')
+    if meal_plan_id:
+        cleaned_val = str(meal_plan_id).strip()
+        if cleaned_val.isdigit():
+            meal_plan = MealPlan.objects.filter(id=int(cleaned_val), room_type=room_type).first()
+        else:
+            meal_plan = MealPlan.objects.filter(plan_code__iexact=cleaned_val, room_type=room_type).first()
+            if not meal_plan:
+                meal_plan = MealPlan.objects.filter(plan_code__iexact=cleaned_val).first()
 
-            if meal_plan:
-                meal_extra = meal_plan.additional_price
-            else:
-                fallback_rates = {
-                    'EP': Decimal('0.00'),
-                    'CP': Decimal('350.00'),
-                    'MAP': Decimal('750.00'),
-                    'AP': Decimal('1200.00'),
-                }
-                code_upper = cleaned_val.upper()
-                meal_extra = fallback_rates.get(code_upper, Decimal('0.00'))
-                # if room_type exists, create a new MealPlan entry dynamically
-                if room_type and code_upper in fallback_rates:
-                    meal_plan, _ = MealPlan.objects.get_or_create(
-                        room_type=room_type,
-                        plan_code=code_upper,
-                        defaults={'additional_price': meal_extra, 'is_active': True}
-                    )
-        # Calculate stay duration
-        check_in_date = None
-        check_out_date = None
-        nights = 1
-        try:
-            check_in_date = datetime.strptime(check_in_str or '', '%Y-%m-%d').date()
-            check_out_date = datetime.strptime(check_out_str or '', '%Y-%m-%d').date()
-            nights = (check_out_date - check_in_date).days
-        except ValueError:
-            check_in_date = check_out_date = None
-
-        if not check_in_date or check_in_date < timezone.localdate() or nights < 1 or nights > 30:
-            messages.error(request, "Please select valid check-in and check-out dates (maximum 30 nights).")
-            return redirect('index')
-        if len(_normalize_phone(guest_phone)) < 10 or '@' not in guest_email or not guest_name:
-            messages.error(request, "Please enter a valid name, 10-digit phone number and email address.")
-            return redirect('index')
-
-        # --- Automatic Offer & Dynamic DB Coupon Evaluation ---
-        discount_percentage = Decimal('0.00')
-        flat_discount_amount = Decimal('0.00')
-        offer_name = "Standard Pricing"
-        applied_coupon_obj = None
-
-        # 1. Early Bird Offer: Booking made >= 7 days before check-in (10% OFF)
-        if check_in_date and (check_in_date - timezone.localdate()).days >= 7:
-            discount_percentage = Decimal('10.00')
-            offer_name = "Early Bird Offer (10% OFF)"
-
-        # 2. Long Stay Offer: Booking stay >= 3 nights (15% OFF)
-        if nights >= 3:
-            if Decimal('15.00') > discount_percentage:
-                discount_percentage = Decimal('15.00')
-                offer_name = "Long Stay Offer (15% OFF)"
-
-        # 3. Dynamic Database Coupon Lookup
-        coupon_input = (request.POST.get('coupon_code') or '').strip()
-        if coupon_input:
-            coupon_match = Coupon.objects.filter(code__iexact=coupon_input, is_active=True).first()
-            today = timezone.localdate()
-            if coupon_match and (coupon_match.valid_till is None or coupon_match.valid_till >= today):
-                applied_coupon_obj = coupon_match
-                if coupon_match.discount_type == 'flat':
-                    flat_discount_amount = coupon_match.discount_value
-                    discount_percentage = Decimal('0.00')
-                    offer_name = f"Coupon {coupon_match.code} (Rs. {coupon_match.discount_value} OFF)"
-                else:
-                    if coupon_match.discount_value > discount_percentage:
-                        discount_percentage = coupon_match.discount_value
-                        offer_name = f"Coupon {coupon_match.code} ({coupon_match.discount_value}% OFF)"
-            else:
-                messages.warning(request, f"Coupon '{coupon_input}' is either invalid or expired.")
-
-        # Compute bill via calculator (with weekend surge engine)
-        bill = calculate_stay_pricing(
-            base_price=base_rate,
-            meal_extra=meal_extra,
-            check_in=check_in_date,
-            check_out=check_out_date,
-            rooms=rooms_count,
-            discount_percent=discount_percentage,
-            adults=adults_count,
-            children=children_count,
-            flat_discount=flat_discount_amount,
-            surge_percent=20  # 20% surge for Friday & Saturday nights
-        )
-
-        custom_booking_id = generate_mmy_booking_id()
-        while Booking.objects.filter(booking_id=custom_booking_id).exists():
-            custom_booking_id = generate_mmy_booking_id()
-
-        # 1. Create and save booking in DB
-        booking = Booking.objects.create(
-            booking_id=custom_booking_id,
-            hotel=hotel,
-            room_type=room_type,
-            meal_plan=meal_plan,
-            user=request.user if request.user.is_authenticated else None,
-            guest_name=guest_name,
-            guest_phone=guest_phone,
-            guest_email=guest_email,
-            check_in=check_in_date,
-            check_out=check_out_date,
-            destination_title=f"{hotel.name} ({hotel.city})",
-            travel_date=check_in_date,
-            guests_count=total_guests,
-            adults_count=adults_count,
-            children_count=children_count,
-            coupon=applied_coupon_obj,
-            base_amount=bill['pure_room_base'],             # Reflects surge pricing
-            meal_plan_amount=bill['total_meal_amount'],     
-            discount_amount=bill['discount_amount'],
-            cgst_amount=bill['cgst'],
-            sgst_amount=bill['sgst'],
-            gst_amount=bill['total_gst'],
-            total_amount=bill['grand_total'],
-            rooms_count=rooms_count,
-            payment_mode='PAY_AT_HOTEL',
-            payment_status='PENDING',
-            status='CONFIRMED',
-            transaction_id=f"TXN-{uuid.uuid4().hex[:8].upper()}"
-        )
-        # 2. Multi-channel alerts dispatch (Safe try-except block)
-        try:
-            send_booking_sms(booking)
-            try:
-                send_booking_email(booking)
-            except Exception as email_err:
-                logger.warning(
-                    f"Email dispatch failed for booking {booking.booking_id}: "
-                    f"{type(email_err).__name__}"
+        if meal_plan:
+            meal_extra = meal_plan.additional_price
+        else:
+            code_upper = cleaned_val.upper()
+            meal_extra = MEAL_FALLBACK_RATES.get(code_upper, Decimal('0.00'))
+            if room_type and code_upper in MEAL_FALLBACK_RATES:
+                meal_plan, _ = MealPlan.objects.get_or_create(
+                    room_type=room_type,
+                    plan_code=code_upper,
+                    defaults={'additional_price': meal_extra, 'is_active': True}
                 )
-            send_whatsapp_notification(booking)
-        except Exception as sms_err:
-            logger.warning(
-                f"SMS dispatch failed for booking {booking.booking_id}: "
-                f"{type(sms_err).__name__}"
-            )
-        _remember_booking(request, booking)  # lets this guest open their own voucher
-        # 3. Direct Redirect to Printable Tax Voucher / Invoice
-        messages.success(request, f"Booking #{booking.booking_id} confirmed! Here is your official travel pass.")
-        return redirect('booking_voucher', booking_id=booking.booking_id)
-    return redirect('index')
+    
+    # Calculate stay duration
+    check_in_date = None
+    check_out_date = None
+    nights = 1
+    try:
+        check_in_date = datetime.strptime(check_in_str or '', '%Y-%m-%d').date()
+        check_out_date = datetime.strptime(check_out_str or '', '%Y-%m-%d').date()
+        nights = (check_out_date - check_in_date).days
+    except ValueError:
+        check_in_date = check_out_date = None
 
+    if not check_in_date or check_in_date < timezone.localdate() or nights < 1 or nights > 30:
+        messages.error(request, "Please select valid check-in and check-out dates (maximum 30 nights).")
+        return redirect('index')
+    
+    if len(_normalize_phone(guest_phone)) < 10 or '@' not in guest_email or not guest_name:
+        messages.error(request, "Please enter a valid name, 10-digit phone number and email address.")
+        return redirect('index')
+
+    # Offer & Coupon evaluation
+    discount_percentage = Decimal('0.00')
+    flat_discount_amount = Decimal('0.00')
+    applied_coupon_obj = None
+
+    if check_in_date and (check_in_date - timezone.localdate()).days >= 7:
+        discount_percentage = Decimal('10.00')
+
+    if nights >= 3 and Decimal('15.00') > discount_percentage:
+        discount_percentage = Decimal('15.00')
+
+    coupon_input = (request.POST.get('coupon_code') or '').strip()
+    if coupon_input:
+        coupon_match = Coupon.objects.filter(code__iexact=coupon_input, is_active=True).first()
+        today = timezone.localdate()
+        if coupon_match and (coupon_match.valid_till is None or coupon_match.valid_till >= today):
+            applied_coupon_obj = coupon_match
+            if coupon_match.discount_type == 'flat':
+                flat_discount_amount = coupon_match.discount_value
+                discount_percentage = Decimal('0.00')
+            else:
+                if coupon_match.discount_value > discount_percentage:
+                    discount_percentage = coupon_match.discount_value
+        else:
+            messages.warning(request, f"Coupon '{coupon_input}' is either invalid or expired.")
+
+    # Compute bill
+    bill = calculate_stay_pricing(
+        base_price=base_rate,
+        meal_extra=meal_extra,
+        check_in=check_in_date,
+        check_out=check_out_date,
+        rooms=rooms_count,
+        discount_percent=discount_percentage,
+        adults=adults_count,
+        children=children_count,
+        flat_discount=flat_discount_amount,
+        surge_percent=20
+    )
+
+    # ========== RACE CONDITION FIX + BOOKING CREATION ==========
+    try:
+        with transaction.atomic():
+            if room_type:
+                locked_room = RoomType.objects.select_for_update().get(pk=room_type.pk)
+                
+                booked_count = Booking.objects.filter(
+                    room_type=locked_room,
+                    status__in=['CONFIRMED', 'PENDING'],
+                    check_in__lt=check_out_date,
+                    check_out__gt=check_in_date,
+                ).count()
+                
+                if booked_count >= locked_room.total_inventory:
+                    messages.error(
+                        request,
+                        "Sorry, this room is fully booked for the selected dates. "
+                        "Please choose different dates or another room type."
+                    )
+                    return redirect('index')
+            
+            custom_booking_id = generate_mmy_booking_id()
+            while Booking.objects.filter(booking_id=custom_booking_id).exists():
+                custom_booking_id = generate_mmy_booking_id()
+            
+            booking = Booking.objects.create(
+                booking_id=custom_booking_id,
+                hotel=hotel,
+                room_type=room_type,
+                meal_plan=meal_plan,
+                user=request.user if request.user.is_authenticated else None,
+                guest_name=guest_name,
+                guest_phone=guest_phone,
+                guest_email=guest_email,
+                check_in=check_in_date,
+                check_out=check_out_date,
+                destination_title=f"{hotel.name} ({hotel.city})",
+                travel_date=check_in_date,
+                guests_count=total_guests,
+                adults_count=adults_count,
+                children_count=children_count,
+                coupon=applied_coupon_obj,
+                base_amount=bill['pure_room_base'],
+                meal_plan_amount=bill['total_meal_amount'],
+                discount_amount=bill['discount_amount'],
+                cgst_amount=bill['cgst'],
+                sgst_amount=bill['sgst'],
+                gst_amount=bill['total_gst'],
+                total_amount=bill['grand_total'],
+                rooms_count=rooms_count,
+                payment_mode='PAY_AT_HOTEL',
+                payment_status='PENDING',
+                status='CONFIRMED',
+                transaction_id=f"TXN-{uuid.uuid4().hex[:8].upper()}"
+            )
+    except RoomType.DoesNotExist:
+        messages.error(request, "Room not available. Please try again.")
+        return redirect('index')
+    except Exception as e:
+        logger.error(f"Booking failed: {type(e).__name__}: {str(e)}")
+        messages.error(request, "Booking could not be completed. Please try again.")
+        return redirect('index')
+
+    # ========== NOTIFICATIONS (Booking ke bahar — fail hone pe booking rollback nahi hogi) ==========
+    try:
+        send_booking_sms(booking)
+        try:
+            send_booking_email(booking)
+        except Exception as email_err:
+            logger.warning(f"Email dispatch failed for {booking.booking_id}: {type(email_err).__name__}")
+        send_whatsapp_notification(booking)
+    except Exception as sms_err:
+        logger.warning(f"SMS dispatch failed for {booking.booking_id}: {type(sms_err).__name__}")
+
+    _remember_booking(request, booking)
+    messages.success(request, f"Booking #{booking.booking_id} confirmed! Here is your official travel pass.")
+    return redirect('booking_voucher', booking_id=booking.booking_id)
 
 # Helpdesk and traveler support (Guest Facing Form)
 @ratelimit(key='ip', rate='3/h', method='POST', block=True)
@@ -326,11 +334,9 @@ def support_request(request):
         phone = request.POST.get('phone', '').strip()
         location = request.POST.get('location', '').strip()
         details = request.POST.get('details') or request.POST.get('issue', '')
-
         if not name or not phone:
             messages.error(request, 'Please provide both your name and contact phone number.')
             return redirect('support_request')
-
         EmergencySupport.objects.create(
             name=name,
             phone=phone,
@@ -543,6 +549,7 @@ def portal_room_manage(request, hotel_id):
     return render(request, 'custom_admin/room_manage.html', {
         'hotel': hotel,
         'rooms': rooms,
+
     })
 
 # Add new property
