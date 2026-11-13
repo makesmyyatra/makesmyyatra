@@ -365,3 +365,155 @@ class HotelReview(models.Model):
 
     def __str__(self):
         return f"{self.guest_name} ({self.rating}★) - {self.hotel.name}"
+
+# ============================================================
+# CABS MODULE
+# ============================================================
+
+class CabCategory(models.Model):
+    """Cab vehicle types: Hatchback, Sedan, SUV, Tempo Traveller."""
+    name = models.CharField(max_length=50)
+    seating_capacity = models.PositiveIntegerField(default=4)
+    luggage_capacity = models.PositiveIntegerField(default=2)
+    ac_available = models.BooleanField(default=True)
+    base_per_km_rate = models.DecimalField(max_digits=8, decimal_places=2, default=12.00)
+    driver_allowance_per_day = models.DecimalField(max_digits=8, decimal_places=2, default=300.00)
+    min_km_per_day = models.PositiveIntegerField(default=250)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Cab Category"
+        verbose_name_plural = "Cab Categories"
+        ordering = ['seating_capacity', 'name']
+
+    def __str__(self):
+        return f"{self.name} ({self.seating_capacity} seater)"
+
+
+class CabRoutePackage(models.Model):
+    """Fixed route packages: Delhi→Jaipur, Airport transfers, etc."""
+    TRIP_TYPES = [
+        ('ONE_WAY', 'Outstation One-Way'),
+        ('ROUND_TRIP', 'Outstation Round-Trip'),
+        ('AIRPORT', 'Airport Transfer'),
+        ('HOURLY', 'Hourly Rental'),
+    ]
+    trip_type = models.CharField(max_length=20, choices=TRIP_TYPES)
+    from_city = models.CharField(max_length=100, db_index=True)
+    to_city = models.CharField(max_length=100, blank=True, default="")
+    distance_km = models.PositiveIntegerField(default=0)
+    duration_hours = models.PositiveIntegerField(default=0)
+    category = models.ForeignKey(CabCategory, on_delete=models.CASCADE, related_name='route_packages')
+    fixed_price = models.DecimalField(max_digits=10, decimal_places=2)
+    tolls_included = models.BooleanField(default=False)
+    state_tax_included = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        if self.to_city:
+            return f"{self.from_city} → {self.to_city} ({self.get_trip_type_display()})"
+        return f"{self.from_city} - {self.get_trip_type_display()}"
+
+
+def generate_cab_booking_id():
+    """Generates unique MMY-CAB-XXXXXXXXXX format."""
+    return f"MMY-CAB-{uuid.uuid4().hex[:10].upper()}"
+
+
+class CabBooking(models.Model):
+    """Cab booking with full pricing breakdown."""
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('CONFIRMED', 'Confirmed'),
+        ('ASSIGNED', 'Driver Assigned'),
+        ('ONGOING', 'Trip Ongoing'),
+        ('COMPLETED', 'Completed'),
+        ('CANCELLED', 'Cancelled'),
+        ('CANCELLED_BY_ADMIN', 'Cancelled by Admin'),
+        ('CANCELLED_BY_GUEST', 'Cancelled by Guest'),
+    ]
+    TRIP_TYPES = CabRoutePackage.TRIP_TYPES
+    PAYMENT_MODES = [
+        ('PAY_TO_DRIVER', 'Pay to Driver'),
+        ('PREPAID', 'Full Online Payment'),
+    ]
+    PAYMENT_STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('PAID', 'Paid'),
+        ('REFUNDED', 'Refunded'),
+    ]
+
+    booking_id = models.CharField(max_length=50, unique=True, default=generate_cab_booking_id, editable=False)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='cab_bookings')
+    coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, blank=True, related_name='cab_bookings')
+    category = models.ForeignKey(CabCategory, on_delete=models.PROTECT, related_name='bookings')
+    route_package = models.ForeignKey(CabRoutePackage, on_delete=models.SET_NULL, null=True, blank=True)
+
+    trip_type = models.CharField(max_length=20, choices=TRIP_TYPES)
+    pickup_city = models.CharField(max_length=100)
+    drop_city = models.CharField(max_length=100, blank=True, default="")
+    pickup_address = models.TextField()
+    pickup_datetime = models.DateTimeField()
+    return_date = models.DateField(null=True, blank=True)
+    distance_km = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    waiting_hours = models.PositiveIntegerField(default=0)
+
+    guest_name = models.CharField(max_length=120)
+    guest_phone = models.CharField(max_length=15)
+    guest_email = models.EmailField(blank=True, default="")
+
+    base_fare = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    driver_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    toll_charges = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    night_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    state_tax = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    gst_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    payment_mode = models.CharField(max_length=20, choices=PAYMENT_MODES, default='PAY_TO_DRIVER')
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='PENDING')
+    transaction_id = models.CharField(max_length=100, blank=True, null=True)
+
+    driver_name = models.CharField(max_length=100, blank=True, default="")
+    driver_phone = models.CharField(max_length=15, blank=True, default="")
+    vehicle_number = models.CharField(max_length=20, blank=True, default="")
+
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='PENDING')
+    cancelled_by = models.CharField(max_length=30, blank=True, null=True,
+        choices=[("GUEST", "Guest"), ("ADMIN", "Admin")])
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    cancellation_reason = models.TextField(blank=True, null=True)
+    cancellation_penalty = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Cab Booking"
+        verbose_name_plural = "Cab Bookings"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.booking_id} - {self.guest_name} ({self.status})"
+
+
+class CabReview(models.Model):
+    """Review for a completed cab booking."""
+    booking = models.OneToOneField(CabBooking, on_delete=models.CASCADE, related_name='review')
+    guest_name = models.CharField(max_length=120)
+    rating = models.PositiveSmallIntegerField(default=5,
+        validators=[MinValueValidator(1), MaxValueValidator(5)])
+    comment = models.TextField(blank=True, default="")
+    is_approved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Cab Review"
+        verbose_name_plural = "Cab Reviews"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.guest_name} ({self.rating}★) - {self.booking.booking_id}"

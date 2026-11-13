@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{% block title %}Makes My Yatra{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f2f4f8; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased flex flex-col min-h-screen">
+
+    <!-- ============ PUBLIC HEADER ============ -->
+    <header class="bg-[#030d17] text-white sticky top-0 z-40 border-b border-slate-800 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+            
+            <!-- Logo -->
+            <a href="{% url 'index' %}" class="flex items-center gap-2 flex-shrink-0">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-lg shadow-lg shadow-blue-500/30">⛰️</div>
+                <div class="hidden sm:block">
+                    <span class="text-lg font-black tracking-tight whitespace-nowrap">MAKES<span class="text-blue-400">MY</span>YATRA</span>
+                    <span class="block text-[9px] uppercase font-bold tracking-widest text-slate-400 leading-none">Travel Super-App</span>
+                </div>
+            </a>
+
+            <!-- Center Nav (Desktop) -->
+            <nav class="hidden md:flex items-center gap-1 text-sm font-bold">
+                <a href="{% url 'index' %}" class="px-3 py-2 rounded-lg hover:bg-white/10 transition">Hotels</a>
+                <a href="{% url 'cab_list' %}" class="px-3 py-2 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">Cabs</a>
+                <a href="{% url 'track_booking' %}" class="px-3 py-2 rounded-lg hover:bg-white/10 transition">My Trips</a>
+                <a href="{% url 'track_cab_booking' %}" class="px-3 py-2 rounded-lg hover:bg-white/10 transition">Track Cab</a>
+                <a href="{% url 'support_request' %}" class="px-3 py-2 rounded-lg hover:bg-white/10 transition">Help</a>
+            </nav>
+
+            <!-- Right Actions -->
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <a href="{% url 'partner_login' %}" class="hidden sm:inline-flex text-xs font-bold px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-800 transition">
+                    Partner
+                </a>
+                <a href="{% url 'portal_login' %}" class="hidden lg:inline-flex text-xs font-bold px-3 py-2 rounded-lg border border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-300 transition">
+                    <i data-lucide="lock" class="w-3.5 h-3.5 inline mr-1 text-blue-400"></i> Admin
+                </a>
+                <a href="{% url 'cab_list' %}" class="inline-flex items-center gap-1.5 text-xs font-black px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 transition shadow-lg shadow-emerald-500/30">
+                    <i data-lucide="car" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Book Cab</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Mobile Nav (horizontal scroll) -->
+        <div class="md:hidden border-t border-slate-800 px-2 py-2 overflow-x-auto no-scrollbar">
+            <div class="flex items-center gap-1 text-xs font-bold whitespace-nowrap">
+                <a href="{% url 'index' %}" class="px-3 py-1.5 rounded-lg hover:bg-white/10 transition">Hotels</a>
+                <a href="{% url 'cab_list' %}" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300">Cabs</a>
+                <a href="{% url 'track_booking' %}" class="px-3 py-1.5 rounded-lg hover:bg-white/10 transition">My Trips</a>
+                <a href="{% url 'track_cab_booking' %}" class="px-3 py-1.5 rounded-lg hover:bg-white/10 transition">Track Cab</a>
+                <a href="{% url 'support_request' %}" class="px-3 py-1.5 rounded-lg hover:bg-white/10 transition">Help</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ============ MESSAGES ============ -->
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 pt-4 w-full">
+        {% for message in messages %}
+        <div class="p-3 rounded-xl text-xs font-bold mb-2 flex items-center justify-between gap-2
+            {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200
+            {% elif message.tags == 'error' %}bg-rose-50 text-rose-800 border border-rose-200
+            {% elif message.tags == 'warning' %}bg-amber-50 text-amber-800 border border-amber-200
+            {% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+            <span class="flex items-center gap-2">
+                <i data-lucide="{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}alert-circle{% else %}info{% endif %}" class="w-4 h-4"></i>
+                {{ message }}
+            </span>
+            <button type="button" onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">✕</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ============ MAIN CONTENT ============ -->
+    <main class="flex-1 w-full">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- ============ PUBLIC FOOTER ============ -->
+    <footer class="bg-[#030d17] text-slate-400 text-xs pt-10 pb-6 border-t border-slate-800 mt-12">
+        <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            
+            <div>
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white">⛰️</div>
+                    <span class="text-sm font-black text-white">MAKES<span class="text-blue-400">MY</span>YATRA</span>
+                </div>
+                <p class="leading-relaxed">India's trusted travel platform — verified hotels, cabs, and experiences across the country.</p>
+            </div>
+
+            <div>
+                <h4 class="text-white font-black uppercase tracking-wider text-[11px] mb-3">Services</h4>
+                <ul class="space-y-1.5">
+                    <li><a href="{% url 'index' %}" class="hover:text-white transition">Hotels &amp; Homestays</a></li>
+                    <li><a href="{% url 'cab_list' %}" class="hover:text-white transition">Cabs &amp; Transfers</a></li>
+                    <li><a href="{% url 'track_booking' %}" class="hover:text-white transition">Track Hotel Booking</a></li>
+                    <li><a href="{% url 'track_cab_booking' %}" class="hover:text-white transition">Track Cab Booking</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="text-white font-black uppercase tracking-wider text-[11px] mb-3">Partner With Us</h4>
+                <ul class="space-y-1.5">
+                    <li><a href="{% url 'partner_register' %}" class="text-emerald-400 hover:text-emerald-300 font-bold">List Your Property</a></li>
+                    <li><a href="{% url 'partner_login' %}" class="hover:text-white transition">Partner Dashboard</a></li>
+                    <li><a href="{% url 'support_request' %}" class="hover:text-white transition">Support Helpdesk</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="text-white font-black uppercase tracking-wider text-[11px] mb-3">24x7 Support</h4>
+                <p class="mb-2">Dedicated team for bookings and on-ground assistance.</p>
+                <span class="text-white font-bold block">📞 +91 98160 XXXXX</span>
+                <span class="text-white font-bold block mt-1">✉️ helpdesk@makesmyyatra.com</span>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 mt-8 pt-5 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-slate-600 text-[11px] gap-2">
+            <p>© 2026 MakesMyYatra. All rights reserved.</p>
+            <div class="flex items-center gap-4">
+                <a href="{% url 'partner_login' %}" class="hover:text-slate-400">Partner Desk</a>
+                <span>•</span>
+                <a href="{% url 'portal_login' %}" class="hover:text-slate-400">Admin Operations</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+    </script>
+</body>
+</html>

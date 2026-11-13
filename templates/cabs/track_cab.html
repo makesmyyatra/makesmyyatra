@@ -1,0 +1,73 @@
+{% extends 'base_public.html' %}
+{% block title %}Track Cab Booking — Makes My Yatra{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+
+  <div class="text-center mb-6">
+    <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+      <i data-lucide="search" class="w-8 h-8"></i>
+    </div>
+    <h1 class="text-2xl font-black text-slate-900">Track Your Cab Booking</h1>
+    <p class="text-sm text-slate-500 mt-1">Enter your booking ID and phone/email to view details</p>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 mb-6">
+    <form method="POST">
+      {% csrf_token %}
+      <div class="space-y-3">
+        <input type="text" name="booking_id" value="{{ query_id }}" required placeholder="Booking ID (e.g. MMY-CAB-A1B2C3D4E5)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500 font-mono transition">
+        <input type="text" name="contact_info" value="{{ contact_info }}" placeholder="Phone number or email used at booking" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500 transition">
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm uppercase tracking-wider px-6 py-3 rounded-xl shadow-lg transition">
+          Track Booking
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {% if booking %}
+  <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+    <div class="bg-slate-900 text-white p-5 flex items-center justify-between">
+      <div>
+        <p class="text-[10px] text-slate-400 uppercase font-bold">Booking ID</p>
+        <p class="font-black text-lg">{{ booking.booking_id }}</p>
+      </div>
+      <span class="px-3 py-1 rounded-full text-xs font-black
+        {% if booking.status == 'CONFIRMED' %}bg-emerald-400 text-emerald-900
+        {% elif booking.status == 'COMPLETED' %}bg-blue-400 text-blue-900
+        {% elif 'CANCELLED' in booking.status %}bg-rose-400 text-rose-900
+        {% else %}bg-slate-400 text-slate-900{% endif %}">
+        {{ booking.get_status_display }}
+      </span>
+    </div>
+
+    <div class="p-6 grid grid-cols-2 gap-4 text-sm">
+      <div><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Guest</span><b>{{ booking.guest_name }}</b></div>
+      <div><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Phone</span><b>{{ booking.guest_phone }}</b></div>
+      <div><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Cab</span><b>{{ booking.category.name }}</b></div>
+      <div><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Trip Type</span><b>{{ booking.get_trip_type_display }}</b></div>
+      <div><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Pickup Date</span><b>{{ booking.pickup_datetime|date:"d M Y" }}</b></div>
+      <div><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Time</span><b>{{ booking.pickup_datetime|time:"g:i A" }}</b></div>
+      <div class="col-span-2"><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Address</span><b>{{ booking.pickup_address }}, {{ booking.pickup_city }}</b></div>
+      
+      {% if booking.driver_name %}
+      <div class="col-span-2 bg-emerald-50 border border-emerald-200 rounded-xl p-4 mt-2">
+        <p class="text-xs font-black text-emerald-800 uppercase mb-1">🚗 Driver Assigned</p>
+        <p class="font-black text-base">{{ booking.driver_name }}</p>
+        <p class="text-sm text-slate-700">{{ booking.driver_phone }} • {{ booking.vehicle_number }}</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="bg-slate-50 px-6 py-4 border-t border-slate-200 flex justify-between text-lg font-black">
+      <span>Total</span>
+      <span class="text-emerald-700">₹{{ booking.total_amount }}</span>
+    </div>
+
+    <div class="p-4 text-center">
+      <a href="{% url 'cab_booking_detail' booking.booking_id %}" class="text-sm font-bold text-emerald-600 hover:underline">View Full Details →</a>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

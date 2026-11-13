@@ -1,0 +1,109 @@
+{% extends 'custom_admin/base.html' %}
+{% block title %}Cab Revenue — Admin{% endblock %}
+{% block page_title %}Cab Revenue Report{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h2 class="text-2xl font-black text-slate-900">Cab Revenue Report</h2>
+      <p class="text-xs text-slate-500 mt-1">{{ start_date }} to {{ end_date }}</p>
+    </div>
+    <a href="{% url 'portal_cab_bookings' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-5 py-2.5 rounded-xl transition">
+      ← All Bookings
+    </a>
+  </div>
+
+  <!-- Date Filter -->
+  <div class="bg-white rounded-2xl border border-slate-200 p-4">
+    <form method="GET" class="flex flex-wrap gap-3 items-end">
+      <div class="flex-1 min-w-[150px]">
+        <label class="block text-xs font-bold text-slate-600 mb-1">Start Date</label>
+        <input type="date" name="start_date" value="{{ start_date }}" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+      </div>
+      <div class="flex-1 min-w-[150px]">
+        <label class="block text-xs font-bold text-slate-600 mb-1">End Date</label>
+        <input type="date" name="end_date" value="{{ end_date }}" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+      </div>
+      <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-5 py-2.5 rounded-lg transition">
+        Apply Filter
+      </button>
+      <a href="{% url 'portal_cab_revenue' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm px-5 py-2.5 rounded-lg transition">
+        Reset
+      </a>
+    </form>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="bg-gradient-to-br from-emerald-500 to-emerald-700 text-white rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs uppercase font-bold text-emerald-100">Total Bookings</span>
+        <i data-lucide="calendar-check" class="w-5 h-5 text-emerald-200"></i>
+      </div>
+      <p class="text-3xl font-black">{{ kpi.total_bookings }}</p>
+    </div>
+
+    <div class="bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs uppercase font-bold text-blue-100">Total Revenue</span>
+        <i data-lucide="indian-rupee" class="w-5 h-5 text-blue-200"></i>
+      </div>
+      <p class="text-3xl font-black">₹{{ kpi.total_revenue }}</p>
+    </div>
+
+    <div class="bg-gradient-to-br from-amber-500 to-amber-700 text-white rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs uppercase font-bold text-amber-100">Total GST Collected</span>
+        <i data-lucide="receipt" class="w-5 h-5 text-amber-200"></i>
+      </div>
+      <p class="text-3xl font-black">₹{{ kpi.total_gst }}</p>
+    </div>
+  </div>
+
+  <!-- Category Breakdown -->
+  <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+    <div class="p-5 border-b border-slate-200">
+      <h3 class="text-sm font-black uppercase tracking-wider text-slate-500">Revenue by Cab Category</h3>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 border-b border-slate-200">
+          <tr class="text-left text-xs font-black text-slate-600 uppercase">
+            <th class="px-5 py-3">Cab Category</th>
+            <th class="px-5 py-3 text-right">Bookings</th>
+            <th class="px-5 py-3 text-right">Revenue</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for row in category_summary %}
+          <tr class="hover:bg-slate-50 transition">
+            <td class="px-5 py-3 font-bold">{{ row.category__name }}</td>
+            <td class="px-5 py-3 text-right">{{ row.bookings }}</td>
+            <td class="px-5 py-3 text-right font-black text-emerald-700">₹{{ row.revenue }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" class="px-5 py-16 text-center text-slate-500">
+              <i data-lucide="trending-up" class="w-12 h-12 text-slate-300 mx-auto mb-2"></i>
+              <p class="text-sm font-bold">No revenue data for this period</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        {% if category_summary %}
+        <tfoot class="bg-slate-50 border-t-2 border-slate-200">
+          <tr class="text-sm font-black">
+            <td class="px-5 py-3">Total</td>
+            <td class="px-5 py-3 text-right">{{ kpi.total_bookings }}</td>
+            <td class="px-5 py-3 text-right text-emerald-700">₹{{ kpi.total_revenue }}</td>
+          </tr>
+        </tfoot>
+        {% endif %}
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

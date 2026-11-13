@@ -1,0 +1,105 @@
+{% extends 'custom_admin/base.html' %}
+{% block title %}Cab Bookings — Admin{% endblock %}
+{% block page_title %}Cab Bookings{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+
+  {% if messages %}
+  <div class="space-y-2">
+    {% for message in messages %}
+    <div class="p-3 rounded-xl text-xs font-bold {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% else %}bg-rose-50 text-rose-800 border border-rose-200{% endif %}">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h2 class="text-2xl font-black text-slate-900">Cab Bookings</h2>
+      <p class="text-xs text-slate-500 mt-1">Total {{ bookings|length }} bookings</p>
+    </div>
+    <a href="{% url 'portal_cab_revenue' %}" class="bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase px-5 py-2.5 rounded-xl transition flex items-center gap-2">
+      <i data-lucide="trending-up" class="w-4 h-4"></i> Revenue Report
+    </a>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white rounded-2xl border border-slate-200 p-4">
+    <form method="GET" class="flex flex-wrap gap-3">
+      <input type="text" name="q" value="{{ search_q }}" placeholder="Search booking ID, guest, phone, city..." class="flex-1 min-w-[200px] bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+      <select name="status" class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold outline-none">
+        <option value="ALL" {% if selected_status == 'ALL' %}selected{% endif %}>All Status</option>
+        <option value="PENDING" {% if selected_status == 'PENDING' %}selected{% endif %}>Pending</option>
+        <option value="CONFIRMED" {% if selected_status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
+        <option value="ASSIGNED" {% if selected_status == 'ASSIGNED' %}selected{% endif %}>Assigned</option>
+        <option value="ONGOING" {% if selected_status == 'ONGOING' %}selected{% endif %}>Ongoing</option>
+        <option value="COMPLETED" {% if selected_status == 'COMPLETED' %}selected{% endif %}>Completed</option>
+        <option value="CANCELLED_BY_GUEST" {% if selected_status == 'CANCELLED_BY_GUEST' %}selected{% endif %}>Cancelled by Guest</option>
+        <option value="CANCELLED_BY_ADMIN" {% if selected_status == 'CANCELLED_BY_ADMIN' %}selected{% endif %}>Cancelled by Admin</option>
+      </select>
+      <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-5 py-2.5 rounded-xl transition">Filter</button>
+      <a href="{% url 'portal_cab_bookings' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm px-5 py-2.5 rounded-xl transition">Reset</a>
+    </form>
+  </div>
+
+  <!-- Bookings Table -->
+  <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 border-b border-slate-200">
+          <tr class="text-left text-xs font-black text-slate-600 uppercase">
+            <th class="px-4 py-3">Booking ID</th>
+            <th class="px-4 py-3">Guest</th>
+            <th class="px-4 py-3">Trip</th>
+            <th class="px-4 py-3">Cab Type</th>
+            <th class="px-4 py-3">Pickup</th>
+            <th class="px-4 py-3">Amount</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for booking in bookings %}
+          <tr class="hover:bg-slate-50 transition">
+            <td class="px-4 py-3 font-mono text-xs font-bold">{{ booking.booking_id }}</td>
+            <td class="px-4 py-3">
+              <div class="font-bold">{{ booking.guest_name }}</div>
+              <div class="text-xs text-slate-500">{{ booking.guest_phone }}</div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="font-bold">{{ booking.pickup_city }}{% if booking.drop_city %} → {{ booking.drop_city }}{% endif %}</div>
+              <div class="text-xs text-slate-500">{{ booking.get_trip_type_display }}</div>
+            </td>
+            <td class="px-4 py-3 text-xs">{{ booking.category.name }}</td>
+            <td class="px-4 py-3 text-xs">{{ booking.pickup_datetime|date:"d M, g:i A" }}</td>
+            <td class="px-4 py-3 font-black text-emerald-700">₹{{ booking.total_amount }}</td>
+            <td class="px-4 py-3">
+              <span class="px-2 py-1 rounded-full text-[10px] font-black
+                {% if booking.status == 'CONFIRMED' or booking.status == 'ASSIGNED' or booking.status == 'ONGOING' %}bg-emerald-100 text-emerald-800
+                {% elif booking.status == 'COMPLETED' %}bg-blue-100 text-blue-800
+                {% elif 'CANCELLED' in booking.status %}bg-rose-100 text-rose-800
+                {% else %}bg-slate-100 text-slate-700{% endif %}">
+                {{ booking.get_status_display }}
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <a href="{% url 'portal_cab_booking_detail' booking.booking_id %}" class="text-xs font-bold text-emerald-600 hover:underline">View</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="px-4 py-16 text-center">
+              <i data-lucide="inbox" class="w-12 h-12 text-slate-300 mx-auto mb-2"></i>
+              <p class="text-sm font-bold text-slate-600">No cab bookings yet</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

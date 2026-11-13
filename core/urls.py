@@ -1,6 +1,7 @@
 from django.urls import path
 from core.views import health_check
 from . import views
+from . import cabs_views
 
 urlpatterns = [
     
@@ -95,6 +96,29 @@ urlpatterns = [
     path('portal/urgent-help/<int:support_id>/resolve/', views.portal_urgent_help_resolve, name='portal_urgent_help_resolve'),
     path('portal/reports/revenue/', views.portal_revenue_report, name='portal_revenue_report'),
     path('portal/bookings/<str:booking_id>/cancel/',views.portal_booking_cancel,name='portal_booking_cancel',),
+
+    # CABS MODULE
+    # Public cab URLs
+    path('cabs/', cabs_views.cab_list, name='cab_list'),
+    path('cabs/search/', cabs_views.cab_search, name='cab_search'),
+    path('cabs/book/', cabs_views.book_cab, name='book_cab'),
+    path('cabs/booking/<str:booking_id>/', cabs_views.cab_booking_detail, name='cab_booking_detail'),
+    path('cabs/booking/<str:booking_id>/cancel/', cabs_views.cancel_cab_booking, name='cancel_cab_booking'),
+    path('cabs/booking/<str:booking_id>/review/', cabs_views.submit_cab_review, name='submit_cab_review'),
+    path('cabs/booking/<str:booking_id>/invoice/', cabs_views.cab_invoice_pdf, name='cab_invoice_pdf'),
+    path('cabs/track/', cabs_views.track_cab_booking, name='track_cab_booking'),
+    path('cabs/coupon/apply/', cabs_views.apply_cab_coupon_ajax, name='apply_cab_coupon_ajax'),
+    
+    # Admin cab URLs
+    path('portal/cabs/', cabs_views.portal_cabs, name='portal_cabs'),
+    path('portal/cabs/add/', cabs_views.portal_cab_add, name='portal_cab_add'),
+    path('portal/cabs/<int:cab_id>/edit/', cabs_views.portal_cab_edit, name='portal_cab_edit'),
+    path('portal/cabs/<int:cab_id>/delete/', cabs_views.portal_cab_delete, name='portal_cab_delete'),
+    path('portal/cab-bookings/', cabs_views.portal_cab_bookings, name='portal_cab_bookings'),
+    path('portal/cab-bookings/<str:booking_id>/', cabs_views.portal_cab_booking_detail, name='portal_cab_booking_detail'),
+    path('portal/cab-bookings/<str:booking_id>/update/', cabs_views.portal_cab_booking_update, name='portal_cab_booking_update'),
+    path('portal/cab-bookings/<str:booking_id>/cancel/', cabs_views.portal_cab_cancel, name='portal_cab_cancel'),
+    path('portal/cab-revenue/', cabs_views.portal_cab_revenue, name='portal_cab_revenue'),
 
     
 ]

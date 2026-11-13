@@ -21,7 +21,11 @@
 </style>
 <style>
   body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f2f4f8; }
-  .hero-bg { background: linear-gradient(180deg, #051322 0%, #0c2b4d 55%, #15457c 100%); }
+   .hero-bg {
+    position: relative;
+    background: linear-gradient(135deg, rgba(5,19,34,0.92) 0%, rgba(12,43,77,0.85) 55%, rgba(21,69,124,0.80) 100%),
+                url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    background-attachment: fixed;}
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -254,8 +258,9 @@
           <div class="w-14 h-14 bg-amber-500/10 text-amber-600 rounded-2xl flex items-center justify-center mx-auto border border-amber-200"><i data-lucide="car-taxi-front" class="w-7 h-7"></i></div>
           <h3 id="cabsHeading" class="text-lg font-black text-slate-900"></h3>
           <p id="cabsDesc" class="text-xs text-slate-500"></p>
-          <a href="{% url 'taxi' %}" class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-xs px-6 py-3 rounded-xl transition shadow-lg shadow-blue-500/25">
-            <span>Check Available Cabs &amp; Tariffs</span><i data-lucide="arrow-right" class="w-4 h-4"></i>
+          <a href="{% url 'cab_list' %}" class="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-black text-xs px-6 py-3 rounded-xl transition shadow-lg shadow-emerald-500/25">
+            <span>Book Cabs Now</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
           </a>
         </div>
       </div>
@@ -299,7 +304,7 @@
         </div>
       </div>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-5">
       <div class="border border-slate-200 rounded-2xl p-4 flex gap-3 hover:shadow-md transition bg-gradient-to-tr from-amber-50/40 to-white">
         <span class="text-3xl">🎁</span>
         <div><span class="text-[10px] font-black uppercase text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Coupon Deal</span>
@@ -318,6 +323,14 @@
           <h4 class="text-sm font-bold text-slate-900 mt-1">LONG VACATION: Flat 15% OFF!</h4>
           <p class="text-xs text-slate-500 mt-0.5">Auto-applied on reservations of 3+ nights</p></div>
       </div>
+      <a href="{% url 'cab_list' %}" class="border border-slate-200 rounded-2xl p-4 flex gap-3 hover:shadow-md hover:border-purple-300 transition bg-gradient-to-tr from-purple-50/40 to-white group">
+        <span class="text-3xl">🚗</span>
+        <div>
+          <span class="text-[10px] font-black uppercase text-purple-600 bg-purple-50 px-2 py-0.5 rounded">Cabs Now Live</span>
+          <h4 class="text-sm font-bold text-slate-900 mt-1 group-hover:text-purple-700 transition">Airport &amp; Outstation Cabs</h4>
+          <p class="text-xs text-slate-500 mt-0.5">Verified drivers • Transparent pricing</p>
+        </div>
+      </a>
     </div>
   </div>
 </section>
@@ -350,8 +363,8 @@
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {% for hotel in hotels %}
-    <article class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group">
-      <div class="relative h-56 bg-slate-100 overflow-hidden">
+        <article class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group">
+      <div class="relative aspect-[4/3] bg-slate-100 overflow-hidden">
         <img src="{{ hotel.cover_image|default:'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80' }}"
              alt="{{ hotel.name }}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
         <div class="absolute top-3 left-3 bg-[#051322]/85 backdrop-blur-md text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-lg">{{ hotel.city }}</div>
@@ -365,7 +378,6 @@
           <i data-lucide="image" class="w-3 h-3 text-blue-400"></i> Gallery
         </a>
       </div>
-
       <div class="p-5 flex-1 flex flex-col justify-between">
         <div>
           <div class="flex items-center justify-between mb-1">
@@ -585,7 +597,7 @@
     <div>
       <h4 class="text-white font-black uppercase tracking-wider text-[11px] mb-3">Quick Navigation</h4>
       <ul class="space-y-1.5">
-        <li><a href="{% url 'taxi' %}" class="hover:text-white transition">Outstation Cabs</a></li>
+        <li><a href="{% url 'cab_list' %}" class="hover:text-white transition">Outstation Cabs</a></li>
         <li><a href="{% url 'track_booking' %}" class="hover:text-white transition">Search Booking ID</a></li>
         <li><a href="{% url 'support_request' %}" class="hover:text-white transition">Traveler Helpdesk</a></li>
       </ul>
@@ -610,13 +622,13 @@
   <button type="button" class="on" onclick="window.scrollTo({top:0,behavior:'smooth'})"><i data-lucide="house" class="w-6 h-6"></i>Home</button>
   <a href="{% url 'track_booking' %}"><i data-lucide="briefcase" class="w-6 h-6"></i>My Trips</a>
   <button type="button" onclick="document.getElementById('offersSection').scrollIntoView({behavior:'smooth'})"><i data-lucide="percent" class="w-6 h-6"></i>Offers</button>
-  <a href="{% url 'support_request' %}"><i data-lucide="headset" class="w-6 h-6"></i>Help</a>
+  <a href="{% url 'cab_list' %}"><i data-lucide="car" class="w-6 h-6"></i>Cabs</a>
 </nav>
 
 <script>
 /* ================= CONFIG ================= */
 const SURGE_PERCENT = 20;   // Fri & Sat nights
-// GST on hotel rooms (per room, per night, on declared tariff): up to 1000 = 0%, 1001-7500 = 5%, above 7500 = 18%
+// GST on hotel rooms (per room, per night, on declared tariff): up to 1000 = 0%, 1001-7500 = 5%, above 7500 = 18% 
 // (rates in force since 22 Sep 2025 - confirm with your CA). Final calculation is done on the server (pricing.py).
 function gstRateFor(nightRate) { return nightRate <= 1000 ? 0 : (nightRate <= 7500 ? 0.05 : 0.18); }
 const DEFAULT_RATE = 1850;

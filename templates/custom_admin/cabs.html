@@ -1,0 +1,70 @@
+{% extends 'custom_admin/base.html' %}
+{% block title %}Cab Categories — Admin{% endblock %}
+{% block page_title %}Cab Management{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+
+  {% if messages %}
+  <div class="space-y-2">
+    {% for message in messages %}
+    <div class="p-3 rounded-xl text-xs font-bold {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% else %}bg-rose-50 text-rose-800 border border-rose-200{% endif %}">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-black text-slate-900">Cab Categories</h2>
+      <p class="text-xs text-slate-500 mt-1">Manage all cab types available for booking</p>
+    </div>
+    <a href="{% url 'portal_cab_add' %}" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider px-5 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+      <i data-lucide="plus" class="w-4 h-4"></i> Add Cab Category
+    </a>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for cat in categories %}
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-lg transition">
+      <div class="flex items-start justify-between mb-3">
+        <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+          <i data-lucide="car" class="w-6 h-6"></i>
+        </div>
+        {% if cat.is_active %}
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">ACTIVE</span>
+        {% else %}
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-600">INACTIVE</span>
+        {% endif %}
+      </div>
+
+      <h3 class="text-lg font-black text-slate-900">{{ cat.name }}</h3>
+      <p class="text-xs text-slate-500">{{ cat.seating_capacity }} seater • {{ cat.luggage_capacity }} bags{% if cat.ac_available %} • AC{% endif %}</p>
+
+      <div class="mt-3 pt-3 border-t border-slate-100 space-y-1.5 text-xs">
+        <div class="flex justify-between"><span class="text-slate-500">Per KM Rate:</span><b>₹{{ cat.base_per_km_rate }}</b></div>
+        <div class="flex justify-between"><span class="text-slate-500">Driver Allowance:</span><b>₹{{ cat.driver_allowance_per_day }}/day</b></div>
+        <div class="flex justify-between"><span class="text-slate-500">Min KM/Day:</span><b>{{ cat.min_km_per_day }} km</b></div>
+        <div class="flex justify-between"><span class="text-slate-500">Total Bookings:</span><b>{{ cat.bookings_count }}</b></div>
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-slate-100 flex gap-2">
+        <a href="{% url 'portal_cab_edit' cat.id %}" class="flex-1 text-center bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-2 rounded-lg transition">Edit</a>
+        <a href="{% url 'portal_cab_delete' cat.id %}" onclick="return confirm('Delete {{ cat.name }}? This cannot be undone.')" class="flex-1 text-center bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold py-2 rounded-lg transition">Delete</a>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-span-full bg-white rounded-2xl border border-slate-200 p-12 text-center">
+      <i data-lucide="car" class="w-12 h-12 text-slate-300 mx-auto mb-3"></i>
+      <h3 class="font-black text-slate-800 mb-1">No cab categories yet</h3>
+      <p class="text-sm text-slate-500 mb-4">Add your first cab category to start accepting bookings</p>
+      <a href="{% url 'portal_cab_add' %}" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-6 py-2.5 rounded-xl">
+        <i data-lucide="plus" class="w-4 h-4"></i> Add First Category
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}
