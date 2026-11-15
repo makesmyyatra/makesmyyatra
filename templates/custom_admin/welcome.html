@@ -1,0 +1,189 @@
+{% extends 'custom_admin/base.html' %}
+{% block title %}Welcome Admin — Makes My Yatra{% endblock %}
+{% block page_title %}Welcome Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-8">
+
+  <!-- Hero Welcome -->
+  <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-8 md:p-12 text-white relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full -mr-32 -mt-32"></div>
+    <div class="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500/10 rounded-full -ml-24 -mb-24"></div>
+    
+    <div class="relative z-10">
+      <p class="text-sm font-bold text-blue-300 uppercase tracking-widest mb-2">Admin Control Center</p>
+      <h1 class="text-3xl md:text-5xl font-black mb-3">Welcome, {{ user.first_name|default:user.username }}! 👋</h1>
+      <p class="text-slate-300 max-w-2xl">This is your business command center. Manage all modules (Hotels, Cabs, Bookings, Revenue) from here.</p>
+      
+      <div class="mt-6 flex flex-wrap gap-3">
+        <a href="{% url 'portal_dashboard' %}" class="bg-white text-slate-900 hover:bg-slate-100 font-black text-xs uppercase tracking-wider px-6 py-3 rounded-xl transition inline-flex items-center gap-2">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+          Classic Dashboard
+        </a>
+        <a href="{% url 'index' %}" target="_blank" class="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-black text-xs uppercase tracking-wider px-6 py-3 rounded-xl transition inline-flex items-center gap-2">
+          <i data-lucide="external-link" class="w-4 h-4"></i>
+          Visit Public Site
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Today's Overview -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="bg-white rounded-2xl border border-slate-200 p-5">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Hotels</span>
+        <i data-lucide="building-2" class="w-4 h-4 text-blue-500"></i>
+      </div>
+      <p class="text-2xl font-black text-slate-900">{{ stats.hotels_count }}</p>
+      <p class="text-[10px] text-emerald-600 font-bold">{{ stats.hotels_verified }} verified</p>
+    </div>
+    
+    <div class="bg-white rounded-2xl border border-slate-200 p-5">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Cab Partners</span>
+        <i data-lucide="users" class="w-4 h-4 text-emerald-500"></i>
+      </div>
+      <p class="text-2xl font-black text-slate-900">{{ stats.cabs_partners }}</p>
+      <p class="text-[10px] text-emerald-600 font-bold">Active</p>
+    </div>
+    
+    <div class="bg-white rounded-2xl border border-slate-200 p-5">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Active Cabs</span>
+        <i data-lucide="car" class="w-4 h-4 text-amber-500"></i>
+      </div>
+      <p class="text-2xl font-black text-slate-900">{{ stats.cabs_active_bookings }}</p>
+      <p class="text-[10px] text-slate-500 font-bold">Live bookings</p>
+    </div>
+    
+    <div class="bg-white rounded-2xl border border-slate-200 p-5">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Coupons</span>
+        <i data-lucide="tag" class="w-4 h-4 text-purple-500"></i>
+      </div>
+      <p class="text-2xl font-black text-slate-900">{{ stats.total_coupons }}</p>
+      <p class="text-[10px] text-slate-500 font-bold">Active</p>
+    </div>
+  </div>
+
+  <!-- Module Cards -->
+  <div>
+    <h2 class="text-lg font-black text-slate-900 mb-4">Choose a Module</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      
+      <!-- Hotels Module -->
+      <a href="{% url 'portal_hotels' %}" class="group bg-white rounded-2xl border-2 border-slate-200 hover:border-blue-500 hover:shadow-xl transition-all p-6 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform"></div>
+        
+        <div class="relative z-10 flex items-start justify-between mb-4">
+          <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+            <i data-lucide="building-2" class="w-7 h-7"></i>
+          </div>
+          <i data-lucide="arrow-right" class="w-5 h-5 text-slate-400 group-hover:text-blue-500 group-hover:translate-x-1 transition-all"></i>
+        </div>
+        
+        <h3 class="text-xl font-black text-slate-900 mb-1">Hotels &amp; Homestays</h3>
+        <p class="text-xs text-slate-500 mb-4">Manage properties, bookings, partners and revenue</p>
+        
+        <div class="grid grid-cols-3 gap-2 pt-4 border-t border-slate-100">
+          <div>
+            <p class="text-[9px] text-slate-400 font-bold uppercase">Properties</p>
+            <p class="text-base font-black text-slate-900">{{ stats.hotels_count }}</p>
+          </div>
+          <div>
+            <p class="text-[9px] text-slate-400 font-bold uppercase">Bookings</p>
+            <p class="text-base font-black text-slate-900">{{ stats.hotels_bookings }}</p>
+          </div>
+          <div>
+            <p class="text-[9px] text-slate-400 font-bold uppercase">Revenue</p>
+            <p class="text-base font-black text-emerald-600">₹{{ stats.hotels_revenue|floatformat:0 }}</p>
+          </div>
+        </div>
+      </a>
+      
+      <!-- Cabs Module -->
+      <a href="{% url 'portal_cabs_module' %}" class="group bg-white rounded-2xl border-2 border-slate-200 hover:border-emerald-500 hover:shadow-xl transition-all p-6 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform"></div>
+        
+        <div class="relative z-10 flex items-start justify-between mb-4">
+          <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+            <i data-lucide="car" class="w-7 h-7"></i>
+          </div>
+          <i data-lucide="arrow-right" class="w-5 h-5 text-slate-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all"></i>
+        </div>
+        
+        <h3 class="text-xl font-black text-slate-900 mb-1">Cabs &amp; Transfers</h3>
+        <p class="text-xs text-slate-500 mb-4">Categories, partners, wallet, bookings and dispatch</p>
+        
+        <div class="grid grid-cols-3 gap-2 pt-4 border-t border-slate-100">
+          <div>
+            <p class="text-[9px] text-slate-400 font-bold uppercase">Categories</p>
+            <p class="text-base font-black text-slate-900">{{ stats.cabs_categories }}</p>
+          </div>
+          <div>
+            <p class="text-[9px] text-slate-400 font-bold uppercase">Bookings</p>
+            <p class="text-base font-black text-slate-900">{{ stats.cabs_bookings }}</p>
+          </div>
+          <div>
+            <p class="text-[9px] text-slate-400 font-bold uppercase">Revenue</p>
+            <p class="text-base font-black text-emerald-600">₹{{ stats.cabs_revenue|floatformat:0 }}</p>
+          </div>
+        </div>
+      </a>
+      
+      <!-- Coming Soon -->
+      <div class="bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300 p-6 relative opacity-70">
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-14 h-14 bg-slate-300 rounded-2xl flex items-center justify-center text-white">
+            <i data-lucide="plane" class="w-7 h-7"></i>
+          </div>
+          <span class="text-[10px] font-black text-amber-700 bg-amber-100 px-2 py-1 rounded-lg">COMING SOON</span>
+        </div>
+        <h3 class="text-xl font-black text-slate-500 mb-1">Flights</h3>
+        <p class="text-xs text-slate-400">Booking management for domestic flights</p>
+      </div>
+      
+      <!-- Reports -->
+      <a href="{% url 'portal_revenue_report' %}" class="group bg-white rounded-2xl border-2 border-slate-200 hover:border-purple-500 hover:shadow-xl transition-all p-6 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-purple-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform"></div>
+        
+        <div class="relative z-10 flex items-start justify-between mb-4">
+          <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+            <i data-lucide="bar-chart-3" class="w-7 h-7"></i>
+          </div>
+          <i data-lucide="arrow-right" class="w-5 h-5 text-slate-400 group-hover:text-purple-500 group-hover:translate-x-1 transition-all"></i>
+        </div>
+        <h3 class="text-xl font-black text-slate-900 mb-1">Reports &amp; Analytics</h3>
+        <p class="text-xs text-slate-500">Revenue reports, bookings data, GST and exports</p>
+      </a>
+      
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div>
+    <h2 class="text-lg font-black text-slate-900 mb-4">Quick Actions</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <a href="{% url 'portal_hotel_add' %}" class="bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-500 hover:shadow-md transition text-center">
+        <i data-lucide="plus-circle" class="w-6 h-6 text-blue-500 mx-auto mb-2"></i>
+        <p class="text-xs font-black text-slate-800">Add Hotel</p>
+      </a>
+      <a href="{% url 'portal_cab_add' %}" class="bg-white rounded-xl border border-slate-200 p-4 hover:border-emerald-500 hover:shadow-md transition text-center">
+        <i data-lucide="plus-circle" class="w-6 h-6 text-emerald-500 mx-auto mb-2"></i>
+        <p class="text-xs font-black text-slate-800">Add Cab Category</p>
+      </a>
+      <a href="{% url 'portal_partner_add' %}" class="bg-white rounded-xl border border-slate-200 p-4 hover:border-amber-500 hover:shadow-md transition text-center">
+        <i data-lucide="user-plus" class="w-6 h-6 text-amber-500 mx-auto mb-2"></i>
+        <p class="text-xs font-black text-slate-800">Add Partner</p>
+      </a>
+      <a href="{% url 'portal_coupons' %}" class="bg-white rounded-xl border border-slate-200 p-4 hover:border-purple-500 hover:shadow-md transition text-center">
+        <i data-lucide="tag" class="w-6 h-6 text-purple-500 mx-auto mb-2"></i>
+        <p class="text-xs font-black text-slate-800">Create Coupon</p>
+      </a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

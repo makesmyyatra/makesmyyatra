@@ -3,7 +3,7 @@ from decimal import Decimal
 from datetime import datetime, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.decorators import user_passes_test, login_required
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import Sum, Count, Q
@@ -16,7 +16,7 @@ from django_ratelimit.decorators import ratelimit
 from xhtml2pdf import pisa
 import logging
 
-from .models import CabCategory, CabRoutePackage, CabBooking, CabReview, Coupon
+from .models import CabCategory, CabRoutePackage, CabBooking, CabReview, Coupon, CabPartner, PartnerWalletTransaction
 from .views import is_admin, _to_int, _normalize_phone
 
 logger = logging.getLogger(__name__)
@@ -455,3 +455,468 @@ def apply_cab_coupon_ajax(request):
         'success': True, 'message': f"Coupon '{coupon.code}' applied!",
         'discount_type': coupon.discount_type, 'discount_value': str(coupon.discount_value),
     })
+
+# ============================================================
+# PARTNER WALLET SYSTEM VIEWS
+# ============================================================
+
+def deduct_commission_from_wallet(booking, partner, admin_user=None):
+    """Deduct commission from partner wallet."""
+    from .models import PartnerWalletTransaction
+    
+    commission_rate = partner.commission_percentage / Decimal('100')
+    commission = (booking.base_fare * commission_rate).quantize(Decimal('0.01'))
+    
+    if partner.wallet_balance < commission:
+        return False, f"Insufficient wallet. Required: ₹{commission}, Available: ₹{partner.wallet_balance}"
+    
+    if partner.wallet_balance - commission < partner.min_wallet_required:
+        return False, f"Wallet will fall below min ₹{partner.min_wallet_required}"
+    
+    balance_before = partner.wallet_balance
+    partner.wallet_balance -= commission
+    partner.save()
+    
+    PartnerWalletTransaction.objects.create(
+        partner=partner, txn_type='COMMISSION', amount=commission,
+        balance_before=balance_before, balance_after=partner.wallet_balance,
+        booking=booking, notes=f"Commission for {booking.booking_id}",
+        created_by=admin_user,
+    )
+    
+    booking.assigned_partner = partner
+    booking.commission_deducted = True
+    booking.commission_amount = commission
+    booking.status = 'ASSIGNED'
+    if not booking.driver_name:
+        booking.driver_name = partner.name
+        booking.driver_phone = partner.phone
+    booking.save()
+    
+    return True, f"✓ Commission ₹{commission} deducted. New balance: ₹{partner.wallet_balance}"
+
+
+@user_passes_test(is_admin, login_url='portal_login')
+def portal_partners(request):
+    from django.db.models import F
+    partners = CabPartner.objects.annotate(
+        bookings_count=Count('assigned_bookings')
+    ).order_by('-created_at')
+    
+    stats = {
+        'total_partners': partners.count(),
+        'active': partners.filter(status='ACTIVE').count(),
+        'low_wallet': partners.filter(wallet_balance__lt=F('min_wallet_required')).count(),
+        'total_wallet': partners.aggregate(Sum('wallet_balance'))['wallet_balance__sum'] or 0,
+    }
+    
+    return render(request, 'custom_admin/cab_partners.html', {
+        'partners': partners, 'stats': stats,
+    })
+
+@user_passes_test(is_admin, login_url='portal_login')
+def portal_partner_add(request):
+    if request.method == 'POST':
+        try:
+            import secrets
+            from django.contrib.auth.models import User as AuthUser
+            
+            name = request.POST.get('name', '').strip()
+            phone = request.POST.get('phone', '').strip()
+            
+            # Check if phone already exists
+            if CabPartner.objects.filter(phone=phone).exists():
+                messages.error(request, f"Partner with phone {phone} already exists.")
+                return redirect('portal_partner_add')
+            
+            # Create partner
+            partner = CabPartner.objects.create(
+                name=name,
+                phone=phone,
+                email=request.POST.get('email', '').strip(),
+                partner_type=request.POST.get('partner_type', 'INDIVIDUAL'),
+                company_name=request.POST.get('company_name', '').strip(),
+                city=request.POST.get('city', '').strip(),
+                address=request.POST.get('address', '').strip(),
+                driving_license=request.POST.get('driving_license', '').strip(),
+                commission_percentage=Decimal(request.POST.get('commission_percentage', '10')),
+                min_wallet_required=Decimal(request.POST.get('min_wallet_required', '500')),
+                status='ACTIVE',
+            )
+            
+            # Create User account for login
+            auto_password = secrets.token_urlsafe(8)[:12]
+            
+            if not AuthUser.objects.filter(username=phone).exists():
+                user = AuthUser.objects.create_user(
+                    username=phone,
+                    password=auto_password,
+                    first_name=name,
+                )
+                partner.user = user
+                partner.save()
+                
+                messages.success(
+                    request, 
+                    f"✓ Partner added! Login credentials — Phone: {phone}, Password: {auto_password} (Please share with partner)"
+                )
+            else:
+                messages.warning(request, f"Partner added but user account exists. Please reset password manually.")
+                
+        except Exception as e:
+            messages.error(request, f"Failed: {e}")
+        return redirect('portal_partners')
+    
+    return render(request, 'custom_admin/cab_partner_add.html')
+
+
+@user_passes_test(is_admin, login_url='portal_login')
+def portal_partner_detail(request, partner_id):
+    partner = get_object_or_404(CabPartner, id=partner_id)
+    transactions = partner.wallet_transactions.all()[:30]
+    bookings = partner.assigned_bookings.all()[:20]
+    
+    return render(request, 'custom_admin/cab_partner_detail.html', {
+        'partner': partner, 'transactions': transactions, 'bookings': bookings,
+    })
+
+
+@user_passes_test(is_admin, login_url='portal_login')
+def portal_partner_recharge(request, partner_id):
+    from .models import PartnerWalletTransaction
+    partner = get_object_or_404(CabPartner, id=partner_id)
+    
+    if request.method == 'POST':
+        try:
+            amount = Decimal(request.POST.get('amount', '0'))
+            reference = request.POST.get('reference_id', '').strip()
+            notes = request.POST.get('notes', '').strip()
+            
+            if amount <= 0:
+                raise ValueError("Amount must be positive")
+            
+            balance_before = partner.wallet_balance
+            partner.wallet_balance += amount
+            partner.save()
+            
+            PartnerWalletTransaction.objects.create(
+                partner=partner, txn_type='RECHARGE', amount=amount,
+                balance_before=balance_before, balance_after=partner.wallet_balance,
+                reference_id=reference, notes=notes or "Wallet recharge",
+                created_by=request.user,
+            )
+            messages.success(request, f"₹{amount} added. New: ₹{partner.wallet_balance}")
+        except Exception as e:
+            messages.error(request, f"Failed: {e}")
+        return redirect('portal_partner_detail', partner_id=partner.id)
+    
+    return render(request, 'custom_admin/cab_partner_recharge.html', {'partner': partner})
+
+
+@user_passes_test(is_admin, login_url='portal_login')
+def portal_partner_toggle(request, partner_id):
+    partner = get_object_or_404(CabPartner, id=partner_id)
+    partner.is_available = not partner.is_available
+    partner.save()
+    status = "available" if partner.is_available else "offline"
+    messages.success(request, f"{partner.name} is now {status}.")
+    return redirect('portal_partner_detail', partner_id=partner.id)
+
+@user_passes_test(is_admin, login_url='portal_login')
+def portal_cab_assign_partner(request, booking_id):
+    from django.db.models import F
+    booking = get_object_or_404(CabBooking, booking_id=booking_id)
+    
+    if booking.assigned_partner:
+        messages.warning(request, f"Already assigned to {booking.assigned_partner.name}.")
+        return redirect('portal_cab_booking_detail', booking_id=booking.booking_id)
+    
+    if request.method == 'POST':
+        partner_id = request.POST.get('partner_id')
+        if not partner_id:
+            messages.error(request, "Select a partner.")
+            return redirect('portal_cab_assign_partner', booking_id=booking.booking_id)
+        
+        partner = get_object_or_404(CabPartner, id=partner_id)
+        
+        if not partner.can_accept_booking:
+            messages.error(request, f"{partner.name} cannot accept. Wallet: ₹{partner.wallet_balance}")
+            return redirect('portal_cab_assign_partner', booking_id=booking.booking_id)
+        
+        # NEW FLOW: Just assign and set status - commission deducts only when partner ACCEPTS
+        booking.assigned_partner = partner
+        booking.status = 'PARTNER_REQUESTED'
+        booking.save()
+        
+        messages.success(
+            request, 
+            f"✓ Booking sent to {partner.name} ({partner.phone}). "
+            f"Commission ₹{booking.base_fare * partner.commission_percentage / 100} will be deducted when partner accepts."
+        )
+        return redirect('portal_cab_booking_detail', booking_id=booking.booking_id)
+    
+    eligible = CabPartner.objects.filter(
+        status='ACTIVE', is_available=True,
+        wallet_balance__gte=F('min_wallet_required')
+    ).exclude(assigned_bookings__status='PARTNER_REQUESTED')
+    
+    return render(request, 'custom_admin/cab_assign_partner.html', {
+        'booking': booking, 'partners': eligible,
+    })
+
+@user_passes_test(is_admin, login_url='portal_login')
+def portal_partner_wallet_log(request):
+    from .models import PartnerWalletTransaction
+    txns = PartnerWalletTransaction.objects.select_related('partner', 'booking').order_by('-created_at')[:100]
+    return render(request, 'custom_admin/cab_wallet_log.html', {'transactions': txns})
+
+# ============================================================
+# PARTNER CAB PANEL - LOGIN & DASHBOARD
+# ============================================================
+
+def partner_cab_login(request):
+    """Partner login using phone + password."""
+    if request.user.is_authenticated:
+        if hasattr(request.user, 'cab_partner'):
+            return redirect('partner_cab_dashboard')
+    
+    if request.method == 'POST':
+        phone = request.POST.get('phone', '').strip()
+        password = request.POST.get('password', '').strip()
+        
+        from django.contrib.auth import authenticate, login
+        user = authenticate(request, username=phone, password=password)
+        
+        if user and hasattr(user, 'cab_partner'):
+            login(request, user)
+            partner = user.cab_partner
+            
+            if partner.status != 'ACTIVE':
+                messages.error(request, f"Your account is {partner.status}. Contact admin.")
+                return redirect('partner_cab_login')
+            
+            messages.success(request, f"Welcome back, {partner.name}!")
+            return redirect('partner_cab_dashboard')
+        else:
+            messages.error(request, "Invalid credentials. Please check phone and password.")
+    
+    return render(request, 'cabs_partner/login.html')
+
+
+def partner_cab_logout(request):
+    from django.contrib.auth import logout
+    logout(request)
+    messages.info(request, "Logged out successfully.")
+    return redirect('partner_cab_login')
+
+
+@login_required(login_url='partner_cab_login')
+def partner_cab_dashboard(request):
+    """Partner dashboard - shows wallet, pending requests, active trips."""
+    if not hasattr(request.user, 'cab_partner'):
+        messages.error(request, "You are not a registered cab partner.")
+        return redirect('index')
+    
+    partner = request.user.cab_partner
+    
+    # Pending requests (need accept/reject)
+    pending_requests = CabBooking.objects.filter(
+        assigned_partner=partner,
+        status='PARTNER_REQUESTED'
+    ).select_related('category').order_by('-created_at')
+    
+    # Active bookings (accepted, ongoing)
+    active_bookings = CabBooking.objects.filter(
+        assigned_partner=partner,
+        status__in=['ASSIGNED', 'ONGOING']
+    ).select_related('category').order_by('-pickup_datetime')
+    
+    # Completed
+    completed_bookings = CabBooking.objects.filter(
+        assigned_partner=partner,
+        status='COMPLETED'
+    ).select_related('category').order_by('-created_at')[:10]
+    
+    # Stats
+    total_bookings = CabBooking.objects.filter(assigned_partner=partner).count()
+    total_earnings = CabBooking.objects.filter(
+        assigned_partner=partner,
+        status__in=['ASSIGNED', 'ONGOING', 'COMPLETED']
+    ).aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
+    
+    context = {
+        'partner': partner,
+        'pending_requests': pending_requests,
+        'active_bookings': active_bookings,
+        'completed_bookings': completed_bookings,
+        'total_bookings': total_bookings,
+        'total_earnings': total_earnings,
+    }
+    return render(request, 'cabs_partner/dashboard.html', context)
+
+
+@login_required(login_url='partner_cab_login')
+def partner_cab_accept_booking(request, booking_id):
+    """Partner accepts booking - commission deducted NOW."""
+    if not hasattr(request.user, 'cab_partner'):
+        return redirect('index')
+    
+    partner = request.user.cab_partner
+    booking = get_object_or_404(
+        CabBooking, 
+        booking_id=booking_id, 
+        assigned_partner=partner,
+        status='PARTNER_REQUESTED'
+    )
+    
+    success, msg = deduct_commission_from_wallet(booking, partner, request.user)
+    
+    if success:
+        messages.success(request, msg)
+    else:
+        messages.error(request, msg)
+    
+    return redirect('partner_cab_dashboard')
+
+
+@login_required(login_url='partner_cab_login')
+def partner_cab_reject_booking(request, booking_id):
+    """Partner rejects booking - admin notified."""
+    if not hasattr(request.user, 'cab_partner'):
+        return redirect('index')
+    
+    partner = request.user.cab_partner
+    booking = get_object_or_404(
+        CabBooking, 
+        booking_id=booking_id, 
+        assigned_partner=partner,
+        status='PARTNER_REQUESTED'
+    )
+    
+    if request.method == 'POST':
+        reason = request.POST.get('reason', 'Rejected by partner').strip()
+        
+        booking.assigned_partner = None
+        booking.status = 'PENDING'
+        booking.save()
+        
+        messages.warning(request, f"Booking {booking.booking_id} rejected. Admin will reassign.")
+        return redirect('partner_cab_dashboard')
+    
+    return render(request, 'cabs_partner/reject_confirm.html', {'booking': booking})
+
+
+@login_required(login_url='partner_cab_login')
+def partner_cab_wallet(request):
+    """Partner wallet page with UTR recharge form."""
+    if not hasattr(request.user, 'cab_partner'):
+        return redirect('index')
+    
+    partner = request.user.cab_partner
+    transactions = partner.wallet_transactions.all()[:30]
+    
+    return render(request, 'cabs_partner/wallet.html', {
+        'partner': partner,
+        'transactions': transactions,
+    })
+
+
+@login_required(login_url='partner_cab_login')
+def partner_cab_utr_submit(request):
+    """Partner submits UTR for recharge - admin verifies."""
+    if not hasattr(request.user, 'cab_partner'):
+        return redirect('index')
+    
+    partner = request.user.cab_partner
+    
+    if request.method == 'POST':
+        utr = request.POST.get('utr', '').strip()
+        amount = request.POST.get('amount', '0')
+        
+        try:
+            amount_dec = Decimal(amount)
+            if amount_dec <= 0:
+                raise ValueError("Amount must be positive")
+            if not utr or len(utr) < 6:
+                raise ValueError("UTR must be at least 6 characters")
+            
+            if partner.pending_utr:
+                messages.warning(request, "You already have a pending UTR. Wait for admin verification.")
+                return redirect('partner_cab_wallet')
+            
+            partner.pending_utr = utr
+            partner.pending_utr_amount = amount_dec
+            partner.pending_utr_submitted_at = timezone.now()
+            partner.save()
+            
+            messages.success(request, f"UTR submitted! ₹{amount_dec} will be credited after admin verification.")
+        except Exception as e:
+            messages.error(request, f"Submission failed: {e}")
+        
+        return redirect('partner_cab_wallet')
+    
+    return redirect('partner_cab_wallet')
+
+
+@login_required(login_url='partner_cab_login')
+def partner_cab_bookings(request):
+    """Partner's all bookings list."""
+    if not hasattr(request.user, 'cab_partner'):
+        return redirect('index')
+    
+    partner = request.user.cab_partner
+    bookings = CabBooking.objects.filter(assigned_partner=partner).select_related('category').order_by('-created_at')
+    
+    return render(request, 'cabs_partner/bookings.html', {
+        'partner': partner,
+        'bookings': bookings,
+    })
+
+
+# ============================================================
+# ADMIN - UTR APPROVAL
+# ============================================================
+
+@user_passes_test(is_admin, login_url='portal_login')
+def portal_partner_utr_approve(request, partner_id):
+    """Admin approves partner UTR - credits wallet."""
+    from .models import PartnerWalletTransaction
+    partner = get_object_or_404(CabPartner, id=partner_id)
+    
+    if not partner.pending_utr:
+        messages.warning(request, "No pending UTR.")
+        return redirect('portal_partner_detail', partner_id=partner.id)
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'approve':
+            amount = partner.pending_utr_amount
+            balance_before = partner.wallet_balance
+            
+            partner.wallet_balance += amount
+            utr_reference = partner.pending_utr
+            partner.pending_utr = None
+            partner.pending_utr_amount = Decimal('0.00')
+            partner.pending_utr_submitted_at = None
+            partner.save()
+            
+            PartnerWalletTransaction.objects.create(
+                partner=partner, txn_type='RECHARGE', amount=amount,
+                balance_before=balance_before, balance_after=partner.wallet_balance,
+                reference_id=utr_reference, notes=f"UTR verified by admin",
+                created_by=request.user,
+            )
+            
+            messages.success(request, f"✓ ₹{amount} credited to {partner.name}'s wallet.")
+        
+        elif action == 'reject':
+            partner.pending_utr = None
+            partner.pending_utr_amount = Decimal('0.00')
+            partner.pending_utr_submitted_at = None
+            partner.save()
+            messages.warning(request, "UTR rejected. Partner will need to resubmit.")
+        
+        return redirect('portal_partner_detail', partner_id=partner.id)
+    
+    return redirect('portal_partner_detail', partner_id=partner.id)

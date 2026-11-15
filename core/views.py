@@ -21,7 +21,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.utils import timezone
-from django.db.models import Sum, Q, Count, Max
+from django.db.models import Sum, Q, Count, Max, F
 from django.core.mail import send_mail
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
@@ -31,6 +31,7 @@ from django.db.models import Prefetch
 from .forms import HotelForm, RoomTypeForm, BookingStatusForm
 from django.template.loader import get_template
 from .utils import calculate_stay_pricing, partner_cancel_booking_logic, get_partner_booking_metrics
+from .models import Hotel, Booking, CabCategory, CabBooking, CabPartner, Coupon
 from datetime import datetime, timedelta
 from .notifications import (
     send_booking_sms,
@@ -423,71 +424,117 @@ def portal_logout(request):
 # Admin operations dashboard
 @user_passes_test(is_admin, login_url="portal_login")
 def portal_dashboard(request):
-  # Metric Counts
-  total_revenue = (
-      Booking.objects.filter(status__in=["CONFIRMED", "CHECKED_OUT"]).aggregate(
-          Sum("total_amount")
-      )["total_amount__sum"]
-      or Decimal("0.00")
-  )
-  total_bookings = Booking.objects.count()
-  total_hotels = Hotel.objects.count()
-  total_coupons = Coupon.objects.filter(is_active=True).count()
-  active_supports = EmergencySupport.objects.filter(status='open').count()
+    from django.db.models import F
+    
+    # ============ HOTEL METRICS ============
+    total_revenue = (
+        Booking.objects.filter(status__in=["CONFIRMED", "CHECKED_OUT"]).aggregate(
+            Sum("total_amount")
+        )["total_amount__sum"]
+        or Decimal("0.00")
+    )
+    total_bookings = Booking.objects.count()
+    total_hotels = Hotel.objects.count()
+    total_coupons = Coupon.objects.filter(is_active=True).count()
+    active_supports = EmergencySupport.objects.filter(status='open').count()
 
-  # Today's Traffic
-  today = timezone.localdate()
-  today_checkins = Booking.objects.filter(check_in=today).count()
-  today_checkouts = Booking.objects.filter(check_out=today).count()
-  new_bookings_today = Booking.objects.filter(created_at__date=today).count()
+    # Today's Traffic
+    today = timezone.localdate()
+    today_checkins = Booking.objects.filter(check_in=today).count()
+    today_checkouts = Booking.objects.filter(check_out=today).count()
+    new_bookings_today = Booking.objects.filter(created_at__date=today).count()
 
-  # Pipeline
-  pipeline = {
-      "pending": Booking.objects.filter(status="PENDING").count(),
-      "confirmed": Booking.objects.filter(status="CONFIRMED").count(),
-      "checked_in": Booking.objects.filter(status="CHECKED_IN").count(),
-      "checked_out": Booking.objects.filter(status="CHECKED_OUT").count(),
-  }
+    # Pipeline
+    pipeline = {
+        "pending": Booking.objects.filter(status="PENDING").count(),
+        "confirmed": Booking.objects.filter(status="CONFIRMED").count(),
+        "checked_in": Booking.objects.filter(status="CHECKED_IN").count(),
+        "checked_out": Booking.objects.filter(status="CHECKED_OUT").count(),
+    }
 
-  # Recent Bookings Table
-  recent_bookings = Booking.objects.select_related(
-      "hotel", "room_type"
-  ).order_by("-id")[:6]
+    # Recent Bookings Table
+    recent_bookings = Booking.objects.select_related(
+        "hotel", "room_type"
+    ).order_by("-id")[:6]
 
-  # 1. Quick Master Tables Inventory Summary (Jaise Django Admin me hota hai)
-  catalog_summary = {
-      "users": User.objects.count(),
-      "groups": Group.objects.count(),
-      "hotels": total_hotels,
-      "room_types": RoomType.objects.count(),
-      "meal_plans": MealPlan.objects.count(),
-      "bookings": total_bookings,
-      "coupons": Coupon.objects.count(),
-      "supports": EmergencySupport.objects.count(),
-  }
+    # Catalog Summary
+    catalog_summary = {
+        "users": User.objects.count(),
+        "groups": Group.objects.count(),
+        "hotels": total_hotels,
+        "room_types": RoomType.objects.count(),
+        "meal_plans": MealPlan.objects.count(),
+        "bookings": total_bookings,
+        "coupons": Coupon.objects.count(),
+        "supports": EmergencySupport.objects.count(),
+    }
 
-  # 2. Django Built-in Audit Logs (Recent Actions History)
-  recent_actions = LogEntry.objects.select_related(
-      "content_type", "user"
-  ).order_by("-action_time")[:8]
+    # Django Audit Logs
+    recent_actions = LogEntry.objects.select_related(
+        "content_type", "user"
+    ).order_by("-action_time")[:8]
 
-  context = {
-      "revenue": total_revenue,
-      "total_bookings": total_bookings,
-      "total_hotels": total_hotels,
-      "total_coupons": total_coupons,
-      "active_supports": active_supports,
-      "today_date": today,
-      "today_checkins": today_checkins,
-      "today_checkouts": today_checkouts,
-      "new_bookings_today": new_bookings_today,
-      "pipeline": pipeline,
-      "cancellations_count": Booking.objects.filter(status="CANCELLED").count(),
-      "bookings": recent_bookings,
-      "catalog": catalog_summary,
-      "recent_actions": recent_actions,
-  }
-  return render(request, "custom_admin/dashboard.html", context)
+    # ============ CABS METRICS ============
+    # Import inside function to avoid circular import
+    from .models import CabCategory, CabBooking, CabPartner
+    
+    cab_metrics = {
+        'cab_bookings': CabBooking.objects.count(),
+        'cab_pending': CabBooking.objects.filter(status='PENDING').count(),
+        'cab_assigned': CabBooking.objects.filter(status='ASSIGNED').count(),
+        'cab_ongoing': CabBooking.objects.filter(status='ONGOING').count(),
+        'cab_completed': CabBooking.objects.filter(status='COMPLETED').count(),
+        'cab_active_today': CabBooking.objects.filter(
+            pickup_datetime__date=today,
+            status__in=['ASSIGNED', 'ONGOING']
+        ).count(),
+        'cab_categories': CabCategory.objects.filter(is_active=True).count(),
+        'total_partners': CabPartner.objects.count(),
+        'active_partners': CabPartner.objects.filter(status='ACTIVE').count(),
+        'low_wallet_partners': CabPartner.objects.filter(
+            status='ACTIVE',
+            wallet_balance__lt=F('min_wallet_required')
+        ).count(),
+        'cab_revenue': CabBooking.objects.filter(
+            status__in=['CONFIRMED', 'ASSIGNED', 'ONGOING', 'COMPLETED']
+        ).aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00'),
+        'total_commission': CabBooking.objects.filter(
+            commission_deducted=True
+        ).aggregate(total=Sum('commission_amount'))['total'] or Decimal('0.00'),
+        'recent_cab_bookings': CabBooking.objects.select_related('category').order_by('-created_at')[:5],
+    }
+
+    # ============ COMBINED TOTALS ============
+    combined_revenue = total_revenue + cab_metrics['cab_revenue']
+    combined_bookings = total_bookings + cab_metrics['cab_bookings']
+    combined_properties = total_hotels + cab_metrics['cab_categories']
+
+    context = {
+        # Hotels
+        "revenue": total_revenue,
+        "total_bookings": total_bookings,
+        "total_hotels": total_hotels,
+        "total_coupons": total_coupons,
+        "active_supports": active_supports,
+        "today_date": today,
+        "today_checkins": today_checkins,
+        "today_checkouts": today_checkouts,
+        "new_bookings_today": new_bookings_today,
+        "pipeline": pipeline,
+        "cancellations_count": Booking.objects.filter(status="CANCELLED").count(),
+        "bookings": recent_bookings,
+        "catalog": catalog_summary,
+        "recent_actions": recent_actions,
+        
+        # Cabs
+        "cab_metrics": cab_metrics,
+        
+        # Combined
+        "combined_revenue": combined_revenue,
+        "combined_bookings": combined_bookings,
+        "combined_properties": combined_properties,
+    }
+    return render(request, "custom_admin/dashboard.html", context)
 
 # Bulk delete & clear actions
 @user_passes_test(is_admin, login_url='portal_login')
@@ -1951,3 +1998,66 @@ def health_check(request):
         "service": "makesmyyatra",
         "timestamp": timezone.now().isoformat(),
     })
+
+# ============================================================
+# ADMIN WELCOME / NAVIGATION HUB
+# ============================================================
+@user_passes_test(is_admin, login_url='portal_login')
+def portal_welcome(request):
+    """Admin landing page with module cards and navigation."""
+    
+    today = timezone.localdate()
+    
+    stats = {
+        # Hotels module
+        'hotels_count': Hotel.objects.count(),
+        'hotels_verified': Hotel.objects.filter(is_verified=True).count(),
+        'hotels_bookings': Booking.objects.count(),
+        'hotels_revenue': Booking.objects.filter(
+            status__in=['CONFIRMED', 'CHECKED_IN', 'CHECKED_OUT']
+        ).aggregate(total=Sum('total_amount'))['total'] or 0,
+        
+        # Cabs module
+        'cabs_categories': CabCategory.objects.filter(is_active=True).count(),
+        'cabs_bookings': CabBooking.objects.count(),
+        'cabs_active_bookings': CabBooking.objects.filter(
+            status__in=['PENDING', 'ASSIGNED', 'CONFIRMED', 'ONGOING']
+        ).count(),
+        'cabs_partners': CabPartner.objects.filter(status='ACTIVE').count(),
+        'cabs_revenue': CabBooking.objects.filter(
+            status__in=['CONFIRMED', 'ASSIGNED', 'ONGOING', 'COMPLETED']
+        ).aggregate(total=Sum('total_amount'))['total'] or 0,
+        
+        # General
+        'total_coupons': Coupon.objects.filter(is_active=True).count(),
+        'today': today,
+    }
+    
+    return render(request, 'custom_admin/welcome.html', {'stats': stats})
+
+@user_passes_test(is_admin, login_url='portal_login')
+def portal_cabs_module(request):
+    """Cabs module hub — landing page for cab admin."""
+    from .models import CabCategory, CabBooking, CabPartner, PartnerWalletTransaction
+    
+    stats = {
+        'categories': CabCategory.objects.filter(is_active=True).count(),
+        'total_bookings': CabBooking.objects.count(),
+        'pending_bookings': CabBooking.objects.filter(status='PENDING').count(),
+        'assigned_bookings': CabBooking.objects.filter(status='ASSIGNED').count(),
+        'ongoing_bookings': CabBooking.objects.filter(status='ONGOING').count(),
+        'completed_bookings': CabBooking.objects.filter(status='COMPLETED').count(),
+        'total_partners': CabPartner.objects.count(),
+        'active_partners': CabPartner.objects.filter(status='ACTIVE').count(),
+        'low_wallet_partners': CabPartner.objects.filter(
+            wallet_balance__lt=models.F('min_wallet_required')
+        ).count(),
+        'total_revenue': CabBooking.objects.filter(
+            status__in=['CONFIRMED', 'ASSIGNED', 'ONGOING', 'COMPLETED']
+        ).aggregate(total=Sum('total_amount'))['total'] or 0,
+        'total_commission': CabBooking.objects.filter(
+            commission_deducted=True
+        ).aggregate(total=Sum('commission_amount'))['total'] or 0,
+    }
+    
+    return render(request, 'custom_admin/cabs_module.html', {'stats': stats})

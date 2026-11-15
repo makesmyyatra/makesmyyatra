@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reject Booking</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; }</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-2xl border-2 border-rose-200 p-6 shadow-lg">
+        <div class="text-center mb-4">
+            <div class="w-16 h-16 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="x-circle" class="w-8 h-8"></i>
+            </div>
+            <h1 class="text-xl font-black text-slate-900">Reject Booking?</h1>
+            <p class="text-xs text-slate-500 mt-1">This will return booking to admin for reassignment</p>
+        </div>
+
+        <div class="bg-slate-50 rounded-xl p-3 mb-4 text-xs">
+            <p class="font-bold text-slate-900">{{ booking.booking_id }}</p>
+            <p>{{ booking.pickup_city }}{% if booking.drop_city %} → {{ booking.drop_city }}{% endif %}</p>
+            <p class="text-slate-500">{{ booking.pickup_datetime|date:"d M Y, g:i A" }}</p>
+        </div>
+
+        <form method="POST" class="space-y-3">
+            {% csrf_token %}
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Reason (optional)</label>
+                <textarea name="reason" rows="2" placeholder="e.g. Vehicle not available" class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm"></textarea>
+            </div>
+            <div class="flex gap-2">
+                <a href="{% url 'partner_cab_dashboard' %}" class="flex-1 text-center bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase py-3 rounded-xl">Cancel</a>
+                <button type="submit" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase py-3 rounded-xl">Confirm Reject</button>
+            </div>
+        </form>
+    </div>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

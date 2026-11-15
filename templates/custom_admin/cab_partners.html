@@ -1,0 +1,97 @@
+{% extends 'custom_admin/base.html' %}
+{% block title %}Cab Partners — Admin{% endblock %}
+{% block page_title %}Cab Partners{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+
+  {% if messages %}
+  <div class="space-y-2">
+    {% for message in messages %}
+    <div class="p-3 rounded-xl text-xs font-bold {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% else %}bg-rose-50 text-rose-800 border border-rose-200{% endif %}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="bg-white rounded-2xl border border-slate-200 p-5">
+      <p class="text-xs text-slate-500 uppercase font-bold">Total Partners</p>
+      <p class="text-2xl font-black text-slate-900 mt-1">{{ stats.total_partners }}</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-200 p-5">
+      <p class="text-xs text-emerald-600 uppercase font-bold">Active</p>
+      <p class="text-2xl font-black text-emerald-600 mt-1">{{ stats.active }}</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-200 p-5">
+      <p class="text-xs text-rose-600 uppercase font-bold">Low Wallet</p>
+      <p class="text-2xl font-black text-rose-600 mt-1">{{ stats.low_wallet }}</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-200 p-5">
+      <p class="text-xs text-blue-600 uppercase font-bold">Total Wallet</p>
+      <p class="text-2xl font-black text-blue-600 mt-1">₹{{ stats.total_wallet }}</p>
+    </div>
+  </div>
+
+  <div class="flex items-center justify-between">
+    <h2 class="text-xl font-black text-slate-900">All Partners</h2>
+    <div class="flex gap-2">
+      <a href="{% url 'portal_partner_wallet_log' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl transition">Wallet Log</a>
+      <a href="{% url 'portal_partner_add' %}" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase px-5 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+        <i data-lucide="plus" class="w-4 h-4"></i> Add Partner
+      </a>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 border-b border-slate-200">
+          <tr class="text-left text-xs font-black text-slate-600 uppercase">
+            <th class="px-4 py-3">Partner</th>
+            <th class="px-4 py-3">Type</th>
+            <th class="px-4 py-3">Wallet</th>
+            <th class="px-4 py-3">Commission</th>
+            <th class="px-4 py-3">Bookings</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for p in partners %}
+          <tr class="hover:bg-slate-50 transition">
+            <td class="px-4 py-3">
+              <div class="font-bold text-slate-900">{{ p.name }}</div>
+              <div class="text-xs text-slate-500">{{ p.phone }}</div>
+            </td>
+            <td class="px-4 py-3 text-xs">{{ p.get_partner_type_display }}</td>
+            <td class="px-4 py-3">
+              <span class="font-black {% if p.wallet_balance >= p.min_wallet_required %}text-emerald-600{% else %}text-rose-600{% endif %}">₹{{ p.wallet_balance }}</span>
+              <div class="text-[10px] text-slate-400">Min: ₹{{ p.min_wallet_required }}</div>
+            </td>
+            <td class="px-4 py-3 font-bold">{{ p.commission_percentage }}%</td>
+            <td class="px-4 py-3">{{ p.bookings_count }}</td>
+            <td class="px-4 py-3">
+              {% if p.status == 'ACTIVE' %}
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">ACTIVE</span>
+              {% elif p.status == 'PENDING' %}
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800">PENDING</span>
+              {% else %}
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800">BLOCKED</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3">
+              <a href="{% url 'portal_partner_detail' p.id %}" class="text-xs font-bold text-emerald-600 hover:underline">View</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="px-4 py-16 text-center text-slate-500">
+            <i data-lucide="users" class="w-12 h-12 text-slate-300 mx-auto mb-2"></i>
+            <p class="font-bold">No partners yet</p>
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

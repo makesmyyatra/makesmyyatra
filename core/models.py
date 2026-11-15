@@ -426,6 +426,7 @@ class CabBooking(models.Model):
     """Cab booking with full pricing breakdown."""
     STATUS_CHOICES = [
         ('PENDING', 'Pending'),
+        ('PARTNER_REQUESTED', 'Awaiting Partner Accept'), 
         ('CONFIRMED', 'Confirmed'),
         ('ASSIGNED', 'Driver Assigned'),
         ('ONGOING', 'Trip Ongoing'),
@@ -488,6 +489,17 @@ class CabBooking(models.Model):
     cancellation_reason = models.TextField(blank=True, null=True)
     cancellation_penalty = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
+    # Partner Wallet System Fields
+    assigned_partner = models.ForeignKey(
+        'CabPartner', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='assigned_bookings'
+    )
+    commission_deducted = models.BooleanField(default=False)
+    commission_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    booking_fee = models.DecimalField(max_digits=8, decimal_places=2, default=99.00,
+        help_text="Convenience fee charged to customer")
+    booking_fee_paid = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -517,3 +529,104 @@ class CabReview(models.Model):
 
     def __str__(self):
         return f"{self.guest_name} ({self.rating}★) - {self.booking.booking_id}"
+
+
+# ============================================================
+# CAB PARTNER WALLET SYSTEM
+# ============================================================
+
+class CabPartner(models.Model):
+    """Cab driver/vendor with prepaid wallet for commission."""
+    PARTNER_TYPE = [
+        ('INDIVIDUAL', 'Individual Driver'),
+        ('VENDOR', 'Cab Vendor/Agency'),
+    ]
+    STATUS = [
+        ('PENDING', 'Pending Verification'),
+        ('ACTIVE', 'Active'),
+        ('BLOCKED', 'Blocked'),
+    ]
+    
+    name = models.CharField(max_length=150)
+    phone = models.CharField(max_length=15, unique=True)
+    email = models.EmailField(blank=True)
+    partner_type = models.CharField(max_length=20, choices=PARTNER_TYPE, default='INDIVIDUAL')
+    
+    company_name = models.CharField(max_length=200, blank=True)
+    address = models.TextField(blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    
+    aadhar_number = models.CharField(max_length=20, blank=True)
+    pan_number = models.CharField(max_length=15, blank=True)
+    driving_license = models.CharField(max_length=30, blank=True)
+    dl_document = models.FileField(upload_to='partner_kyc/dl/', blank=True, null=True)
+    rc_document = models.FileField(upload_to='partner_kyc/rc/', blank=True, null=True)
+    insurance_document = models.FileField(upload_to='partner_kyc/insurance/', blank=True, null=True)
+    
+    wallet_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00,
+        help_text="Prepaid balance — commission auto-deducted")
+    min_wallet_required = models.DecimalField(max_digits=8, decimal_places=2, default=500.00,
+        help_text="Minimum balance to receive new bookings")
+    
+    commission_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=10.00,
+        help_text="Default 10% commission per booking")
+    
+    status = models.CharField(max_length=20, choices=STATUS, default='PENDING')
+    is_available = models.BooleanField(default=True)
+    
+    bank_account_name = models.CharField(max_length=150, blank=True)
+    bank_account_number = models.CharField(max_length=30, blank=True)
+    bank_ifsc = models.CharField(max_length=15, blank=True)
+    # UTR pending (for self-recharge verification)
+    pending_utr = models.CharField(max_length=100, blank=True, null=True, help_text="UTR submitted by partner")
+    pending_utr_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    pending_utr_submitted_at = models.DateTimeField(null=True, blank=True)
+    
+    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='cab_partner')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Cab Partner"
+        verbose_name_plural = "Cab Partners"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.name} ({self.phone}) - ₹{self.wallet_balance}"
+    
+    @property
+    def can_accept_booking(self):
+        return (self.status == 'ACTIVE' and self.is_available 
+                and self.wallet_balance >= self.min_wallet_required)
+
+
+class PartnerWalletTransaction(models.Model):
+    """Track all wallet credit/debit transactions."""
+    TXN_TYPE = [
+        ('RECHARGE', 'Recharge'),
+        ('COMMISSION', 'Commission Deduction'),
+        ('REFUND', 'Refund (Cancellation)'),
+        ('PAYOUT', 'Payout to Bank'),
+        ('ADJUSTMENT', 'Manual Adjustment'),
+    ]
+    
+    partner = models.ForeignKey(CabPartner, on_delete=models.CASCADE, related_name='wallet_transactions')
+    txn_type = models.CharField(max_length=20, choices=TXN_TYPE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    balance_before = models.DecimalField(max_digits=10, decimal_places=2)
+    balance_after = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    booking = models.ForeignKey(CabBooking, on_delete=models.SET_NULL, null=True, blank=True, related_name='wallet_txns')
+    reference_id = models.CharField(max_length=100, blank=True)
+    notes = models.TextField(blank=True)
+    
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Wallet Transaction"
+        verbose_name_plural = "Wallet Transactions"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.partner.name} - {self.txn_type} ₹{self.amount}"

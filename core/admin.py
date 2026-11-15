@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Hotel, HotelGalleryImage, RoomType, MealPlan, Coupon, Booking, EmergencySupport,CabCategory, CabRoutePackage, CabBooking, CabReview
+from .models import Hotel, HotelGalleryImage, RoomType, MealPlan, Coupon, Booking, EmergencySupport,CabCategory, CabRoutePackage, CabBooking, CabReview,CabPartner, PartnerWalletTransaction
 
 class HotelGalleryImageInline(admin.TabularInline):
     model = HotelGalleryImage
@@ -50,9 +50,13 @@ class EmergencySupportAdmin(admin.ModelAdmin):
     list_filter = ('status', 'created_at')
     search_fields = ('name', 'phone', 'location')
 
+# ============================================================
+# CABS ADMIN
+# ============================================================
+
 @admin.register(CabCategory)
 class CabCategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'seating_capacity', 'base_per_km_rate', 'driver_allowance_per_day', 'is_active', 'created_at')
+    list_display = ('name', 'seating_capacity', 'base_per_km_rate', 'driver_allowance_per_day', 'is_active')
     list_filter = ('is_active', 'ac_available')
     search_fields = ('name',)
     list_editable = ('is_active',)
@@ -61,46 +65,16 @@ class CabCategoryAdmin(admin.ModelAdmin):
 @admin.register(CabRoutePackage)
 class CabRoutePackageAdmin(admin.ModelAdmin):
     list_display = ('from_city', 'to_city', 'trip_type', 'category', 'fixed_price', 'is_active')
-    list_filter = ('trip_type', 'is_active', 'tolls_included')
+    list_filter = ('trip_type', 'is_active')
     search_fields = ('from_city', 'to_city')
 
 
 @admin.register(CabBooking)
 class CabBookingAdmin(admin.ModelAdmin):
-    list_display = ('booking_id', 'guest_name', 'pickup_city', 'trip_type', 'total_amount', 'status', 'created_at')
-    list_filter = ('status', 'trip_type', 'payment_status', 'payment_mode')
-    search_fields = ('booking_id', 'guest_name', 'guest_phone', 'pickup_city')
+    list_display = ('booking_id', 'guest_name', 'pickup_city', 'trip_type', 'total_amount', 'status', 'assigned_partner', 'commission_deducted')
+    list_filter = ('status', 'trip_type', 'payment_status', 'commission_deducted')
+    search_fields = ('booking_id', 'guest_name', 'guest_phone')
     readonly_fields = ('booking_id', 'created_at', 'updated_at')
-    date_hierarchy = 'created_at'
-    
-    fieldsets = (
-        ('Booking Info', {
-            'fields': ('booking_id', 'status', 'user', 'category', 'route_package')
-        }),
-        ('Trip Details', {
-            'fields': ('trip_type', 'pickup_city', 'drop_city', 'pickup_address', 'pickup_datetime', 'return_date', 'distance_km', 'waiting_hours')
-        }),
-        ('Guest Details', {
-            'fields': ('guest_name', 'guest_phone', 'guest_email')
-        }),
-        ('Pricing', {
-            'fields': ('base_fare', 'driver_allowance', 'toll_charges', 'night_charge', 'state_tax', 'gst_amount', 'discount_amount', 'total_amount', 'coupon')
-        }),
-        ('Payment', {
-            'fields': ('payment_mode', 'payment_status', 'transaction_id')
-        }),
-        ('Driver', {
-            'fields': ('driver_name', 'driver_phone', 'vehicle_number')
-        }),
-        ('Cancellation', {
-            'fields': ('cancelled_by', 'cancelled_at', 'cancellation_reason', 'cancellation_penalty'),
-            'classes': ('collapse',)
-        }),
-        ('Timestamps', {
-            'fields': ('created_at', 'updated_at'),
-            'classes': ('collapse',)
-        }),
-    )
 
 
 @admin.register(CabReview)
@@ -108,4 +82,19 @@ class CabReviewAdmin(admin.ModelAdmin):
     list_display = ('booking', 'guest_name', 'rating', 'is_approved', 'created_at')
     list_filter = ('rating', 'is_approved')
     list_editable = ('is_approved',)
-    search_fields = ('guest_name', 'booking__booking_id')
+
+
+@admin.register(CabPartner)
+class CabPartnerAdmin(admin.ModelAdmin):
+    list_display = ('name', 'phone', 'partner_type', 'wallet_balance', 'commission_percentage', 'status', 'is_available')
+    list_filter = ('status', 'partner_type', 'is_available')
+    search_fields = ('name', 'phone', 'email')
+    list_editable = ('is_available',)
+
+
+@admin.register(PartnerWalletTransaction)
+class PartnerWalletTransactionAdmin(admin.ModelAdmin):
+    list_display = ('partner', 'txn_type', 'amount', 'balance_after', 'created_at')
+    list_filter = ('txn_type',)
+    search_fields = ('partner__name', 'reference_id')
+    readonly_fields = ('created_at',)

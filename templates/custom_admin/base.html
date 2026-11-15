@@ -9,14 +9,17 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+    .nav-sub { transition: all 0.2s ease; }
+    .nav-arrow { transition: transform 0.2s ease; }
   </style>
   {% block extra_head %}{% endblock %}
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex bg-slate-50">
 
-  <!-- ================= SIDEBAR NAVIGATION (Matching Bookings Exactly) ================= -->
+  <!-- ================= SIDEBAR NAVIGATION ================= -->
   <aside class="w-64 bg-[#051322] text-slate-300 flex flex-col justify-between hidden md:flex min-h-screen border-r border-slate-800 shrink-0">
-    <div>
+    <div class="overflow-y-auto flex-1">
+
       <!-- Brand Logo -->
       <div class="p-6 border-b border-slate-800 flex items-center gap-3">
         <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-black text-white shadow-md shadow-blue-500/30">
@@ -28,45 +31,133 @@
         </div>
       </div>
 
-      <!-- Navigation Links with Dynamic Active Pill -->
-      <nav class="p-4 space-y-1.5 text-xs font-bold">
-        <!-- Dashboard -->
-        <a href="{% url 'portal_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.url_name == 'portal_dashboard' %}bg-blue-600 text-white shadow-lg shadow-blue-600/30{% else %}text-slate-400 hover:text-white hover:bg-slate-900{% endif %}">
-          <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+      <!-- Navigation -->
+      <nav class="p-4 space-y-1 text-xs font-bold">
+
+        <!-- 🏠 WELCOME HOME (Dashboard) -->
+        <a href="{% url 'portal_welcome' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.url_name == 'portal_welcome' or request.resolver_match.url_name == 'portal_dashboard' %}bg-blue-600 text-white shadow-lg shadow-blue-600/30{% else %}text-slate-400 hover:text-white hover:bg-slate-900{% endif %}">
+          <i data-lucide="home" class="w-4 h-4"></i> Welcome Home
         </a>
 
-        <!-- All Stays -->
-        <a href="{% url 'portal_hotels' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.url_name in 'portal_hotels,portal_room_manage,portal_hotel_gallery_manage,portal_hotel_edit' %}bg-blue-600 text-white shadow-lg shadow-blue-600/30{% else %}text-slate-400 hover:text-white hover:bg-slate-900{% endif %}">
-          <i data-lucide="building-2" class="w-4 h-4"></i> All Stays
-        </a>
+        <!-- Divider -->
+        <div class="pt-3 pb-2 px-4">
+          <span class="text-[9px] uppercase text-slate-600 tracking-wider">Modules</span>
+        </div>
 
-        <!-- Add New Stay -->
-        <a href="{% url 'portal_hotel_add' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.url_name == 'portal_hotel_add' %}bg-blue-600 text-white shadow-lg shadow-blue-600/30{% else %}text-slate-400 hover:text-white hover:bg-slate-900{% endif %}">
-          <i data-lucide="plus-circle" class="w-4 h-4"></i> Add New Stay
-        </a>
+        <!-- 🏨 HOTELS MODULE -->
+        <div>
+          <button type="button" onclick="toggleNavGroup('hotels')" class="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.url_name in 'portal_hotels,portal_hotel_add,portal_hotel_edit,portal_room_manage,portal_hotel_gallery_manage,portal_bookings,portal_booking_update,portal_customers,portal_revenue_report' %}bg-slate-900 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-900{% endif %}">
+            <span class="flex items-center gap-3">
+              <i data-lucide="building-2" class="w-4 h-4"></i> Hotels
+            </span>
+            <i data-lucide="chevron-down" id="arrow-hotels" class="nav-arrow w-3.5 h-3.5"></i>
+          </button>
+          <div id="nav-hotels" class="nav-sub hidden pl-3 mt-1 space-y-0.5 border-l-2 border-slate-800 ml-6">
+            <a href="{% url 'portal_hotels' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg transition {% if request.resolver_match.url_name == 'portal_hotels' %}bg-blue-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+              <i data-lucide="list" class="w-3.5 h-3.5"></i> All Properties
+            </a>
+            <a href="{% url 'portal_hotel_add' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg transition {% if request.resolver_match.url_name == 'portal_hotel_add' %}bg-blue-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Add Property
+            </a>
+            <a href="{% url 'portal_bookings' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg transition {% if request.resolver_match.url_name in 'portal_bookings,portal_booking_update' %}bg-blue-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+              <i data-lucide="calendar-check" class="w-3.5 h-3.5"></i> Hotel Bookings
+            </a>
+            <a href="{% url 'portal_customers' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg transition {% if request.resolver_match.url_name == 'portal_customers' %}bg-blue-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+              <i data-lucide="users" class="w-3.5 h-3.5"></i> Customers
+            </a>
+            <a href="{% url 'portal_revenue_report' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg transition {% if request.resolver_match.url_name == 'portal_revenue_report' %}bg-blue-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+              <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> Hotel Revenue
+            </a>
+          </div>
+        </div>
 
-        <!-- Bookings -->
-        <a href="{% url 'portal_bookings' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.url_name in 'portal_bookings,portal_booking_update' %}bg-blue-600 text-white shadow-lg shadow-blue-600/30{% else %}text-slate-400 hover:text-white hover:bg-slate-900{% endif %}">
-          <i data-lucide="calendar-check" class="w-4 h-4"></i> Bookings
-        </a>
+        <!-- 🚗 CABS MODULE -->
+        <div>
+          <button type="button" onclick="toggleNavGroup('cabs')" class="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.url_name in 'portal_cabs_module,portal_cabs,portal_cab_add,portal_cab_edit,portal_cab_bookings,portal_cab_booking_detail,portal_cab_booking_update,portal_partners,portal_partner_add,portal_partner_detail,portal_partner_recharge,portal_partner_wallet_log,portal_cab_revenue,portal_cab_assign_partner' %}bg-slate-900 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-900{% endif %}">
+            <span class="flex items-center gap-3">
+              <i data-lucide="car" class="w-4 h-4"></i> Cabs
+            </span>
+            <i data-lucide="chevron-down" id="arrow-cabs" class="nav-arrow w-3.5 h-3.5"></i>
+          </button>
+          <div id="nav-cabs" class="nav-sub hidden pl-3 mt-1 space-y-0.5 border-l-2 border-slate-800 ml-6">
+            <a href="{% url 'portal_cabs_module' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg transition {% if request.resolver_match.url_name == 'portal_cabs_module' %}bg-blue-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+              <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i> Cabs Hub
+            </a>
+            <a href="{% url 'portal_cabs' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg transition {% if request.resolver_match.url_name in 'portal_cabs,portal_cab_add,portal_cab_edit' %}bg-blue-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+              <i data-lucide="layers" class="w-3.5 h-3.5"></i> Categories
+            </a>
+            <a href="{% url 'portal_cab_bookings' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg transition {% if request.resolver_match.url_name in 'portal_cab_bookings,portal_cab_booking_detail,portal_cab_booking_update,portal_cab_assign_partner' %}bg-blue-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+              <i data-lucide="calendar-check" class="w-3.5 h-3.5"></i> Cab Bookings
+            </a>
+            <a href="{% url 'portal_partners' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg transition {% if request.resolver_match.url_name in 'portal_partners,portal_partner_add,portal_partner_detail,portal_partner_recharge' %}bg-blue-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+              <i data-lucide="users" class="w-3.5 h-3.5"></i> Partners
+            </a>
+            <a href="{% url 'portal_partner_wallet_log' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg transition {% if request.resolver_match.url_name == 'portal_partner_wallet_log' %}bg-blue-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+              <i data-lucide="wallet" class="w-3.5 h-3.5"></i> Wallet Log
+            </a>
+            <a href="{% url 'portal_cab_revenue' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg transition {% if request.resolver_match.url_name == 'portal_cab_revenue' %}bg-blue-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+              <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> Cab Revenue
+            </a>
+          </div>
+        </div>
 
-        <!-- Travelers Directory -->
-        <a href="{% url 'portal_customers' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.url_name == 'portal_customers' %}bg-blue-600 text-white shadow-lg shadow-blue-600/30{% else %}text-slate-400 hover:text-white hover:bg-slate-900{% endif %}">
-          <i data-lucide="users" class="w-4 h-4"></i> Travelers Directory
-        </a>
-        <!-- Revenue Report -->
-        <a href="{% url 'portal_revenue_report' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.url_name == 'portal_revenue_report' %}bg-blue-600 text-white shadow-lg shadow-blue-600/30{% else %}text-slate-400 hover:text-white hover:bg-slate-900{% endif %}">
-          <i data-lucide="bar-chart" class="w-4 h-4"></i> Revenue Report
-        </a>
+        <!-- More Features — Coming Soon -->
+        <div class="pt-2 pb-1 px-4">
+          <div class="flex items-center justify-between gap-2 py-2 px-3 rounded-lg bg-slate-900/40 border border-slate-800/60">
+            <span class="flex items-center gap-2 text-slate-500">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+              <span class="text-[10px]">More Features</span>
+            </span>
+            <span class="text-[8px] font-black bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">SOON</span>
+          </div>
+        </div>
 
-        <!-- Urgent Desk -->
-        <a href="{% url 'portal_urgent_help' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.url_name == 'portal_urgent_help' %}bg-blue-600 text-white shadow-lg shadow-blue-600/30{% else %}text-slate-400 hover:text-white hover:bg-slate-900{% endif %}">
-          <i data-lucide="phone-call" class="w-4 h-4"></i> Urgent Desk
-        </a>
-        <!-- Reviews -->
-        <a href="{% url 'portal_reviews' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.url_name == 'portal_reviews' %}bg-blue-600 text-white shadow-lg shadow-blue-600/30{% else %}text-slate-400 hover:text-white hover:bg-slate-900{% endif %}">
-          <i data-lucide="message-circle" class="w-4 h-4"></i> Reviews
-        </a>
+        <!-- Divider -->
+        <div class="pt-3 pb-2 px-4">
+          <span class="text-[9px] uppercase text-slate-600 tracking-wider">Marketing</span>
+        </div>
+
+        <!-- 🎯 MARKETING GROUP -->
+        <div>
+          <button type="button" onclick="toggleNavGroup('marketing')" class="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.url_name in 'portal_coupons,portal_reviews' %}bg-slate-900 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-900{% endif %}">
+            <span class="flex items-center gap-3">
+              <i data-lucide="megaphone" class="w-4 h-4"></i> Marketing
+            </span>
+            <i data-lucide="chevron-down" id="arrow-marketing" class="nav-arrow w-3.5 h-3.5"></i>
+          </button>
+          <div id="nav-marketing" class="nav-sub hidden pl-3 mt-1 space-y-0.5 border-l-2 border-slate-800 ml-6">
+            <a href="{% url 'portal_coupons' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg transition {% if request.resolver_match.url_name == 'portal_coupons' %}bg-blue-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+              <i data-lucide="tag" class="w-3.5 h-3.5"></i> Coupons
+            </a>
+            <a href="{% url 'portal_reviews' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg transition {% if request.resolver_match.url_name == 'portal_reviews' %}bg-blue-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+              <i data-lucide="star" class="w-3.5 h-3.5"></i> Customer Reviews
+            </a>
+          </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="pt-3 pb-2 px-4">
+          <span class="text-[9px] uppercase text-slate-600 tracking-wider">Operations</span>
+        </div>
+
+        <!-- 🛠 OPERATIONS GROUP -->
+        <div>
+          <button type="button" onclick="toggleNavGroup('operations')" class="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.url_name in 'portal_urgent_help' %}bg-slate-900 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-900{% endif %}">
+            <span class="flex items-center gap-3">
+              <i data-lucide="wrench" class="w-4 h-4"></i> Operations
+            </span>
+            <i data-lucide="chevron-down" id="arrow-operations" class="nav-arrow w-3.5 h-3.5"></i>
+          </button>
+          <div id="nav-operations" class="nav-sub hidden pl-3 mt-1 space-y-0.5 border-l-2 border-slate-800 ml-6">
+            <a href="{% url 'portal_urgent_help' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg transition {% if request.resolver_match.url_name == 'portal_urgent_help' %}bg-blue-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+              <i data-lucide="phone-call" class="w-3.5 h-3.5"></i> Urgent Desk
+            </a>
+            <a href="{% url 'portal_revenue_report' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg transition text-slate-400 hover:text-white hover:bg-slate-800">
+              <i data-lucide="file-text" class="w-3.5 h-3.5"></i> All Reports
+            </a>
+          </div>
+        </div>
+
       </nav>
     </div>
 
@@ -78,7 +169,7 @@
       </div>
       <div class="flex items-center gap-2">
         <a href="{% url 'index' %}" target="_blank" class="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-center text-[11px] font-bold transition flex items-center justify-center gap-1.5">
-          <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Visit Website
+          <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Website
         </a>
         <a href="{% url 'portal_logout' %}" class="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/20 transition" title="Logout">
           <i data-lucide="log-out" class="w-4 h-4"></i>
@@ -90,28 +181,65 @@
   <!-- ================= MAIN CONTENT WRAPPER ================= -->
   <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
 
-    <!-- Top Advisory Header -->
+    <!-- Top Header -->
     <header class="bg-white border-b border-slate-200/80 px-6 py-4 flex items-center justify-between">
       <div>
-        <h1 class="text-lg font-black text-slate-900 tracking-tight">{% block header_title %}OPERATIONS CONSOLE{% endblock %}</h1>
+        <h1 class="text-lg font-black text-slate-900 tracking-tight">{% block header_title %}{% block page_title %}OPERATIONS CONSOLE{% endblock %}{% endblock %}</h1>
         <p class="text-xs text-slate-500 font-medium">MakesMyYatra Operations Desk</p>
       </div>
 
       <div class="flex items-center gap-3">
-        <a href="{% url 'portal_hotel_add' %}" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-md shadow-blue-500/20 transition flex items-center gap-1.5">
-          <i data-lucide="plus" class="w-4 h-4"></i> Add Property
+        <a href="{% url 'portal_welcome' %}" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition flex items-center gap-1.5">
+          <i data-lucide="home" class="w-4 h-4"></i> Home
+        </a>
+        <a href="{% url 'index' %}" target="_blank" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-md shadow-blue-500/20 transition flex items-center gap-1.5">
+          <i data-lucide="external-link" class="w-4 h-4"></i> View Site
         </a>
       </div>
     </header>
 
     <!-- Main Workspace -->
     <main class="p-6 md:p-8 space-y-6">
-      {% block content %}
-      {% endblock %}
+      {% block content %}{% endblock %}
     </main>
   </div>
 
   <script>
+    function toggleNavGroup(name) {
+      const sub = document.getElementById('nav-' + name);
+      const arrow = document.getElementById('arrow-' + name);
+      if (sub && arrow) {
+        sub.classList.toggle('hidden');
+        arrow.style.transform = sub.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+      }
+    }
+
+    (function() {
+      const currentUrlName = '{{ request.resolver_match.url_name }}';
+      
+      const moduleUrls = {
+        'hotels': ['portal_hotels', 'portal_hotel_add', 'portal_hotel_edit', 'portal_room_manage', 
+                   'portal_hotel_gallery_manage', 'portal_bookings', 'portal_booking_update', 
+                   'portal_customers', 'portal_revenue_report'],
+        'cabs': ['portal_cabs_module', 'portal_cabs', 'portal_cab_add', 'portal_cab_edit', 
+                 'portal_cab_bookings', 'portal_cab_booking_detail', 'portal_cab_booking_update', 
+                 'portal_partners', 'portal_partner_add', 'portal_partner_detail', 
+                 'portal_partner_recharge', 'portal_partner_wallet_log', 'portal_cab_revenue', 
+                 'portal_cab_assign_partner'],
+        'marketing': ['portal_coupons', 'portal_reviews'],
+        'operations': ['portal_urgent_help'],
+      };
+
+      Object.entries(moduleUrls).forEach(([module, urls]) => {
+        if (urls.includes(currentUrlName)) {
+          const sub = document.getElementById('nav-' + module);
+          const arrow = document.getElementById('arrow-' + module);
+          if (sub) sub.classList.remove('hidden');
+          if (arrow) arrow.style.transform = 'rotate(180deg)';
+        }
+      });
+    })();
+
     if (typeof lucide !== 'undefined') {
       lucide.createIcons();
     }

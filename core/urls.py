@@ -51,6 +51,8 @@ urlpatterns = [
     path('portal/logout/', views.portal_logout, name='portal_logout'),
     path('portal/dashboard/', views.portal_dashboard, name='portal_dashboard'),
     path('portal/customers/', views.portal_customers, name='portal_customers'),
+    path('portal/welcome/', views.portal_welcome, name='portal_welcome'),
+    path('portal/cabs-module/', views.portal_cabs_module, name='portal_cabs_module'),
     path('portal/booking/<str:booking_id>/invoice/', views.portal_booking_invoice, name='portal_booking_invoice'),
 
     # --- Hotel & Room Management ---
@@ -120,5 +122,25 @@ urlpatterns = [
     path('portal/cab-bookings/<str:booking_id>/cancel/', cabs_views.portal_cab_cancel, name='portal_cab_cancel'),
     path('portal/cab-revenue/', cabs_views.portal_cab_revenue, name='portal_cab_revenue'),
 
+    # Partner Wallet System
+    path('portal/cab-partners/', cabs_views.portal_partners, name='portal_partners'),
+    path('portal/cab-partners/add/', cabs_views.portal_partner_add, name='portal_partner_add'),
+    path('portal/cab-partners/<int:partner_id>/', cabs_views.portal_partner_detail, name='portal_partner_detail'),
+    path('portal/cab-partners/<int:partner_id>/recharge/', cabs_views.portal_partner_recharge, name='portal_partner_recharge'),
+    path('portal/cab-partners/<int:partner_id>/toggle/', cabs_views.portal_partner_toggle, name='portal_partner_toggle'),
+    path('portal/cab-partners/wallet-log/', cabs_views.portal_partner_wallet_log, name='portal_partner_wallet_log'),
+    path('portal/cab-bookings/<str:booking_id>/assign/', cabs_views.portal_cab_assign_partner, name='portal_cab_assign_partner'),
+
+        # Partner Cab Panel
+    path('partner-cab/login/', cabs_views.partner_cab_login, name='partner_cab_login'),
+    path('partner-cab/logout/', cabs_views.partner_cab_logout, name='partner_cab_logout'),
+    path('partner-cab/dashboard/', cabs_views.partner_cab_dashboard, name='partner_cab_dashboard'),
+    path('partner-cab/wallet/', cabs_views.partner_cab_wallet, name='partner_cab_wallet'),
+    path('partner-cab/wallet/utr/', cabs_views.partner_cab_utr_submit, name='partner_cab_utr_submit'),
+    path('partner-cab/bookings/', cabs_views.partner_cab_bookings, name='partner_cab_bookings'),
+    path('partner-cab/bookings/<str:booking_id>/accept/', cabs_views.partner_cab_accept_booking, name='partner_cab_accept_booking'),
+    path('partner-cab/bookings/<str:booking_id>/reject/', cabs_views.partner_cab_reject_booking, name='partner_cab_reject_booking'),
     
+    # Admin UTR Approval
+    path('portal/cab-partners/<int:partner_id>/utr-approve/', cabs_views.portal_partner_utr_approve, name='portal_partner_utr_approve'),
 ]

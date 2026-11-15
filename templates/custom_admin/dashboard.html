@@ -18,249 +18,311 @@
   </div>
   {% endif %}
 
-  <!-- Top Metric Stat Cards (5 Cards Layout) -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-    <!-- Total Revenue -->
-    <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
-      <div>
-        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Confirmed Revenue</span>
-        <span class="text-2xl font-black text-slate-900 mt-1 block">₹{{ revenue|floatformat:2 }}</span>
-        <span class="text-[11px] text-blue-600 font-semibold mt-1 inline-block">Settled Stays</span>
+  <!-- ==================== COMBINED BUSINESS METRICS ==================== -->
+  <div>
+    <h2 class="text-xs font-black text-slate-500 uppercase tracking-wider mb-3"> Overview</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Total Revenue (Combined) -->
+      <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Revenue</span>
+          <span class="text-2xl font-black text-slate-900 mt-1 block">₹{{ combined_revenue|floatformat:0 }}</span>
+          <span class="text-[10px] text-blue-600 font-semibold mt-1 inline-block">
+            Hotels ₹{{ revenue|floatformat:0 }}{% if cab_metrics %} + Cabs ₹{{ cab_metrics.cab_revenue|floatformat:0 }}{% endif %}
+          </span>
+        </div>
+        <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+          <i data-lucide="indian-rupee" class="w-6 h-6"></i>
+        </div>
       </div>
-      <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
-        <i data-lucide="indian-rupee" class="w-6 h-6"></i>
-      </div>
-    </div>
 
-    <!-- Total Bookings -->
-    <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
-      <div>
-        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Bookings</span>
-        <span class="text-2xl font-black text-slate-900 mt-1 block">{{ total_bookings }}</span>
-        <span class="text-[11px] text-emerald-600 font-semibold mt-1 inline-block">+{{ new_bookings_today }} Booked Today</span>
+      <!-- Total Bookings (Combined) -->
+      <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Bookings</span>
+          <span class="text-2xl font-black text-slate-900 mt-1 block">{{ combined_bookings }}</span>
+          <span class="text-[10px] text-emerald-600 font-semibold mt-1 inline-block">+{{ new_bookings_today }} Booked Today</span>
+        </div>
+        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
+          <i data-lucide="calendar-check-2" class="w-6 h-6"></i>
+        </div>
       </div>
-      <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
-        <i data-lucide="calendar-check-2" class="w-6 h-6"></i>
-      </div>
-    </div>
 
-    <!-- Active Stays / Fleet -->
-    <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
-      <div>
-        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Active Fleet</span>
-        <span class="text-2xl font-black text-slate-900 mt-1 block">{{ total_hotels }}</span>
-        <span class="text-[11px] text-slate-500 font-semibold mt-1 inline-block">Across HP</span>
+      <!-- Total Properties (Hotels + Cab Categories) -->
+      <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Properties</span>
+          <span class="text-2xl font-black text-slate-900 mt-1 block">{{ combined_properties }}</span>
+          <span class="text-[10px] text-slate-500 font-semibold mt-1 inline-block">
+            {{ total_hotels }} Hotels{% if cab_metrics %} • {{ cab_metrics.cab_categories }} Cabs{% endif %}
+          </span>
+        </div>
+        <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
+          <i data-lucide="layers" class="w-6 h-6"></i>
+        </div>
       </div>
-      <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
-        <i data-lucide="hotel" class="w-6 h-6"></i>
-      </div>
-    </div>
 
-    <!-- Active Coupons (Clickable Card) -->
-    <a href="{% url 'portal_coupons' %}" class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between hover:border-amber-400 hover:shadow-md transition group">
-      <div>
-        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Active Coupons</span>
-        <span class="text-2xl font-black text-slate-900 mt-1 block">{{ total_coupons|default:0 }}</span>
-        <span class="text-[11px] text-amber-600 font-semibold mt-1 inline-block group-hover:underline">Manage Offers &rarr;</span>
-      </div>
-      <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100">
-        <i data-lucide="tag" class="w-6 h-6"></i>
-      </div>
-    </a>
-
-    <!-- Urgent SOS Tickets -->
-    <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
-      <div>
-        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Urgent Support</span>
-        <span class="text-2xl font-black {% if active_supports > 0 %}text-rose-600{% else %}text-slate-900{% endif %} mt-1 block">{{ active_supports }}</span>
-        <span class="text-[11px] {% if active_supports > 0 %}text-rose-500 font-bold{% else %}text-slate-400{% endif %} mt-1 inline-block">Action Required</span>
-      </div>
-      <div class="w-12 h-12 rounded-2xl {% if active_supports > 0 %}bg-rose-50 text-rose-600 border-rose-200 animate-pulse{% else %}bg-slate-50 text-slate-400 border-slate-200{% endif %} flex items-center justify-center border">
-        <i data-lucide="life-buoy" class="w-6 h-6"></i>
+      <!-- Urgent Support -->
+      <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Urgent Support</span>
+          <span class="text-2xl font-black {% if active_supports > 0 %}text-rose-600{% else %}text-slate-900{% endif %} mt-1 block">{{ active_supports }}</span>
+          <span class="text-[11px] {% if active_supports > 0 %}text-rose-500 font-bold{% else %}text-slate-400{% endif %} mt-1 inline-block">Action Required</span>
+        </div>
+        <div class="w-12 h-12 rounded-2xl {% if active_supports > 0 %}bg-rose-50 text-rose-600 border-rose-200 animate-pulse{% else %}bg-slate-50 text-slate-400 border-slate-200{% endif %} flex items-center justify-center border">
+          <i data-lucide="life-buoy" class="w-6 h-6"></i>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Operational Flow Strips: Today Check-in/Out & Pipeline -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- Today Daily Operations -->
+  <!-- ==================== CABS MODULE METRICS ==================== -->
+  {% if cab_metrics %}
+  <div>
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-xs font-black text-slate-500 uppercase tracking-wider flex items-center gap-2">
+        <i data-lucide="car" class="w-4 h-4 text-emerald-600"></i> Cabs Module Metrics
+      </h2>
+      <a href="{% url 'portal_cabs_module' %}" class="text-[11px] font-bold text-emerald-600 hover:underline">Open Cabs Hub →</a>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Cab Bookings -->
+      <a href="{% url 'portal_cab_bookings' %}" class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:border-emerald-400 hover:shadow-md transition group">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cab Bookings</span>
+          <i data-lucide="calendar-check" class="w-4 h-4 text-emerald-500"></i>
+        </div>
+        <span class="text-2xl font-black text-slate-900 block">{{ cab_metrics.cab_bookings }}</span>
+        <span class="text-[10px] font-bold text-amber-600 mt-1 inline-block">{{ cab_metrics.cab_pending }} pending dispatch</span>
+      </a>
+
+      <!-- Active Partners -->
+      <a href="{% url 'portal_partners' %}" class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:border-emerald-400 hover:shadow-md transition group">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Partners</span>
+          <i data-lucide="users" class="w-4 h-4 text-blue-500"></i>
+        </div>
+        <span class="text-2xl font-black text-slate-900 block">{{ cab_metrics.active_partners }}</span>
+        <span class="text-[10px] font-bold {% if cab_metrics.low_wallet_partners > 0 %}text-rose-600{% else %}text-slate-400{% endif %} mt-1 inline-block">
+          {{ cab_metrics.low_wallet_partners }} low wallet
+        </span>
+      </a>
+
+      <!-- Cab Revenue -->
+      <a href="{% url 'portal_cab_revenue' %}" class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:border-emerald-400 hover:shadow-md transition group">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cab Revenue</span>
+          <i data-lucide="trending-up" class="w-4 h-4 text-purple-500"></i>
+        </div>
+        <span class="text-2xl font-black text-slate-900 block">₹{{ cab_metrics.cab_revenue|floatformat:0 }}</span>
+        <span class="text-[10px] font-bold text-emerald-600 mt-1 inline-block">All-time gross</span>
+      </a>
+
+      <!-- Commission Earned -->
+      <a href="{% url 'portal_partner_wallet_log' %}" class="bg-gradient-to-br from-emerald-500 to-emerald-700 p-5 rounded-3xl shadow-md hover:shadow-lg transition text-white">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[10px] font-bold text-emerald-100 uppercase tracking-wider">Commission Earned</span>
+          <i data-lucide="wallet" class="w-4 h-4 text-emerald-100"></i>
+        </div>
+        <span class="text-2xl font-black block">₹{{ cab_metrics.total_commission|floatformat:0 }}</span>
+        <span class="text-[10px] font-bold text-emerald-100 mt-1 inline-block">Deducted from wallets</span>
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ==================== PIPELINES (HOTELS + CABS) ==================== -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    
+    <!-- Hotels Pipeline -->
     <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-      <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-        <i data-lucide="clock" class="w-4 h-4 text-blue-600"></i> Today's Schedule ({{ today_date|date:"d M Y" }})
-      </h3>
-      <div class="grid grid-cols-2 gap-3">
-        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center">
-          <span class="text-[11px] font-bold text-slate-400 uppercase block">Expected Check-Ins</span>
-          <span class="text-2xl font-black text-blue-600 mt-1 block">{{ today_checkins }}</span>
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="building-2" class="w-4 h-4 text-blue-600"></i> Hotels Pipeline
+        </h3>
+        <a href="{% url 'portal_bookings' %}" class="text-[10px] font-bold text-blue-600 hover:underline">Manage →</a>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-center">
+          <span class="text-[9px] font-black text-amber-700 uppercase block">Pending</span>
+          <span class="text-lg font-black text-amber-900 mt-0.5 block">{{ pipeline.pending }}</span>
         </div>
-        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center">
-          <span class="text-[11px] font-bold text-slate-400 uppercase block">Scheduled Check-Outs</span>
-          <span class="text-2xl font-black text-indigo-600 mt-1 block">{{ today_checkouts }}</span>
+        <div class="p-3 rounded-xl bg-blue-50 border border-blue-200 text-center">
+          <span class="text-[9px] font-black text-blue-700 uppercase block">Confirmed</span>
+          <span class="text-lg font-black text-blue-900 mt-0.5 block">{{ pipeline.confirmed }}</span>
+        </div>
+        <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
+          <span class="text-[9px] font-black text-emerald-700 uppercase block">Checked-In</span>
+          <span class="text-lg font-black text-emerald-900 mt-0.5 block">{{ pipeline.checked_in }}</span>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-100 border border-slate-200 text-center">
+          <span class="text-[9px] font-black text-slate-600 uppercase block">Checked-Out</span>
+          <span class="text-lg font-black text-slate-800 mt-0.5 block">{{ pipeline.checked_out }}</span>
         </div>
       </div>
-      <div class="pt-2">
-        <a href="{% url 'portal_bookings' %}" class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center justify-center gap-1.5">
-          <span>Manage Today's Arrivals</span>
-          <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+      <div class="flex items-center justify-between text-[10px] font-semibold text-slate-500 pt-1">
+        <span>Cancellations: <b class="text-rose-600">{{ cancellations_count }}</b></span>
+        <a href="{% url 'export_bookings_excel' %}" class="text-blue-600 hover:underline flex items-center gap-1 font-bold">
+          <i data-lucide="file-spreadsheet" class="w-3 h-3"></i> Export Excel
         </a>
       </div>
     </div>
 
-    <!-- Booking Pipeline Distribution -->
-    <div class="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-      <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-        <i data-lucide="git-commit" class="w-4 h-4 text-blue-600"></i> Booking Lifecycle Pipeline
-      </h3>
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-center">
-          <span class="text-[10px] font-black text-amber-700 uppercase block">Pending</span>
-          <span class="text-xl font-black text-amber-900 mt-1 block">{{ pipeline.pending }}</span>
+    <!-- Cabs Pipeline -->
+    {% if cab_metrics %}
+    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="car" class="w-4 h-4 text-emerald-600"></i> Cabs Pipeline
+        </h3>
+        <a href="{% url 'portal_cab_bookings' %}" class="text-[10px] font-bold text-emerald-600 hover:underline">Manage →</a>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-center">
+          <span class="text-[9px] font-black text-amber-700 uppercase block">Pending</span>
+          <span class="text-lg font-black text-amber-900 mt-0.5 block">{{ cab_metrics.cab_pending }}</span>
         </div>
-        <div class="p-3.5 rounded-2xl bg-blue-50 border border-blue-200 text-center">
-          <span class="text-[10px] font-black text-blue-700 uppercase block">Confirmed</span>
-          <span class="text-xl font-black text-blue-900 mt-1 block">{{ pipeline.confirmed }}</span>
+        <div class="p-3 rounded-xl bg-blue-50 border border-blue-200 text-center">
+          <span class="text-[9px] font-black text-blue-700 uppercase block">Assigned</span>
+          <span class="text-lg font-black text-blue-900 mt-0.5 block">{{ cab_metrics.cab_assigned }}</span>
         </div>
-        <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-center">
-          <span class="text-[10px] font-black text-emerald-700 uppercase block">Checked-In</span>
-          <span class="text-xl font-black text-emerald-900 mt-1 block">{{ pipeline.checked_in }}</span>
+        <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
+          <span class="text-[9px] font-black text-emerald-700 uppercase block">Ongoing</span>
+          <span class="text-lg font-black text-emerald-900 mt-0.5 block">{{ cab_metrics.cab_ongoing }}</span>
         </div>
-        <div class="p-3.5 rounded-2xl bg-slate-100 border border-slate-200 text-center">
-          <span class="text-[10px] font-black text-slate-600 uppercase block">Checked-Out</span>
-          <span class="text-xl font-black text-slate-800 mt-1 block">{{ pipeline.checked_out }}</span>
+        <div class="p-3 rounded-xl bg-slate-100 border border-slate-200 text-center">
+          <span class="text-[9px] font-black text-slate-600 uppercase block">Completed</span>
+          <span class="text-lg font-black text-slate-800 mt-0.5 block">{{ cab_metrics.cab_completed }}</span>
         </div>
       </div>
-      <div class="flex items-center justify-between text-xs font-semibold text-slate-500 pt-1">
-        <span>Cancellations logged: <b class="text-rose-600">{{ cancellations_count }}</b></span>
-        <a href="{% url 'export_bookings_excel' %}" class="text-blue-600 hover:underline flex items-center gap-1 font-bold">
-          <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
-          <span>Export Excel Report</span>
+      <div class="flex items-center justify-between text-[10px] font-semibold text-slate-500 pt-1">
+        <span>Total Partners: <b class="text-emerald-600">{{ cab_metrics.total_partners }}</b></span>
+        <a href="{% url 'portal_cab_revenue' %}" class="text-emerald-600 hover:underline flex items-center gap-1 font-bold">
+          <i data-lucide="bar-chart-3" class="w-3 h-3"></i> Revenue
         </a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ==================== TODAY'S SCHEDULE ==================== -->
+  <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+    <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2 mb-4">
+      <i data-lucide="clock" class="w-4 h-4 text-blue-600"></i> Today's Schedule ({{ today_date|date:"d M Y" }})
+    </h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="bg-blue-50 p-4 rounded-2xl border border-blue-200 text-center">
+        <span class="text-[10px] font-bold text-blue-600 uppercase block">Check-Ins</span>
+        <span class="text-2xl font-black text-blue-900 mt-1 block">{{ today_checkins }}</span>
+        <span class="text-[9px] text-blue-500 font-bold">Hotels</span>
+      </div>
+      <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-200 text-center">
+        <span class="text-[10px] font-bold text-indigo-600 uppercase block">Check-Outs</span>
+        <span class="text-2xl font-black text-indigo-900 mt-1 block">{{ today_checkouts }}</span>
+        <span class="text-[9px] text-indigo-500 font-bold">Hotels</span>
+      </div>
+      <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 text-center">
+        <span class="text-[10px] font-bold text-emerald-600 uppercase block">Active Cabs</span>
+        <span class="text-2xl font-black text-emerald-900 mt-1 block">{% if cab_metrics %}{{ cab_metrics.cab_active_today }}{% else %}0{% endif %}</span>
+        <span class="text-[9px] text-emerald-500 font-bold">Live Trips</span>
+      </div>
+      <div class="bg-amber-50 p-4 rounded-2xl border border-amber-200 text-center">
+        <span class="text-[10px] font-bold text-amber-600 uppercase block">New Bookings</span>
+        <span class="text-2xl font-black text-amber-900 mt-1 block">{{ new_bookings_today }}</span>
+        <span class="text-[9px] text-amber-500 font-bold">All Types</span>
       </div>
     </div>
   </div>
 
-  <!-- Master Registry & Audit Log (Django Administration Section) -->
+  <!-- ==================== QUICK REGISTRY + RECENT ACTIONS ==================== -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- Models Registry Grid -->
+    
+    <!-- Quick Registry -->
     <div class="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-        <div>
-          <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-            <i data-lucide="layers" class="w-4 h-4 text-blue-600"></i> Core Business Registry & Models
-          </h3>
-          <p class="text-[11px] text-slate-400 mt-0.5">Quick access management shortcuts</p>
-        </div>
-        <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full uppercase">Registry</span>
+        <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="layers" class="w-4 h-4 text-blue-600"></i> Quick Registry
+        </h3>
+        <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full uppercase">Shortcuts</span>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <!-- Bookings -->
-        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <a href="{% url 'portal_bookings' %}" class="p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-400 transition flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
               <i data-lucide="ticket" class="w-3.5 h-3.5"></i>
             </div>
-            <div>
-              <span class="block text-xs font-bold text-slate-800">Bookings</span>
-              <span class="text-[10px] text-slate-400">{{ catalog.bookings|default:total_bookings }} items</span>
-            </div>
+            <span class="text-xs font-bold text-slate-800">Bookings</span>
           </div>
-          <a href="{% url 'portal_bookings' %}" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-blue-600 hover:border-blue-500 shadow-sm">View</a>
-        </div>
+          <span class="text-[10px] text-slate-400">{{ total_bookings }}</span>
+        </a>
 
-        <!-- Coupons -->
-        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <div class="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs">
-              <i data-lucide="tag" class="w-3.5 h-3.5"></i>
-            </div>
-            <div>
-              <span class="block text-xs font-bold text-slate-800">Coupons</span>
-              <span class="text-[10px] text-slate-400">{{ catalog.coupons|default:total_coupons }} items</span>
-            </div>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <a href="{% url 'portal_coupons' %}" class="px-2 py-1 rounded-lg bg-amber-500 text-white text-[10px] font-bold">+ Add</a>
-            <a href="{% url 'portal_coupons' %}" class="px-2 py-1 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-slate-600">View</a>
-          </div>
-        </div>
-
-        <!-- Hotels -->
-        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <div class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">
+        <a href="{% url 'portal_hotels' %}" class="p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-indigo-400 transition flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center">
               <i data-lucide="building-2" class="w-3.5 h-3.5"></i>
             </div>
-            <div>
-              <span class="block text-xs font-bold text-slate-800">Hotels</span>
-              <span class="text-[10px] text-slate-400">{{ catalog.hotels|default:total_hotels }} properties</span>
-            </div>
+            <span class="text-xs font-bold text-slate-800">Hotels</span>
           </div>
-          <a href="{% url 'portal_hotels' %}" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-indigo-600 hover:border-indigo-500 shadow-sm transition">
-            Manage
-          </a>
-        </div>
+          <span class="text-[10px] text-slate-400">{{ total_hotels }}</span>
+        </a>
 
-        <!-- Room Types -->
-        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <div class="w-7 h-7 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs">
-              <i data-lucide="bed-double" class="w-3.5 h-3.5"></i>
+        <a href="{% url 'portal_cabs' %}" class="p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-emerald-400 transition flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+              <i data-lucide="car" class="w-3.5 h-3.5"></i>
             </div>
-            <div>
-              <span class="block text-xs font-bold text-slate-800">Room Types</span>
-              <span class="text-[10px] text-slate-400">{{ catalog.room_types|default:0 }} categories</span>
-            </div>
+            <span class="text-xs font-bold text-slate-800">Cabs</span>
           </div>
-          <a href="{% url 'portal_room_types' %}" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-indigo-600 hover:border-indigo-500 shadow-sm transition">
-            Manage
-          </a>
-        </div>
+          <span class="text-[10px] text-slate-400">{% if cab_metrics %}{{ cab_metrics.cab_categories }}{% else %}0{% endif %}</span>
+        </a>
 
-        <!-- Meal Plans -->
-        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <div class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
-              <i data-lucide="utensils" class="w-3.5 h-3.5"></i>
+        <a href="{% url 'portal_partners' %}" class="p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-amber-400 transition flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
+              <i data-lucide="users" class="w-3.5 h-3.5"></i>
             </div>
-            <div>
-              <span class="block text-xs font-bold text-slate-800">Meal Plans</span>
-              <span class="text-[10px] text-slate-400">{{ catalog.meal_plans|default:0 }} options</span>
-            </div>
+            <span class="text-xs font-bold text-slate-800">Partners</span>
           </div>
-          <a href="{% url 'portal_meal_plans' %}" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-emerald-600 hover:border-emerald-500 shadow-sm transition">
-            Manage
-          </a>
-        </div>
+          <span class="text-[10px] text-slate-400">{% if cab_metrics %}{{ cab_metrics.active_partners }}{% else %}0{% endif %}</span>
+        </a>
 
-        <!-- Support Tickets (fixed URL name) -->
-        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <div class="w-7 h-7 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-xs">
+        <a href="{% url 'portal_coupons' %}" class="p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-purple-400 transition flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center">
+              <i data-lucide="tag" class="w-3.5 h-3.5"></i>
+            </div>
+            <span class="text-xs font-bold text-slate-800">Coupons</span>
+          </div>
+          <span class="text-[10px] text-slate-400">{{ total_coupons|default:0 }}</span>
+        </a>
+
+        <a href="{% url 'portal_urgent_help' %}" class="p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-rose-400 transition flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center">
               <i data-lucide="life-buoy" class="w-3.5 h-3.5"></i>
             </div>
-            <div>
-              <span class="block text-xs font-bold text-slate-800">SOS Support</span>
-              <span class="text-[10px] text-slate-400">{{ catalog.supports|default:active_supports }} open</span>
-            </div>
+            <span class="text-xs font-bold text-slate-800">SOS</span>
           </div>
-          <a href="{% url 'portal_urgent_help' %}" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-rose-600">Review</a>
-        </div>
+          <span class="text-[10px] {% if active_supports > 0 %}text-rose-600 font-bold{% else %}text-slate-400{% endif %}">{{ active_supports }}</span>
+        </a>
       </div>
     </div>
 
-    <!-- Recent Actions Feed -->
-    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+    <!-- Recent Actions -->
+    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
       <div>
-        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
           <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
             <i data-lucide="history" class="w-4 h-4 text-emerald-600"></i> Recent Actions
           </h3>
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
         </div>
 
-        <div class="mt-4 space-y-3">
-          {% for action in recent_actions %}
+        <div class="space-y-3">
+          {% for action in recent_actions|slice:":6" %}
           <div class="flex items-start gap-2.5 text-xs">
             <span class="w-5 h-5 rounded-lg flex items-center justify-center flex-shrink-0 text-[10px] font-bold mt-0.5
               {% if action.is_addition %}bg-emerald-50 text-emerald-700 border border-emerald-200
@@ -269,9 +331,7 @@
               {% if action.is_addition %}+{% elif action.is_change %}✎{% else %}✕{% endif %}
             </span>
             <div class="flex-1 min-w-0">
-              <span class="font-bold text-slate-900 block truncate leading-tight">
-                {{ action.object_repr }}
-              </span>
+              <span class="font-bold text-slate-900 block truncate leading-tight">{{ action.object_repr }}</span>
               <div class="flex items-center gap-1.5 text-[10px] text-slate-400 mt-0.5">
                 <span class="font-semibold text-slate-600">{{ action.content_type.name|title }}</span>
                 <span>•</span>
@@ -280,77 +340,111 @@
             </div>
           </div>
           {% empty %}
-          <div class="py-8 text-center text-slate-400 text-xs">
-            No actions logged yet.
-          </div>
+          <div class="py-8 text-center text-slate-400 text-xs">No actions logged yet.</div>
           {% endfor %}
         </div>
       </div>
-
       <div class="pt-3 border-t border-slate-100 text-center">
-        <span class="text-[10px] font-bold text-slate-400">Activity Log Synced with Admin</span>
+        <span class="text-[10px] font-bold text-slate-400">Synced with Django Admin</span>
       </div>
     </div>
   </div>
 
-  <!-- Recent Bookings Table -->
-  <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-    <div class="p-5 border-b border-slate-200 flex items-center justify-between">
-      <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-        <i data-lucide="receipt" class="w-4 h-4 text-blue-600"></i> Recent Guest Reservations
-      </h3>
-      <a href="{% url 'portal_bookings' %}" class="text-xs font-bold text-blue-600 hover:underline">View All &rarr;</a>
+  <!-- ==================== RECENT BOOKINGS (HOTELS + CABS) ==================== -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    
+    <!-- Recent Hotel Bookings -->
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+        <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="building-2" class="w-4 h-4 text-blue-600"></i> Recent Hotel Bookings
+        </h3>
+        <a href="{% url 'portal_bookings' %}" class="text-[10px] font-bold text-blue-600 hover:underline">All →</a>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-slate-600">
+          <thead class="bg-slate-50 border-b text-[10px] font-black uppercase text-slate-700">
+            <tr>
+              <th class="p-3">Guest</th>
+              <th class="p-3">Hotel</th>
+              <th class="p-3">Amount</th>
+              <th class="p-3">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for b in bookings|slice:":5" %}
+            <tr class="hover:bg-slate-50/80">
+              <td class="p-3">
+                <span class="font-bold text-slate-900 block">{{ b.guest_name }}</span>
+                <span class="text-[10px] text-slate-400">{{ b.booking_id }}</span>
+              </td>
+              <td class="p-3 text-slate-700">{{ b.hotel.name|default:"Direct"|truncatechars:20 }}</td>
+              <td class="p-3 font-black text-slate-900">₹{{ b.total_amount }}</td>
+              <td class="p-3">
+                <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-black
+                  {% if b.status == 'CONFIRMED' %}bg-blue-50 text-blue-700
+                  {% elif b.status == 'CHECKED_IN' %}bg-emerald-50 text-emerald-700
+                  {% elif b.status == 'PENDING' %}bg-amber-50 text-amber-700
+                  {% else %}bg-slate-100 text-slate-600{% endif %}">
+                  {{ b.status }}
+                </span>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="p-8 text-center text-slate-400">No recent bookings</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <div class="overflow-x-auto">
-      <table class="w-full text-left text-xs text-slate-600">
-        <thead class="bg-slate-50 border-b border-slate-200 text-[11px] font-black uppercase text-slate-700">
-          <tr>
-            <th class="p-4">Booking ID</th>
-            <th class="p-4">Guest Information</th>
-            <th class="p-4">Hotel / Property</th>
-            <th class="p-4">Stay Dates</th>
-            <th class="p-4">Total Amount</th>
-            <th class="p-4">Status</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100">
-          {% for b in bookings %}
-          <tr class="hover:bg-slate-50/80 transition">
-            <td class="p-4 font-black text-slate-900">
-              #{{ b.booking_id }}
-            </td>
-            <td class="p-4">
-              <span class="font-bold text-slate-900 block">{{ b.guest_name }}</span>
-              <span class="text-[11px] text-slate-400">{{ b.guest_phone }}</span>
-            </td>
-            <td class="p-4 font-medium text-slate-800">
-              {{ b.hotel.name|default:"Direct Stay" }}
-            </td>
-            <td class="p-4 text-slate-600">
-              {{ b.check_in|date:"d M" }} - {{ b.check_out|date:"d M Y" }}
-            </td>
-            <td class="p-4 font-black text-slate-900">
-              ₹{{ b.total_amount }}
-            </td>
-            <td class="p-4">
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black 
-                {% if b.status == 'CONFIRMED' %}bg-blue-50 text-blue-700 border border-blue-200
-                {% elif b.status == 'CHECKED_IN' %}bg-emerald-50 text-emerald-700 border border-emerald-200
-                {% elif b.status == 'PENDING' %}bg-amber-50 text-amber-700 border border-amber-200
-                {% else %}bg-slate-100 text-slate-600 border border-slate-200{% endif %}">
-                {{ b.status }}
-              </span>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="6" class="p-8 text-center text-slate-400">No recent reservations found.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <!-- Recent Cab Bookings -->
+    {% if cab_metrics %}
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+        <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="car" class="w-4 h-4 text-emerald-600"></i> Recent Cab Bookings
+        </h3>
+        <a href="{% url 'portal_cab_bookings' %}" class="text-[10px] font-bold text-emerald-600 hover:underline">All →</a>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-slate-600">
+          <thead class="bg-slate-50 border-b text-[10px] font-black uppercase text-slate-700">
+            <tr>
+              <th class="p-3">Guest</th>
+              <th class="p-3">Route</th>
+              <th class="p-3">Amount</th>
+              <th class="p-3">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for cb in cab_metrics.recent_cab_bookings %}
+            <tr class="hover:bg-slate-50/80">
+              <td class="p-3">
+                <span class="font-bold text-slate-900 block">{{ cb.guest_name }}</span>
+                <span class="text-[10px] text-slate-400">{{ cb.booking_id }}</span>
+              </td>
+              <td class="p-3 text-slate-700">{{ cb.pickup_city }}{% if cb.drop_city %} → {{ cb.drop_city }}{% endif %}</td>
+              <td class="p-3 font-black text-slate-900">₹{{ cb.total_amount }}</td>
+              <td class="p-3">
+                <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-black
+                  {% if cb.status == 'CONFIRMED' or cb.status == 'ASSIGNED' %}bg-blue-50 text-blue-700
+                  {% elif cb.status == 'ONGOING' %}bg-emerald-50 text-emerald-700
+                  {% elif cb.status == 'PENDING' %}bg-amber-50 text-amber-700
+                  {% elif cb.status == 'COMPLETED' %}bg-slate-100 text-slate-600
+                  {% else %}bg-rose-50 text-rose-700{% endif %}">
+                  {{ cb.status }}
+                </span>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="p-8 text-center text-slate-400">No cab bookings yet</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
+    {% endif %}
   </div>
 
 </div>
