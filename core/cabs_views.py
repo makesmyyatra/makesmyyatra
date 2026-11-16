@@ -200,6 +200,9 @@ def book_cab(request):
         except Exception as e:
             logger.warning(f"Cab email failed for {booking.booking_id}: {type(e).__name__}: {e}")
 
+    messages.success(request, f"Cab booking #{booking.booking_id} confirmed!")
+    return redirect('cab_booking_detail', booking_id=booking.booking_id)
+
 def cab_booking_detail(request, booking_id):
     booking = get_object_or_404(CabBooking.objects.select_related('category', 'coupon'), booking_id=booking_id)
     return render(request, 'cabs/cab_booking_detail.html', {'booking': booking})
