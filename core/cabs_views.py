@@ -193,14 +193,12 @@ def book_cab(request):
             send_mail(
                 f"Cab Booking Confirmed — {booking.booking_id}",
                 f"Dear {booking.guest_name},\n\nYour cab booking is confirmed.\nBooking ID: {booking.booking_id}\nPickup: {booking.pickup_address}, {booking.pickup_city}\nDate: {booking.pickup_datetime.strftime('%d %b %Y, %I:%M %p')}\nTotal: Rs. {booking.total_amount} (Pay to driver)\n\n— Makes My Yatra",
-                settings.DEFAULT_FROM_EMAIL, [booking.guest_email], fail_silently=True,
+                settings.DEFAULT_FROM_EMAIL,
+                [booking.guest_email],
+                fail_silently=True,
             )
         except Exception as e:
-            logger.warning(f"Cab email failed: {e}")
-
-    messages.success(request, f"Cab booking #{booking.booking_id} confirmed!")
-    return redirect('cab_booking_detail', booking_id=booking.booking_id)
-
+            logger.warning(f"Cab email failed for {booking.booking_id}: {type(e).__name__}: {e}")
 
 def cab_booking_detail(request, booking_id):
     booking = get_object_or_404(CabBooking.objects.select_related('category', 'coupon'), booking_id=booking_id)
