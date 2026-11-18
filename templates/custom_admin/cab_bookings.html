@@ -46,10 +46,41 @@
 
   <!-- Bookings Table -->
   <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+      <!-- Bulk Actions Bar -->
+  <div class="bg-white rounded-2xl border border-slate-200 p-3 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-2">
+      <label class="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+        <input type="checkbox" id="selectAllCabs" onchange="toggleSelectAllCabs(this)" class="w-4 h-4 text-emerald-600 rounded">
+        <span>Select All</span>
+      </label>
+      <span id="selectedCountCabs" class="text-xs text-slate-500 hidden"></span>
+    </div>
+    <div class="flex gap-2">
+      <form method="POST" action="{% url 'portal_cab_booking_actions' %}" id="deleteSelectedForm" class="inline">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete_selected">
+        <div id="selectedIdsContainer"></div>
+        <button type="submit" onclick="return confirmDeleteSelected()" class="px-4 py-2 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-xs rounded-lg transition">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i> Delete Selected
+        </button>
+      </form>
+      
+      <form method="POST" action="{% url 'portal_cab_booking_actions' %}" class="inline">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete_all">
+        <button type="submit" onclick="return confirm('⚠️ Are you sure? ALL cab bookings will be permanently deleted. This cannot be undone!')" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs rounded-lg transition">
+          <i data-lucide="alert-triangle" class="w-3.5 h-3.5 inline"></i> Delete ALL Bookings
+        </button>
+      </form>
+    </div>
+  </div>
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead class="bg-slate-50 border-b border-slate-200">
           <tr class="text-left text-xs font-black text-slate-600 uppercase">
+            <th class="px-4 py-3 w-10">
+              <input type="checkbox" disabled class="w-4 h-4 text-slate-300">
+            </th>
             <th class="px-4 py-3">Booking ID</th>
             <th class="px-4 py-3">Guest</th>
             <th class="px-4 py-3">Trip</th>
@@ -63,6 +94,9 @@
         <tbody class="divide-y divide-slate-100">
           {% for booking in bookings %}
           <tr class="hover:bg-slate-50 transition">
+            <td class="px-4 py-3">
+              <input type="checkbox" name="selected_bookings" value="{{ booking.id }}" data-booking="{{ booking.booking_id }}" class="cab-checkbox w-4 h-4 text-emerald-600 rounded" onchange="updateSelectionCount()">
+            </td>
             <td class="px-4 py-3 font-mono text-xs font-bold">{{ booking.booking_id }}</td>
             <td class="px-4 py-3">
               <div class="font-bold">{{ booking.guest_name }}</div>
@@ -89,6 +123,7 @@
             </td>
           </tr>
           {% empty %}
+          
           <tr>
             <td colspan="8" class="px-4 py-16 text-center">
               <i data-lucide="inbox" class="w-12 h-12 text-slate-300 mx-auto mb-2"></i>
@@ -103,3 +138,43 @@
 
 </div>
 {% endblock %}
+
+<script>
+  function toggleSelectAllCabs(source) {
+    const checkboxes = document.querySelectorAll('.cab-checkbox');
+    checkboxes.forEach(cb => cb.checked = source.checked);
+    updateSelectionCount();
+  }
+  
+  function updateSelectionCount() {
+    const checked = document.querySelectorAll('.cab-checkbox:checked');
+    const countEl = document.getElementById('selectedCountCabs');
+    const container = document.getElementById('selectedIdsContainer');
+    
+    if (checked.length > 0) {
+      countEl.textContent = `${checked.length} selected`;
+      countEl.classList.remove('hidden');
+    } else {
+      countEl.classList.add('hidden');
+    }
+    
+    // Update form hidden inputs
+    container.innerHTML = '';
+    checked.forEach(cb => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'selected_bookings';
+      input.value = cb.value;
+      container.appendChild(input);
+    });
+  }
+  
+  function confirmDeleteSelected() {
+    const checked = document.querySelectorAll('.cab-checkbox:checked');
+    if (checked.length === 0) {
+      alert('Please select at least one booking to delete.');
+      return false;
+    }
+    return confirm(`⚠️ Delete ${checked.length} selected booking(s)? This cannot be undone.`);
+  }
+</script>

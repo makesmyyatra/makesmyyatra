@@ -1,0 +1,81 @@
+{% extends 'base_public.html' %}
+{% block title %}Pay Advance — {{ booking.booking_id }}{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+
+  {% if messages %}
+  {% for message in messages %}
+  <div class="mb-4 p-3 rounded-xl text-xs font-bold {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% else %}bg-rose-50 text-rose-800 border border-rose-200{% endif %}">{{ message }}</div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+    
+    <div class="bg-gradient-to-r from-amber-500 to-amber-600 text-white p-6 text-center">
+      <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+        <i data-lucide="credit-card" class="w-8 h-8"></i>
+      </div>
+      <h1 class="text-2xl font-black">Pay 20% Advance</h1>
+      <p class="text-amber-100 text-sm mt-1">Confirm your booking by paying advance</p>
+    </div>
+
+    <div class="p-6 space-y-4">
+      
+      <!-- Booking Summary -->
+      <div class="bg-slate-50 rounded-xl p-4">
+        <p class="text-[10px] uppercase font-bold text-slate-500">Booking ID</p>
+        <p class="font-mono font-black text-slate-900">{{ booking.booking_id }}</p>
+        
+        <div class="grid grid-cols-2 gap-3 mt-3 text-sm">
+          <div><span class="text-xs text-slate-500 block">Route</span><b>{{ booking.pickup_city }} → {{ booking.drop_city|default:"—" }}</b></div>
+          <div><span class="text-xs text-slate-500 block">Cab</span><b>{{ booking.category.name }}</b></div>
+        </div>
+        
+        <div class="mt-3 pt-3 border-t border-slate-200 space-y-1.5 text-sm">
+          <div class="flex justify-between"><span class="text-slate-600">Total Fare</span><b>₹{{ booking.total_amount }}</b></div>
+          <div class="flex justify-between text-amber-700"><span class="font-bold">Advance (20%)</span><b class="text-lg">₹{{ booking.advance_amount }}</b></div>
+          <div class="flex justify-between text-slate-500 text-xs"><span>Balance to pay driver</span><span>₹{{ booking.balance_amount }}</span></div>
+        </div>
+      </div>
+
+      <!-- UPI Payment -->
+      <div class="bg-emerald-50 rounded-xl p-4 border-2 border-emerald-300">
+        <p class="text-[10px] font-black uppercase text-emerald-700 mb-2">Pay via UPI to:</p>
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <p class="text-lg font-black text-emerald-800 font-mono break-all">{{ upi_id }}</p>
+          <button type="button" onclick="navigator.clipboard.writeText('{{ upi_id }}'); this.innerText='✓'; setTimeout(()=>this.innerText='Copy', 2000)" class="px-3 py-1.5 bg-emerald-600 text-white text-[10px] font-black rounded-lg">Copy</button>
+        </div>
+        <p class="text-[10px] text-emerald-700"><b>Business:</b> {{ business_name }}</p>
+        <p class="text-[10px] text-slate-600 mt-1">Pay ₹{{ booking.advance_amount }} via PhonePe, GPay, Paytm, etc.</p>
+        
+        <div class="mt-3 text-center">
+          <p class="text-[10px] text-slate-500 mb-2">Or scan QR code:</p>
+          <img src="data:image/png;base64,{{ qr_base64 }}" alt="UPI QR" class="w-48 h-48 mx-auto border-4 border-white rounded-xl shadow-md">
+        </div>
+      </div>
+
+      <!-- UTR Submit -->
+      {% if not booking.advance_utr %}
+      <form method="POST" class="bg-white border-2 border-slate-200 rounded-xl p-4">
+        {% csrf_token %}
+        <p class="text-xs font-black text-slate-900 mb-2">After payment, enter UTR / Transaction ID:</p>
+        <div class="flex gap-2">
+          <input type="text" name="utr" required minlength="6" placeholder="e.g. 1234567890" class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+          <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase px-5 py-2.5 rounded-lg">Submit</button>
+        </div>
+      </form>
+      {% else %}
+      <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-4">
+        <p class="text-xs font-black text-amber-800">⏳ UTR Submitted — Awaiting Verification</p>
+        <p class="text-xs text-amber-700 mt-1">UTR: <b>{{ booking.advance_utr }}</b></p>
+        <p class="text-[10px] text-amber-600 mt-1">Admin will verify and confirm your booking shortly.</p>
+      </div>
+      {% endif %}
+
+      <div class="text-center pt-2">
+        <a href="{% url 'cab_booking_detail' booking.booking_id %}" class="text-xs font-bold text-slate-500 hover:text-slate-700">View Booking Details →</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

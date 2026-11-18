@@ -131,7 +131,7 @@ urlpatterns = [
     path('portal/cab-partners/wallet-log/', cabs_views.portal_partner_wallet_log, name='portal_partner_wallet_log'),
     path('portal/cab-bookings/<str:booking_id>/assign/', cabs_views.portal_cab_assign_partner, name='portal_cab_assign_partner'),
 
-        # Partner Cab Panel
+    # Partner Cab Panel
     path('partner-cab/login/', cabs_views.partner_cab_login, name='partner_cab_login'),
     path('partner-cab/logout/', cabs_views.partner_cab_logout, name='partner_cab_logout'),
     path('partner-cab/dashboard/', cabs_views.partner_cab_dashboard, name='partner_cab_dashboard'),
@@ -143,4 +143,13 @@ urlpatterns = [
     
     # Admin UTR Approval
     path('portal/cab-partners/<int:partner_id>/utr-approve/', cabs_views.portal_partner_utr_approve, name='portal_partner_utr_approve'),
+
+    # Advance Payment Flow
+    path('cabs/booking/<str:booking_id>/pay-advance/', cabs_views.cab_pay_advance, name='cab_pay_advance'),
+    path('portal/cab-bookings/<str:booking_id>/verify-advance/', cabs_views.portal_cab_verify_advance, name='portal_cab_verify_advance'),
+    path('portal/cab-bookings/<str:booking_id>/complete-trip/', cabs_views.portal_cab_complete_trip, name='portal_cab_complete_trip'),
+
+    # Cab Bookings Bulk Delete
+    path('portal/cab-bookings/actions/', cabs_views.portal_cab_booking_actions, name='portal_cab_booking_actions'),
+    path('portal/cab-bookings/<str:booking_id>/delete/', cabs_views.portal_cab_booking_delete, name='portal_cab_booking_delete'),
 ]

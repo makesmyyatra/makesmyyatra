@@ -94,6 +94,56 @@
 
     <!-- Right Column (1/3) -->
     <div class="space-y-6">
+            <!-- Advance Payment Status -->
+      {% if booking.status == 'ADVANCE_PENDING' %}
+      <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-5">
+        <p class="text-[10px] font-black text-amber-800 uppercase mb-2">⚠️ Advance Verification Pending</p>
+        <p class="text-sm text-amber-900">UTR: <b class="font-mono">{{ booking.advance_utr }}</b></p>
+        <p class="text-sm text-amber-900">Amount: <b>₹{{ booking.advance_amount }}</b></p>
+        <p class="text-[10px] text-amber-700 mb-3">Submitted {{ booking.advance_utr_submitted_at|timesince }} ago</p>
+        
+        <form method="POST" action="{% url 'portal_cab_verify_advance' booking.booking_id %}" class="flex gap-2">
+          {% csrf_token %}
+          <button type="submit" name="action" value="approve" onclick="return confirm('Approve ₹{{ booking.advance_amount }} advance?')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase py-2.5 rounded-lg">✓ Verify & Confirm</button>
+          <button type="submit" name="action" value="reject" onclick="return confirm('Reject this UTR?')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase py-2.5 rounded-lg">✕ Reject</button>
+        </form>
+      </div>
+      {% elif booking.advance_paid %}
+      <div class="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-4">
+        <p class="text-[10px] font-black text-emerald-800 uppercase">✓ Advance Verified: ₹{{ booking.advance_amount }}</p>
+              <!-- Assign Partner Button (only if CONFIRMED and no partner) -->
+      {% if booking.status == 'CONFIRMED' and not booking.assigned_partner %}
+      <div class="bg-purple-50 border-2 border-purple-300 rounded-2xl p-5">
+        <p class="text-[10px] font-black text-purple-800 uppercase mb-2">🎯 Ready to Assign</p>
+        <p class="text-xs text-purple-700 mb-3">Advance received. Assign a partner to dispatch this booking.</p>
+        <a href="{% url 'portal_cab_assign_partner' booking.booking_id %}" class="block w-full bg-purple-600 hover:bg-purple-700 text-white font-black text-xs uppercase py-3 rounded-lg text-center">Assign Partner Now</a>
+      </div>
+      {% endif %}
+
+      <!-- Partner Assigned Info -->
+      {% if booking.assigned_partner %}
+      <div class="bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-4">
+        <p class="text-[10px] font-black text-indigo-800 uppercase">Partner Assigned</p>
+        <p class="font-bold text-slate-900 mt-1">{{ booking.assigned_partner.name }}</p>
+        <p class="text-xs text-slate-600">{{ booking.assigned_partner.phone }}</p>
+        <p class="text-[10px] text-indigo-700 mt-1">Status: {{ booking.get_status_display }}</p>
+      </div>
+      {% endif %}
+        <p class="text-xs text-emerald-700 mt-1">Balance to driver: ₹{{ booking.balance_amount }}</p>
+      </div>
+      {% endif %}
+
+      <!-- Complete Trip Button (only if ASSIGNED/ONGOING) -->
+      {% if booking.status == 'ASSIGNED' or booking.status == 'ONGOING' %}
+      <div class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4">
+        <p class="text-[10px] font-black text-blue-800 uppercase mb-2">🎯 Trip In Progress</p>
+        <a href="{% url 'portal_cab_complete_trip' booking.booking_id %}" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-xs uppercase py-2.5 rounded-lg text-center">Complete Trip + Add Waiting</a>
+        <form method="POST" action="{% url 'portal_cab_verify_advance' booking.booking_id %}" class="mt-2">
+          {% csrf_token %}
+          <button type="submit" name="action" value="no_show" onclick="return confirm('Mark customer as NO-SHOW? Advance will be forfeited.')" class="w-full bg-rose-100 hover:bg-rose-200 text-rose-700 font-black text-xs uppercase py-2 rounded-lg">Mark No-Show</button>
+        </form>
+      </div>
+      {% endif %}
       
       <!-- Update Form -->
       <div class="bg-white rounded-2xl border border-slate-200 p-6">

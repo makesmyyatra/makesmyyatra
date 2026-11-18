@@ -425,12 +425,14 @@ def generate_cab_booking_id():
 class CabBooking(models.Model):
     """Cab booking with full pricing breakdown."""
     STATUS_CHOICES = [
-        ('PENDING', 'Pending'),
-        ('PARTNER_REQUESTED', 'Awaiting Partner Accept'), 
+        ('PENDING', 'Pending Payment'),
+        ('ADVANCE_PENDING', 'Advance Submitted — Awaiting Verification'),
         ('CONFIRMED', 'Confirmed'),
+        ('PARTNER_REQUESTED', 'Awaiting Partner Accept'),
         ('ASSIGNED', 'Driver Assigned'),
         ('ONGOING', 'Trip Ongoing'),
         ('COMPLETED', 'Completed'),
+        ('NO_SHOW', 'Customer No-Show'),
         ('CANCELLED', 'Cancelled'),
         ('CANCELLED_BY_ADMIN', 'Cancelled by Admin'),
         ('CANCELLED_BY_GUEST', 'Cancelled by Guest'),
@@ -496,6 +498,33 @@ class CabBooking(models.Model):
     )
     commission_deducted = models.BooleanField(default=False)
     commission_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    
+    # ============ ADVANCE PAYMENT (20%) ============
+    advance_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00,
+        help_text="20% advance paid by customer online"
+    )
+    advance_paid = models.BooleanField(default=False)
+    advance_paid_at = models.DateTimeField(null=True, blank=True)
+    advance_utr = models.CharField(max_length=100, blank=True, null=True)
+    advance_utr_submitted_at = models.DateTimeField(null=True, blank=True)
+    
+    balance_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00,
+        help_text="Balance to pay driver in cash (80% minus waiting)"
+    )
+    
+    # ============ WAITING CHARGES ============
+    waiting_minutes = models.IntegerField(default=0, help_text="Extra waiting beyond 15 min free")
+    waiting_charges = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    
+    # ============ DRIVER SETTLEMENT ============
+    driver_wallet_credit = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00,
+        help_text="Amount admin owes driver (advance - commission)"
+    )
+    driver_settled = models.BooleanField(default=False)
+    driver_settled_at = models.DateTimeField(null=True, blank=True)
     booking_fee = models.DecimalField(max_digits=8, decimal_places=2, default=99.00,
         help_text="Convenience fee charged to customer")
     booking_fee_paid = models.BooleanField(default=False)
