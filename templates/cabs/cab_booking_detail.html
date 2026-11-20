@@ -1,121 +1,381 @@
 {% extends 'base_public.html' %}
+
 {% block title %}Cab Booking — {{ booking.booking_id }}{% endblock %}
+
 {% block content %}
-<div class="max-w-3xl mx-auto px-4 py-8">
 
-  <div class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+<style>
+    .mmy-booking-page { background: #f3f7fc; min-height: 70vh; color: #172b4d; }
+    .mmy-booking-page * { box-sizing: border-box; }
+    .mmy-panel { background: #fff; border: 1px solid #e1eaf4; border-radius: 17px; box-shadow: 0 5px 22px rgba(20,54,91,.05); }
+    .mmy-hero { background: linear-gradient(115deg, #052b66, #0757b8 58%, #1687e8); position: relative; overflow: hidden; }
+    .mmy-hero:after { content: ""; position: absolute; width: 300px; height: 300px; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; right: -100px; top: -200px; box-shadow: 0 0 0 40px rgba(255,255,255,.04), 0 0 0 80px rgba(255,255,255,.025); }
+    .mmy-detail-label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .07em; font-weight: 800; color: #718198; margin-bottom: 5px; }
+    .mmy-detail-value { font-size: 14px; font-weight: 800; color: #172b4d; overflow-wrap: anywhere; word-break: break-word; }
+    .mmy-info-card { background: #fff; border: 1px solid #e5ebf3; border-radius: 12px; padding: 14px; }
+    .mmy-section-title { display: flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 900; color: #172b4d; }
+    .mmy-section-title i { width: 19px; height: 19px; color: #0878d1; }
+    .mmy-fare-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px dashed #e5eaf1; font-size: 13px; }
+    .mmy-fare-row:last-child { border-bottom: 0; }
+    .mmy-action { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 15px; border-radius: 9px; font-size: 12px; font-weight: 800; transition: .2s; cursor: pointer; border: none; text-decoration: none; }
+    .mmy-action:hover { transform: translateY(-1px); }
+    .mmy-primary { background: #0878d1; color: white; }
+    .mmy-primary:hover { background: #0668b8; }
+    .mmy-secondary { background: white; border: 1px solid #dbe4ef; color: #334155; }
+    .mmy-secondary:hover { background: #f1f5f9; }
+    .mmy-danger { background: white; border: 1px solid #fecaca; color: #be123c; }
+    .mmy-danger:hover { background: #fff1f2; }
+    .mmy-status { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 30px; font-size: 11px; font-weight: 900; }
+    .mmy-copy-btn { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; transition: .2s; display: inline-flex; align-items: center; gap: 5px; }
+    .mmy-copy-btn:hover { background: rgba(255,255,255,.25); }
+    .mmy-copy-btn.copied { background: rgba(34,197,94,.25); border-color: rgba(34,197,94,.5); }
     
-    <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white p-6 md:p-8 text-center">
-      <div class="w-16 h-16 bg-white/20 backdrop-blur rounded-full flex items-center justify-center mx-auto mb-3">
-        <i data-lucide="check-circle" class="w-8 h-8 text-white"></i>
-      </div>
-      <h1 class="text-2xl font-black">Booking Confirmed!</h1>
-      <p class="text-emerald-100 text-sm mt-1">Your driver details will be shared via SMS/WhatsApp before pickup</p>
-      <p class="mt-3 text-xs font-mono font-bold bg-white/20 backdrop-blur inline-block px-4 py-1.5 rounded-lg">{{ booking.booking_id }}</p>
-    </div>
+    @media(max-width: 640px) {
+        .mmy-action { width: 100%; }
+        .mmy-booking-title { font-size: 22px; }
+    }
+    @media print {
+        .mmy-hero:after { display: none; }
+        .mmy-action, .mmy-copy-btn { display: none !important; }
+        .mmy-panel { box-shadow: none; border: 1px solid #ccc; }
+        body { background: #fff; }
+    }
+</style>
 
-    <div class="p-6 md:p-8">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-        <div><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Guest</span><b class="text-slate-900">{{ booking.guest_name }}</b></div>
-        <div><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Phone</span><b class="text-slate-900">{{ booking.guest_phone }}</b></div>
-        <div><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Cab Type</span><b class="text-slate-900">{{ booking.category.name }} ({{ booking.category.seating_capacity }} seater)</b></div>
-        <div><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Trip Type</span><b class="text-slate-900">{{ booking.get_trip_type_display }}</b></div>
-        <div class="md:col-span-2"><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Pickup Address</span><b class="text-slate-900">{{ booking.pickup_address }}, {{ booking.pickup_city }}</b></div>
-        {% if booking.drop_city %}
-        <div class="md:col-span-2"><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Drop City</span><b class="text-slate-900">{{ booking.drop_city }}</b></div>
-        {% endif %}
-        <div><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Pickup Date</span><b class="text-slate-900">{{ booking.pickup_datetime|date:"d M Y" }}</b></div>
-        <div><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Time</span><b class="text-slate-900">{{ booking.pickup_datetime|time:"g:i A" }}</b></div>
-      </div>
+<div class="mmy-booking-page py-6 md:py-8">
+    <div class="max-w-4xl mx-auto px-4">
 
-      {% if booking.driver_name %}
-      <div class="mt-6 bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-4">
-        <div class="flex items-center gap-3">
-          <div class="w-12 h-12 bg-emerald-600 text-white rounded-xl flex items-center justify-center">
-            <i data-lucide="user-check" class="w-6 h-6"></i>
-          </div>
-          <div>
-            <p class="text-xs font-bold text-emerald-800 uppercase">Driver Assigned</p>
-            <p class="font-black text-lg text-slate-900">{{ booking.driver_name }}</p>
-            <p class="text-sm text-slate-700">{{ booking.driver_phone }} • Vehicle: {{ booking.vehicle_number }}</p>
-          </div>
+        <!-- PAGE HEADER -->
+        <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <p class="text-xs font-extrabold uppercase tracking-widest text-blue-700">MANAGE YOUR TRIP</p>
+                <h1 class="mmy-booking-title mt-1 text-2xl md:text-3xl font-black text-slate-900">Cab booking details</h1>
+                <p class="text-xs text-slate-500 mt-1">View your booking, driver and payment information.</p>
+            </div>
+            <a href="{% url 'cab_list' %}" class="mmy-action mmy-secondary">
+                <i data-lucide="plus-circle" class="w-4 h-4" aria-hidden="true"></i> Book another cab
+            </a>
         </div>
-      </div>
-      {% endif %}
-          <!-- Advance Payment Summary -->
-    {% if booking.advance_paid %}
-    <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-4">
-      <div class="flex justify-between items-center">
-        <div>
-          <p class="text-[10px] font-black uppercase text-emerald-700">✓ Advance Paid</p>
-          <p class="text-lg font-black text-emerald-800">₹{{ booking.advance_amount }}</p>
-        </div>
-        <div class="text-right">
-          <p class="text-[10px] font-bold uppercase text-slate-600">Balance to Driver</p>
-          <p class="text-lg font-black text-slate-800">₹{{ booking.balance_amount }}</p>
-        </div>
-      </div>
-    </div>
-    {% elif booking.status == 'ADVANCE_PENDING' %}
-    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
-      <p class="text-[10px] font-black uppercase text-amber-800">⏳ Advance Verification Pending</p>
-      <p class="text-xs text-amber-700 mt-1">UTR: {{ booking.advance_utr }}</p>
-      <a href="{% url 'cab_pay_advance' booking.booking_id %}" class="mt-2 inline-block text-xs font-bold text-amber-700 underline">View Payment Details</a>
-    </div>
-    {% elif booking.status == 'PENDING' %}
-    <div class="bg-rose-50 border border-rose-200 rounded-xl p-4 mb-4">
-      <p class="text-xs font-black text-rose-800">⚠️ Booking Not Confirmed</p>
-      <p class="text-xs text-rose-700 mt-1">Pay ₹{{ booking.advance_amount }} advance to confirm</p>
-      <a href="{% url 'cab_pay_advance' booking.booking_id %}" class="mt-2 inline-block bg-rose-600 hover:bg-rose-700 text-white font-black text-xs px-4 py-2 rounded-lg">Pay Advance Now</a>
-    </div>
-    {% endif %}
-      <div class="mt-6 pt-6 border-t border-slate-200">
-        <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 mb-3">Fare Breakdown</h3>
-        <div class="space-y-2 text-sm">
-          <div class="flex justify-between"><span class="text-slate-600">Base fare</span><span class="font-bold">₹{{ booking.base_fare }}</span></div>
-          {% if booking.night_charge > 0 %}<div class="flex justify-between text-amber-700"><span>Night charge</span><span class="font-bold">+ ₹{{ booking.night_charge }}</span></div>{% endif %}
-          {% if booking.state_tax > 0 %}<div class="flex justify-between text-blue-700"><span>State tax</span><span class="font-bold">+ ₹{{ booking.state_tax }}</span></div>{% endif %}
-          {% if booking.discount_amount > 0 %}<div class="flex justify-between text-emerald-700"><span>Discount{% if booking.coupon %} ({{ booking.coupon.code }}){% endif %}</span><span class="font-bold">- ₹{{ booking.discount_amount }}</span></div>{% endif %}
-          <div class="flex justify-between"><span class="text-slate-600">GST (5%)</span><span class="font-bold">+ ₹{{ booking.gst_amount }}</span></div>
-          <div class="flex justify-between border-t-2 border-slate-300 pt-3 text-lg font-black text-emerald-700">
-            <span>Total (Pay to Driver)</span><span>₹{{ booking.total_amount }}</span>
-          </div>
-        </div>
-      </div>
 
-      <div class="mt-6 flex flex-wrap items-center justify-between gap-3 bg-slate-50 -mx-6 md:-mx-8 px-6 md:px-8 py-4 border-t border-slate-200">
-        <div>
-          <span class="text-xs text-slate-500 uppercase font-bold block">Status</span>
-          <span class="inline-block mt-1 px-3 py-1 rounded-full text-xs font-black
-            {% if booking.status == 'CONFIRMED' %}bg-emerald-100 text-emerald-800
-            {% elif booking.status == 'COMPLETED' %}bg-blue-100 text-blue-800
-            {% elif 'CANCELLED' in booking.status %}bg-rose-100 text-rose-800
-            {% else %}bg-slate-100 text-slate-800{% endif %}">
-            {{ booking.get_status_display }}
-          </span>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <a href="{% url 'cab_invoice_pdf' booking.booking_id %}" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition">
-            <i data-lucide="download" class="w-3.5 h-3.5 inline"></i> Download Invoice
-          </a>
-          <a href="{% url 'track_cab_booking' %}?booking_id={{ booking.booking_id }}" class="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-lg transition">
-            Track
-          </a>
-          {% if booking.status == 'CONFIRMED' %}
-          <a href="{% url 'cancel_cab_booking' booking.booking_id %}" class="px-4 py-2 bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-lg transition">
-            Cancel
-          </a>
-          {% endif %}
-        </div>
-      </div>
+        <section class="mmy-panel overflow-hidden">
+
+            <!-- BOOKING HEADER -->
+            <div class="mmy-hero p-5 md:p-7 text-white">
+                <div class="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
+                            <i data-lucide="car-front" class="w-7 h-7" aria-hidden="true"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-blue-100">BOOKING REFERENCE</p>
+                            <div class="flex items-center gap-2 flex-wrap mt-1">
+                                <h2 class="text-xl md:text-2xl font-black break-all" id="booking-id-text">{{ booking.booking_id }}</h2>
+                                <button type="button" class="mmy-copy-btn" id="copy-booking-id" aria-label="Copy booking ID">
+                                    <i data-lucide="copy" class="w-3.5 h-3.5" aria-hidden="true"></i> 
+                                    <span id="copy-label">Copy</span>
+                                </button>
+                            </div>
+                            <p class="text-xs text-blue-100 mt-1">Keep this ID handy for support and tracking.</p>
+                        </div>
+                    </div>
+                    <span class="inline-flex items-center self-start rounded-full bg-white/15 border border-white/20 px-4 py-2 text-xs font-extrabold">
+                        <i data-lucide="clipboard-check" class="w-4 h-4 mr-2" aria-hidden="true"></i>{{ booking.get_status_display }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="p-5 md:p-7">
+
+                <!-- JOURNEY DETAILS -->
+                <div>
+                    <h3 class="mmy-section-title mb-4">
+                        <i data-lucide="map-pinned" aria-hidden="true"></i> Journey information
+                    </h3>
+                    
+                    <div class="rounded-xl border border-blue-100 bg-blue-50/70 p-4 mb-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center gap-3">
+                            <div>
+                                <p class="text-[10px] font-extrabold uppercase tracking-wider text-blue-700">PICKUP CITY</p>
+                                <p class="text-lg font-black text-slate-900 mt-1">{{ booking.pickup_city }}</p>
+                            </div>
+                            <div class="hidden sm:flex w-9 h-9 rounded-full bg-white text-blue-600 items-center justify-center">
+                                <i data-lucide="arrow-right" class="w-5 h-5" aria-hidden="true"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-extrabold uppercase tracking-wider text-blue-700">DROP CITY</p>
+                                <p class="text-lg font-black text-slate-900 mt-1">
+                                    {% if booking.drop_city %}{{ booking.drop_city }}{% else %}As per trip package{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="mmy-info-card">
+                            <span class="mmy-detail-label">GUEST NAME</span>
+                            <p class="mmy-detail-value">{{ booking.guest_name }}</p>
+                        </div>
+                        <div class="mmy-info-card">
+                            <span class="mmy-detail-label">PHONE NUMBER</span>
+                            <p class="mmy-detail-value">
+                                <a href="tel:{{ booking.guest_phone }}" class="text-[#0878d1] hover:underline">{{ booking.guest_phone }}</a>
+                            </p>
+                        </div>
+                        <div class="mmy-info-card">
+                            <span class="mmy-detail-label">CAB CATEGORY</span>
+                            <p class="mmy-detail-value">{{ booking.category.name }}</p>
+                            <p class="text-xs text-slate-500 mt-1">{{ booking.category.seating_capacity }} seater</p>
+                        </div>
+                        <div class="mmy-info-card">
+                            <span class="mmy-detail-label">TRIP TYPE</span>
+                            <p class="mmy-detail-value">{{ booking.get_trip_type_display }}</p>
+                        </div>
+                        <div class="mmy-info-card sm:col-span-2">
+                            <span class="mmy-detail-label">FULL PICKUP ADDRESS</span>
+                            <p class="mmy-detail-value">{{ booking.pickup_address }}, {{ booking.pickup_city }}</p>
+                            {% if booking.drop_city %}
+                                <div class="mt-3 pt-3 border-t border-slate-100">
+                                    <span class="mmy-detail-label">DROP CITY</span>
+                                    <p class="mmy-detail-value">{{ booking.drop_city }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="mmy-info-card">
+                            <span class="mmy-detail-label">PICKUP DATE</span>
+                            <p class="mmy-detail-value">{{ booking.pickup_datetime|date:"d M Y" }}</p>
+                        </div>
+                        <div class="mmy-info-card">
+                            <span class="mmy-detail-label">PICKUP TIME</span>
+                            <p class="mmy-detail-value">{{ booking.pickup_datetime|time:"g:i A" }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DRIVER DETAILS -->
+                <div class="mt-6">
+                    <h3 class="mmy-section-title mb-3">
+                        <i data-lucide="user-check" aria-hidden="true"></i> Driver & vehicle details
+                    </h3>
+                    
+                    {% if booking.driver_name %}
+                        <div class="rounded-xl border border-blue-200 bg-blue-50/70 p-4">
+                            <div class="flex items-start gap-3">
+                                <div class="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
+                                    <i data-lucide="user-check" class="w-5 h-5" aria-hidden="true"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex flex-wrap justify-between items-center gap-2">
+                                        <p class="text-[10px] font-extrabold uppercase tracking-wider text-blue-800">DRIVER ASSIGNED</p>
+                                        <span class="rounded-full bg-green-100 text-green-800 px-3 py-1 text-[10px] font-extrabold">Assigned</span>
+                                    </div>
+                                    <p class="text-lg font-black text-slate-900 mt-1">{{ booking.driver_name }}</p>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                                        <div>
+                                            <p class="text-[10px] font-bold uppercase text-slate-500">DRIVER PHONE</p>
+                                            <p class="text-sm font-bold text-slate-800 mt-1">
+                                                <a href="tel:{{ booking.driver_phone }}" class="text-[#0878d1] hover:underline">{{ booking.driver_phone }}</a>
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p class="text-[10px] font-bold uppercase text-slate-500">VEHICLE NUMBER</p>
+                                            <p class="text-sm font-bold text-slate-800 mt-1 font-mono">{{ booking.vehicle_number }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 flex items-start gap-3">
+                            <i data-lucide="info" class="w-5 h-5 text-blue-600 mt-0.5 shrink-0" aria-hidden="true"></i>
+                            <div>
+                                <p class="text-sm font-extrabold text-slate-800">Driver details pending</p>
+                                <p class="text-xs text-slate-500 mt-1">Driver and vehicle information will appear here once assigned.</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- PAYMENT INFORMATION -->
+                <div class="mt-6">
+                    <h3 class="mmy-section-title mb-3">
+                        <i data-lucide="wallet" aria-hidden="true"></i> Payment information
+                    </h3>
+
+                    {% if booking.advance_paid %}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="rounded-xl border border-green-200 bg-green-50 p-4">
+                                <p class="text-[10px] font-extrabold uppercase tracking-wide text-green-700">ADVANCE PAID</p>
+                                <p class="mt-1 text-2xl font-black text-green-800">₹{{ booking.advance_amount }}</p>
+                                {% if booking.advance_utr %}
+                                    <p class="text-[10px] text-green-700 mt-1">UTR: {{ booking.advance_utr }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                <p class="text-[10px] font-extrabold uppercase tracking-wide text-slate-500">BALANCE TO DRIVER</p>
+                                <p class="mt-1 text-2xl font-black text-slate-900">₹{{ booking.balance_amount }}</p>
+                            </div>
+                        </div>
+                    {% elif booking.status == 'ADVANCE_PENDING' %}
+                        <div class="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                            <p class="text-sm font-extrabold text-amber-900">Advance verification pending</p>
+                            {% if booking.advance_utr %}
+                                <p class="text-xs text-amber-800 mt-1">UTR: {{ booking.advance_utr }}</p>
+                            {% endif %}
+                            <a href="{% url 'cab_pay_advance' booking.booking_id %}" class="mmy-action mmy-secondary mt-3">View payment details</a>
+                        </div>
+                    {% elif booking.status == 'PENDING' %}
+                        <div class="rounded-xl border border-rose-200 bg-rose-50 p-4">
+                            <p class="text-sm font-extrabold text-rose-900">Advance payment required</p>
+                            <p class="text-xs text-rose-800 mt-1">Pay ₹{{ booking.advance_amount }} advance to proceed with confirmation.</p>
+                            <a href="{% url 'cab_pay_advance' booking.booking_id %}" class="mmy-action mmy-primary mt-3">
+                                Pay advance <i data-lucide="arrow-right" class="w-4 h-4" aria-hidden="true"></i>
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- FARE BREAKDOWN -->
+                <div class="mt-6 border-t border-slate-100 pt-5">
+                    <h3 class="mmy-section-title mb-3">
+                        <i data-lucide="receipt-text" aria-hidden="true"></i> Fare breakdown
+                    </h3>
+
+                    <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                        <div class="mmy-fare-row">
+                            <span class="text-slate-600">Base fare</span>
+                            <span class="font-bold text-slate-900">₹{{ booking.base_fare }}</span>
+                        </div>
+                        {% if booking.night_charge > 0 %}
+                            <div class="mmy-fare-row">
+                                <span class="text-slate-600">Night charge</span>
+                                <span class="font-bold text-slate-900">+ ₹{{ booking.night_charge }}</span>
+                            </div>
+                        {% endif %}
+                        {% if booking.waiting_charge > 0 %}
+                            <div class="mmy-fare-row">
+                                <span class="text-slate-600">Waiting charge</span>
+                                <span class="font-bold text-slate-900">+ ₹{{ booking.waiting_charge }}</span>
+                            </div>
+                        {% endif %}
+                        {% if booking.state_tax > 0 %}
+                            <div class="mmy-fare-row">
+                                <span class="text-slate-600">State tax</span>
+                                <span class="font-bold text-slate-900">+ ₹{{ booking.state_tax }}</span>
+                            </div>
+                        {% endif %}
+                        {% if booking.discount_amount > 0 %}
+                            <div class="mmy-fare-row">
+                                <span class="text-green-700">Discount{% if booking.coupon %} ({{ booking.coupon.code }}){% endif %}</span>
+                                <span class="font-bold text-green-700">− ₹{{ booking.discount_amount }}</span>
+                            </div>
+                        {% endif %}
+                        <div class="mmy-fare-row">
+                            <span class="text-slate-600">GST</span>
+                            <span class="font-bold text-slate-900">+ ₹{{ booking.gst_amount }}</span>
+                        </div>
+                        <div class="flex justify-between items-center gap-3 border-t border-slate-200 pt-4 mt-2">
+                            <span class="font-extrabold text-slate-900">Total fare</span>
+                            <span class="text-2xl font-black text-[#0878d1]">₹{{ booking.total_amount }}</span>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-2">Toll, parking, airport entry and extra-kilometre charges may be payable separately where applicable.</p>
+                </div>
+
+                <!-- CANCELLATION POLICY -->
+                <div class="mt-5 rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-blue-700" aria-hidden="true"></i>
+                        <p class="text-xs font-extrabold text-blue-900">CANCELLATION POLICY</p>
+                    </div>
+                    <ul class="space-y-1.5 text-[11px] text-slate-600">
+                        <li>• 24+ hrs before pickup: Full refund</li>
+                        <li>• 6–24 hrs before pickup: 50% refund</li>
+                        <li>• Less than 6 hrs: No refund</li>
+                    </ul>
+                    <p class="text-[10px] text-slate-400 mt-2">Applicable cancellation terms and charges are subject to the booking policy.</p>
+                </div>
+
+            </div>
+
+            <!-- BOTTOM ACTIONS -->
+            <div class="border-t border-slate-100 bg-slate-50 p-5 md:px-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <span class="block text-[10px] uppercase font-extrabold tracking-wider text-slate-500">BOOKING STATUS</span>
+                    <span class="mmy-status mt-2 
+                        {% if booking.status == 'CONFIRMED' %}bg-green-100 text-green-800
+                        {% elif booking.status == 'COMPLETED' %}bg-blue-100 text-blue-800
+                        {% elif 'CANCELLED' in booking.status %}bg-rose-100 text-rose-800
+                        {% else %}bg-amber-100 text-amber-800{% endif %}">
+                        <i data-lucide="circle-dot" class="w-3.5 h-3.5" aria-hidden="true"></i> 
+                        {{ booking.get_status_display }}
+                    </span>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <a href="{% url 'cab_invoice_pdf' booking.booking_id %}" class="mmy-action mmy-primary">
+                        <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i> Invoice
+                    </a>
+                    <a href="{% url 'track_cab_booking' %}?booking_id={{ booking.booking_id }}" class="mmy-action mmy-secondary">
+                        <i data-lucide="map-pin" class="w-4 h-4" aria-hidden="true"></i> Track
+                    </a>
+                    {% if booking.status == 'CONFIRMED' %}
+                        <a href="{% url 'cancel_cab_booking' booking.booking_id %}" class="mmy-action mmy-danger" onclick="return confirm('Are you sure you want to cancel this booking?');">
+                            <i data-lucide="x-circle" class="w-4 h-4" aria-hidden="true"></i> Cancel
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+        </section>
     </div>
-  </div>
-
-  <div class="mt-6 text-center">
-    <a href="{% url 'cab_list' %}" class="inline-block bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm px-6 py-3 rounded-xl transition">
-      Book Another Cab
-    </a>
-  </div>
-
 </div>
+
+<script>
+    (function() {
+        'use strict';
+        
+        // Copy booking ID functionality
+        var copyBtn = document.getElementById('copy-booking-id');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', function() {
+                var text = document.getElementById('booking-id-text').textContent.trim();
+                var label = document.getElementById('copy-label');
+                
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(function() {
+                        copyBtn.classList.add('copied');
+                        label.textContent = 'Copied!';
+                        setTimeout(function() {
+                            copyBtn.classList.remove('copied');
+                            label.textContent = 'Copy';
+                        }, 1800);
+                    });
+                } else {
+                    // Fallback for older browsers
+                    var ta = document.createElement('textarea');
+                    ta.value = text;
+                    ta.style.position = 'fixed';
+                    ta.style.opacity = '0';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    try {
+                        document.execCommand('copy');
+                        copyBtn.classList.add('copied');
+                        label.textContent = 'Copied!';
+                        setTimeout(function() {
+                            copyBtn.classList.remove('copied');
+                            label.textContent = 'Copy';
+                        }, 1800);
+                    } catch(e) {}
+                    document.body.removeChild(ta);
+                }
+            });
+        }
+
+        // Initialize Lucide Icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    })();
+</script>
+
 {% endblock %}

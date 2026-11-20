@@ -1,129 +1,616 @@
 {% extends 'base_public.html' %}
-{% block title %}Book Cabs — Makes My Yatra{% endblock %}
+
+{% block title %}Book Cabs Across India — Makes My Yatra{% endblock %}
+
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 py-8">
 
-  <div class="text-center mb-10">
-    <span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full mb-3">🚗 Book Cabs Across India</span>
-    <h1 class="text-3xl md:text-5xl font-black text-slate-900">Your Journey, Your Way</h1>
-    <p class="text-slate-500 mt-2 max-w-2xl mx-auto">Airport transfers, outstation trips, hourly rentals — verified drivers, transparent pricing</p>
-  </div>
+<style>
+/* ==========================================
+   MAKES MY YATRA - CAB BOOKING
+   MMT INSPIRED DESIGN (CLEANED)
+========================================== */
 
-  <div class="bg-white rounded-3xl shadow-xl border border-slate-200 p-6 md:p-8 mb-10">
-    <form action="{% url 'cab_search' %}" method="POST">
-      {% csrf_token %}
-      
-      <div class="flex flex-wrap gap-2 mb-6">
-        <label class="cursor-pointer">
-          <input type="radio" name="trip_type" value="ONE_WAY" checked class="peer sr-only">
-          <span class="block px-5 py-2.5 rounded-xl border-2 border-slate-200 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:border-emerald-600 font-bold text-sm transition">One Way</span>
-        </label>
-        <label class="cursor-pointer">
-          <input type="radio" name="trip_type" value="ROUND_TRIP" class="peer sr-only">
-          <span class="block px-5 py-2.5 rounded-xl border-2 border-slate-200 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:border-emerald-600 font-bold text-sm transition">Round Trip</span>
-        </label>
-        <label class="cursor-pointer">
-          <input type="radio" name="trip_type" value="AIRPORT" class="peer sr-only">
-          <span class="block px-5 py-2.5 rounded-xl border-2 border-slate-200 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:border-emerald-600 font-bold text-sm transition">Airport</span>
-        </label>
-        <label class="cursor-pointer">
-          <input type="radio" name="trip_type" value="HOURLY" class="peer sr-only">
-          <span class="block px-5 py-2.5 rounded-xl border-2 border-slate-200 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:border-emerald-600 font-bold text-sm transition">Hourly</span>
-        </label>
-      </div>
+.mmy-cab-page {
+    background: #f4f7fb;
+    color: #172b4d;
+    min-height: 100vh;
+}
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">From City *</label>
-          <input type="text" name="from_city" required placeholder="e.g. Delhi" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">To City</label>
-          <input type="text" name="to_city" placeholder="e.g. Jaipur" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Distance (km)</label>
-          <input type="number" name="distance_km" placeholder="e.g. 280" min="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Pickup Date *</label>
-          <input type="date" name="pickup_date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Pickup Time *</label>
-          <input type="time" name="pickup_time" required value="10:00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Cab Type</label>
-          <select name="category_id" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition">
-            <option value="">All Types</option>
-            {% for cat in categories %}
-            <option value="{{ cat.id }}">{{ cat.name }} ({{ cat.seating_capacity }} seater)</option>
-            {% endfor %}
-          </select>
-        </div>
-      </div>
+.mmy-cab-page * {
+    box-sizing: border-box;
+}
 
-      <div class="mt-5 flex flex-col sm:flex-row gap-3">
-        <input type="text" name="coupon_code" placeholder="Have a coupon? Enter code" class="flex-1 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm font-bold uppercase outline-none focus:ring-2 focus:ring-amber-500 transition">
-        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm uppercase tracking-wider px-10 py-3 rounded-xl shadow-lg shadow-emerald-500/30 transition">
-          Search Cabs
-        </button>
-      </div>
-    </form>
-  </div>
+.mmy-cab-hero {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(115deg, #052b66, #0757b8 60%, #1687e8);
+}
 
-  <div class="mb-10">
-    <h2 class="text-2xl font-black text-slate-900 mb-4">Choose Your Ride</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {% for cat in categories %}
-      <div class="bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-        <div class="w-14 h-14 bg-gradient-to-tr from-emerald-50 to-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-4">
-          <i data-lucide="car" class="w-7 h-7"></i>
+.mmy-cab-hero::before {
+    content: "";
+    position: absolute;
+    width: 420px;
+    height: 420px;
+    right: -100px;
+    top: -230px;
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 50%;
+    box-shadow:
+        0 0 0 40px rgba(255,255,255,.04),
+        0 0 0 80px rgba(255,255,255,.03);
+}
+
+.mmy-cab-card {
+    background: #fff;
+    border: 1px solid #e4eaf2;
+    border-radius: 17px;
+    box-shadow: 0 5px 22px rgba(20,54,91,.05);
+}
+
+.mmy-cab-field {
+    width: 100%;
+    min-width: 0;
+    height: 50px;
+    background: #fff;
+    color: #172b4d;
+    border: 1px solid #dce4ef;
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+    transition: .2s ease;
+}
+
+/* Zero-specificity default padding. 
+   Allows Tailwind utilities (like !pl-11) to override it cleanly. */
+:where(.mmy-cab-field) {
+    padding: 0 16px;
+}
+
+.mmy-cab-field::placeholder {
+    color: #9aa8b9;
+}
+
+.mmy-cab-field:focus {
+    border-color: #008cff;
+    box-shadow: 0 0 0 3px rgba(0,140,255,.12);
+}
+
+.mmy-cab-label {
+    display: block;
+    margin-bottom: 8px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+}
+
+.mmy-cab-tab input:checked + span {
+    background: #0878d1;
+    border-color: #0878d1;
+    color: #fff;
+    box-shadow: 0 4px 13px rgba(8,120,209,.19);
+}
+
+.mmy-cab-tab input:focus-visible + span {
+    outline: 3px solid #93c5fd;
+    outline-offset: 3px;
+}
+
+.mmy-cab-tab span {
+    transition: .2s ease;
+}
+
+.mmy-cab-search-btn {
+    min-height: 52px;
+    background: #0878d1;
+    transition: .2s ease;
+}
+
+.mmy-cab-search-btn:hover {
+    background: #0668b8;
+    transform: translateY(-1px);
+}
+
+.mmy-cab-category {
+    transition: .22s ease;
+}
+
+.mmy-cab-category:hover {
+    transform: translateY(-4px);
+    border-color: #b9d8f7;
+    box-shadow: 0 12px 28px rgba(20,54,91,.09);
+}
+
+.mmy-cab-section-label {
+    color: #0878d1;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+}
+
+.mmy-cab-section-title {
+    color: #172b4d;
+    font-size: 25px;
+    font-weight: 900;
+}
+
+.mmy-cab-package {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 13px;
+}
+
+.mmy-cab-feature-icon {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    color: #0878d1;
+    background: #eaf4ff;
+    border-radius: 13px;
+}
+
+.mmy-cab-route {
+    transition: .2s ease;
+}
+
+.mmy-cab-route:hover {
+    border-color: #b9d8f7;
+    background: #f8fbff;
+    transform: translateY(-2px);
+}
+
+@media(max-width: 640px) {
+    .mmy-cab-hero h1 {
+        font-size: 30px;
+    }
+    .mmy-cab-section-title {
+        font-size: 21px;
+    }
+}
+</style>
+
+<div class="mmy-cab-page pb-14">
+
+    <!-- ====================================
+         HERO SECTION
+    ===================================== -->
+    <section class="mmy-cab-hero text-white">
+        <div class="max-w-7xl mx-auto px-4 pt-11 pb-32 md:pt-14 md:pb-36 relative z-10">
+            <div class="max-w-3xl">
+                <div class="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-bold tracking-wide">
+                    <i data-lucide="badge-check" class="w-4 h-4 shrink-0"></i>
+                    RELIABLE RIDES. CLEAR FARES.
+                </div>
+
+                <h1 class="mt-4 text-3xl md:text-5xl font-black leading-tight">
+                    Every journey starts
+                    <br class="hidden sm:block">
+                    with the right cab.
+                </h1>
+
+                <p class="mt-3 max-w-xl text-sm md:text-base text-blue-100 leading-relaxed">
+                    Book outstation rides, airport transfers and local rentals
+                    with transparent pricing and dependable travel support.
+                </p>
+
+                <div class="flex flex-wrap gap-4 mt-6 text-xs font-semibold text-blue-100">
+                    <span class="flex items-center gap-2">
+                        <i data-lucide="shield-check" class="w-4 h-4 shrink-0"></i>
+                        Secure booking
+                    </span>
+                    <span class="flex items-center gap-2">
+                        <i data-lucide="badge-indian-rupee" class="w-4 h-4 shrink-0"></i>
+                        Transparent pricing
+                    </span>
+                    <span class="flex items-center gap-2">
+                        <i data-lucide="headset" class="w-4 h-4 shrink-0"></i>
+                        Travel support
+                    </span>
+                </div>
+            </div>
+
+            <div class="absolute right-8 bottom-9 hidden lg:flex items-center justify-center w-48 h-28 rounded-3xl border border-white/20 bg-white/10 backdrop-blur-sm rotate-[-5deg]">
+                <i data-lucide="car-front" class="w-24 h-24 text-white/90 shrink-0"></i>
+            </div>
         </div>
-        <h3 class="font-black text-lg text-slate-900">{{ cat.name }}</h3>
-        <p class="text-xs text-slate-500">{{ cat.seating_capacity }} seater • {{ cat.luggage_capacity }} bags {% if cat.ac_available %}• AC{% endif %}</p>
-        <div class="mt-4 pt-4 border-t border-slate-100">
-          <span class="text-[10px] text-slate-500 uppercase font-bold">Starting from</span>
-          <p class="text-2xl font-black text-emerald-600">₹{{ cat.base_per_km_rate }}<span class="text-xs font-normal text-slate-500">/km</span></p>
-          <p class="text-[10px] text-slate-400 mt-0.5">+ ₹{{ cat.driver_allowance_per_day }} driver allowance</p>
+    </section>
+
+    <!-- ====================================
+         MAIN BOOKING SEARCH
+    ===================================== -->
+    <div class="max-w-7xl mx-auto px-4 -mt-24 relative z-20">
+        <div class="mmy-cab-card overflow-hidden">
+            <div class="p-5 md:p-8">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                    <div>
+                        <p class="text-xs font-extrabold tracking-widest text-blue-700 uppercase">PLAN YOUR RIDE</p>
+                        <h2 class="text-xl md:text-2xl font-black text-slate-900 mt-1">Where would you like to go?</h2>
+                    </div>
+                    <div class="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-500">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-blue-600 shrink-0"></i>Secure booking experience
+                    </div>
+                </div>
+
+                <form action="{% url 'cab_search' %}" method="POST" id="cab-search-form">
+                    {% csrf_token %}
+                    
+                    <!-- TRIP TYPE TABS -->
+                    <div class="mb-6">
+                        <label class="mmy-cab-label">SELECT JOURNEY TYPE</label>
+                        <div class="flex flex-wrap gap-2">
+                            <label class="mmy-cab-tab cursor-pointer">
+                                <input type="radio" name="trip_type" value="ONE_WAY" checked class="sr-only">
+                                <span class="flex items-center gap-2 px-4 py-2.5 rounded-full border border-slate-200 text-sm font-bold text-slate-600">
+                                    <i data-lucide="arrow-right" class="w-4 h-4 shrink-0"></i> One Way
+                                </span>
+                            </label>
+                            <label class="mmy-cab-tab cursor-pointer">
+                                <input type="radio" name="trip_type" value="ROUND_TRIP" class="sr-only">
+                                <span class="flex items-center gap-2 px-4 py-2.5 rounded-full border border-slate-200 text-sm font-bold text-slate-600">
+                                    <i data-lucide="repeat" class="w-4 h-4 shrink-0"></i> Round Trip
+                                </span>
+                            </label>
+                            <label class="mmy-cab-tab cursor-pointer">
+                                <input type="radio" name="trip_type" value="AIRPORT" class="sr-only">
+                                <span class="flex items-center gap-2 px-4 py-2.5 rounded-full border border-slate-200 text-sm font-bold text-slate-600">
+                                    <i data-lucide="plane" class="w-4 h-4 shrink-0"></i> Airport
+                                </span>
+                            </label>
+                            <label class="mmy-cab-tab cursor-pointer">
+                                <input type="radio" name="trip_type" value="HOURLY" class="sr-only">
+                                <span class="flex items-center gap-2 px-4 py-2.5 rounded-full border border-slate-200 text-sm font-bold text-slate-600">
+                                    <i data-lucide="clock-3" class="w-4 h-4 shrink-0"></i> Hourly
+                                </span>
+                            </label>
+                        </div>
+                        <p id="trip-type-help" class="text-xs text-slate-500 mt-3" role="status" aria-live="polite">
+                            Book a one-way ride for your journey.
+                        </p>
+                    </div>
+
+                    <!-- HOURLY PACKAGE -->
+                    <div id="hourly-package-box" class="mmy-cab-package hidden mb-5 p-4">
+                        <div class="flex items-center gap-2 mb-3 text-blue-800">
+                            <i data-lucide="clock-3" class="w-5 h-5 shrink-0"></i>
+                            <h3 class="font-extrabold text-sm">Choose your hourly package</h3>
+                        </div>
+                        <label class="mmy-cab-label" for="hourly-package">AVAILABLE PACKAGES</label>
+                        <select id="hourly-package" name="hourly_package_id" class="mmy-cab-field">
+                            <option value="">-- Custom (enter distance below) --</option>
+                            {% for pkg in hourly_packages %}
+                            <option value="{{ pkg.id }}">
+                                {{ pkg.from_city }} — {{ pkg.duration_hours }}hr / {{ pkg.distance_km }}km ({{ pkg.category.name }}) — ₹{{ pkg.fixed_price }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-xs text-blue-700 mt-2">Fixed package price, subject to availability and booking conditions.</p>
+                    </div>
+
+                    <!-- PICKUP & DROP CITY (CLEANED FLEX LAYOUT) -->
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-5">
+                        
+                        <!-- Pickup -->
+                        <div class="w-full">
+                            <label class="mmy-cab-label" for="from-city">PICKUP CITY *</label>
+                            <div class="relative">
+                                <i data-lucide="map-pin" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-600 pointer-events-none shrink-0"></i>
+                                <input id="from-city" type="text" name="from_city" required placeholder="Enter pickup city" class="mmy-cab-field !pl-11">
+                            </div>
+                        </div>
+
+                        <!-- Swap Button (Perfectly centered vertically with inputs) -->
+                        <button type="button" id="swap-cities" class="self-center flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-blue-600 shadow-sm transition hover:bg-blue-50 hover:rotate-180" aria-label="Swap pickup and drop" title="Swap locations">
+                            <i data-lucide="arrow-down-up" class="w-4 h-4 shrink-0"></i>
+                        </button>
+
+                        <!-- Drop -->
+                        <div class="w-full">
+                            <label class="mmy-cab-label" for="to-city">DROP CITY</label>
+                            <div class="relative">
+                                <i data-lucide="map-pin-check" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-600 pointer-events-none shrink-0"></i>
+                                <input id="to-city" type="text" name="to_city" placeholder="Enter destination" class="mmy-cab-field !pl-11">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DATE / TIME / DISTANCE / CATEGORY -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label class="mmy-cab-label" for="pickup-date">PICKUP DATE *</label>
+                            <input id="pickup-date" type="date" name="pickup_date" required class="mmy-cab-field">
+                        </div>
+                        <div>
+                            <label class="mmy-cab-label" for="pickup-time">PICKUP TIME *</label>
+                            <input id="pickup-time" type="time" name="pickup_time" required value="10:00" class="mmy-cab-field">
+                        </div>
+                        <div>
+                            <label class="mmy-cab-label" for="distance-km">DISTANCE (KM)</label>
+                            <div class="relative">
+                                <i data-lucide="route" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-600 pointer-events-none shrink-0"></i>
+                                <input id="distance-km" type="number" name="distance_km" min="0" placeholder="Distance in km" class="mmy-cab-field !pl-11">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="mmy-cab-label" for="category-id">CAB PREFERENCE</label>
+                            <select id="category-id" name="category_id" class="mmy-cab-field">
+                                <option value="">All Types</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }} ({{ cat.seating_capacity }} seater)</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- COUPON AND SEARCH BUTTON -->
+                    <div class="mt-6 grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3">
+                        <div>
+                            <label class="mmy-cab-label" for="coupon-code">HAVE A COUPON?</label>
+                            <div class="relative">
+                                <i data-lucide="ticket-percent" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-600 pointer-events-none shrink-0"></i>
+                                <input id="coupon-code" type="text" name="coupon_code" maxlength="50" placeholder="Enter coupon code" class="mmy-cab-field !pl-11 uppercase placeholder:normal-case">
+                            </div>
+                        </div>
+                        <div class="flex items-end">
+                            <button type="submit" id="cab-search-button" class="mmy-cab-search-btn flex w-full sm:w-auto items-center justify-center gap-2 px-9 py-3 rounded-xl text-sm font-black text-white shadow-lg shadow-blue-700/20">
+                                <i data-lucide="search" class="w-4 h-4 shrink-0"></i>
+                                SEARCH CABS
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- TRUST FEATURES -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 border-t border-slate-100 bg-slate-50/80">
+                <div class="flex items-center gap-3 px-5 py-4">
+                    <span class="mmy-cab-feature-icon">
+                        <i data-lucide="badge-indian-rupee" class="w-5 h-5 shrink-0"></i>
+                    </span>
+                    <span class="text-xs font-bold text-slate-600">Transparent fare details</span>
+                </div>
+                <div class="flex items-center gap-3 px-5 py-4 border-t sm:border-t-0 sm:border-x border-slate-100">
+                    <span class="mmy-cab-feature-icon">
+                        <i data-lucide="car-front" class="w-5 h-5 shrink-0"></i>
+                    </span>
+                    <span class="text-xs font-bold text-slate-600">Multiple cab categories</span>
+                </div>
+                <div class="flex items-center gap-3 px-5 py-4 border-t sm:border-t-0 border-slate-100">
+                    <span class="mmy-cab-feature-icon">
+                        <i data-lucide="headset" class="w-5 h-5 shrink-0"></i>
+                    </span>
+                    <span class="text-xs font-bold text-slate-600">Travel assistance</span>
+                </div>
+            </div>
         </div>
-      </div>
-      {% empty %}
-      <div class="col-span-full text-center py-12 bg-slate-50 rounded-2xl">
-        <p class="text-slate-500">No cabs available. Coming soon!</p>
-      </div>
-      {% endfor %}
+
+        <!-- CAB CATEGORIES -->
+        <section class="mt-10 md:mt-14">
+            <div class="mb-5">
+                <p class="mmy-cab-section-label">FIND YOUR MATCH</p>
+                <h2 class="mmy-cab-section-title mt-1">Choose your ride</h2>
+                <p class="text-sm text-slate-500 mt-2">Pick a cab type that fits your journey.</p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {% for cat in categories %}
+                <article class="mmy-cab-card mmy-cab-category p-5">
+                    <div class="flex items-center justify-between">
+                        <div class="w-12 h-12 shrink-0 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center">
+                            <i data-lucide="car-front" class="w-6 h-6 shrink-0"></i>
+                        </div>
+                        <span class="text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-full shrink-0">
+                            {{ cat.seating_capacity }} Seater
+                        </span>
+                    </div>
+                    <h3 class="font-black text-lg text-slate-900 mt-4">{{ cat.name }}</h3>
+                    <p class="text-xs text-slate-500 mt-2">
+                        {{ cat.seating_capacity }} seats <span class="mx-1">•</span> {{ cat.luggage_capacity }} bags
+                        {% if cat.ac_available %} <span class="mx-1">•</span> AC {% endif %}
+                    </p>
+                    <div class="border-t border-slate-100 mt-5 pt-4">
+                        <p class="text-[10px] uppercase font-extrabold tracking-wider text-slate-500">Starting from</p>
+                        <p class="text-2xl font-black text-[#0878d1] mt-1">
+                            ₹{{ cat.base_per_km_rate }} <span class="text-xs font-semibold text-slate-500">/ km</span>
+                        </p>
+                        <p class="text-[11px] text-slate-400 mt-2">+ ₹{{ cat.driver_allowance_per_day }} driver allowance</p>
+                    </div>
+                </article>
+                {% empty %}
+                <div class="sm:col-span-2 lg:col-span-4 mmy-cab-card p-10 text-center">
+                    <i data-lucide="car-front" class="w-10 h-10 mx-auto text-slate-300 shrink-0"></i>
+                    <p class="font-bold text-slate-700 mt-3">No cabs available. Coming soon!</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- POPULAR ROUTES -->
+        {% if popular_routes %}
+        <section class="mt-10 md:mt-14">
+            <div class="mb-5">
+                <p class="mmy-cab-section-label">POPULAR JOURNEYS</p>
+                <h2 class="mmy-cab-section-title mt-1">Popular Routes</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {% for route in popular_routes %}
+                <article class="mmy-cab-card mmy-cab-route p-4 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 shrink-0 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
+                            <i data-lucide="route" class="w-5 h-5 shrink-0"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="font-extrabold text-sm text-slate-900 truncate">
+                                {{ route.from_city }} {% if route.to_city %} → {{ route.to_city }} {% endif %}
+                            </p>
+                            <p class="text-xs text-slate-500 mt-1">
+                                {{ route.get_trip_type_display }} · {{ route.category.name }}
+                            </p>
+                        </div>
+                    </div>
+                    <span class="font-black text-lg text-[#0878d1] whitespace-nowrap shrink-0">
+                        ₹{{ route.fixed_price }}
+                    </span>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- TRACK BOOKING -->
+        <section class="mt-10">
+            <div class="mmy-cab-card p-5 md:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 shrink-0 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center">
+                        <i data-lucide="map-pinned" class="w-6 h-6 shrink-0"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900">Already booked a cab?</h3>
+                        <p class="text-xs text-slate-500 mt-1">Check your existing cab booking.</p>
+                    </div>
+                </div>
+                <a href="{% url 'track_cab_booking' %}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-50 hover:bg-blue-100 px-5 py-3 text-sm font-extrabold text-[#0878d1] transition shrink-0">
+                    <i data-lucide="search-check" class="w-4 h-4 shrink-0"></i>
+                    TRACK BOOKING
+                    <i data-lucide="arrow-right" class="w-4 h-4 shrink-0"></i>
+                </a>
+            </div>
+        </section>
     </div>
-  </div>
-
-  {% if popular_routes %}
-  <div>
-    <h2 class="text-2xl font-black text-slate-900 mb-4">Popular Routes</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-      {% for route in popular_routes %}
-      <div class="bg-gradient-to-r from-emerald-50 to-white rounded-xl border border-emerald-200 p-4 flex items-center justify-between hover:shadow-md transition">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-emerald-600">
-            <i data-lucide="map-pin" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <p class="font-bold text-sm text-slate-900">{{ route.from_city }}{% if route.to_city %} → {{ route.to_city }}{% endif %}</p>
-            <p class="text-xs text-slate-500">{{ route.get_trip_type_display }} • {{ route.category.name }}</p>
-          </div>
-        </div>
-        <span class="font-black text-lg text-emerald-700">₹{{ route.fixed_price }}</span>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
-
-  <div class="mt-10 text-center">
-    <a href="{% url 'track_cab_booking' %}" class="text-sm font-bold text-slate-600 hover:text-emerald-600 transition">
-      <i data-lucide="search" class="w-4 h-4 inline"></i> Track an existing cab booking
-    </a>
-  </div>
-
 </div>
+
+<!-- ==========================================
+     CAB BOOKING JAVASCRIPT
+========================================== -->
+<script>
+(function () {
+    'use strict';
+
+    const form = document.getElementById('cab-search-form');
+    if (!form) return;
+
+    const radios = form.querySelectorAll('input[name="trip_type"]');
+    const packageBox = document.getElementById('hourly-package-box');
+    const fromCity = document.getElementById('from-city');
+    const toCity = document.getElementById('to-city');
+    const dateInput = document.getElementById('pickup-date');
+    const timeInput = document.getElementById('pickup-time');
+    const tripHelp = document.getElementById('trip-type-help');
+    const swapButton = document.getElementById('swap-cities');
+    const couponInput = document.getElementById('coupon-code');
+    const searchButton = document.getElementById('cab-search-button');
+
+    const messages = {
+        ONE_WAY: 'Book a one-way cab for your destination.',
+        ROUND_TRIP: 'Book your cab for an onward and return journey.',
+        AIRPORT: 'Book a convenient airport pickup or drop.',
+        HOURLY: 'Choose an hourly package or enter your custom trip details.'
+    };
+
+    function getLocalDate() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function updateTripType() {
+        const selected = form.querySelector('input[name="trip_type"]:checked');
+        const type = selected ? selected.value : 'ONE_WAY';
+        if (packageBox) packageBox.classList.toggle('hidden', type !== 'HOURLY');
+        if (tripHelp) tripHelp.textContent = messages[type] || messages.ONE_WAY;
+    }
+
+    if (dateInput) dateInput.min = getLocalDate();
+
+    if (swapButton) {
+        swapButton.addEventListener('click', function () {
+            const temp = fromCity.value;
+            fromCity.value = toCity.value;
+            toCity.value = temp;
+            fromCity.dispatchEvent(new Event('change', { bubbles: true }));
+            toCity.dispatchEvent(new Event('change', { bubbles: true }));
+            fromCity.focus();
+        });
+    }
+
+    [fromCity, toCity, dateInput, timeInput].forEach(function (field) {
+        if (!field) return;
+        field.addEventListener('input', function () {
+            field.setCustomValidity('');
+        });
+    });
+
+    radios.forEach(function (radio) {
+        radio.addEventListener('change', updateTripType);
+    });
+
+    if (couponInput) {
+        couponInput.addEventListener('blur', function () {
+            couponInput.value = couponInput.value.trim().toUpperCase();
+        });
+    }
+
+    form.addEventListener('submit', function (event) {
+        [fromCity, toCity, dateInput, timeInput].forEach(function (field) {
+            if (field) field.setCustomValidity('');
+        });
+
+        const selected = form.querySelector('input[name="trip_type"]:checked');
+        const type = selected ? selected.value : 'ONE_WAY';
+
+        fromCity.value = fromCity.value.trim();
+        toCity.value = toCity.value.trim();
+
+        if (!fromCity.value) {
+            fromCity.setCustomValidity('Please enter your pickup city.');
+        }
+
+        if (dateInput.value) {
+            const pickupDate = dateInput.value;
+            const today = getLocalDate();
+            if (pickupDate < today) {
+                dateInput.setCustomValidity('Please select today or a future pickup date.');
+            }
+            if (pickupDate === today && timeInput.value) {
+                const selectedDateTime = new Date(pickupDate + 'T' + timeInput.value);
+                if (selectedDateTime <= new Date()) {
+                    dateInput.setCustomValidity('Please choose a future pickup time.');
+                }
+            }
+        }
+
+        if ((type === 'ONE_WAY' || type === 'ROUND_TRIP') && fromCity.value && toCity.value && fromCity.value.toLowerCase() === toCity.value.toLowerCase()) {
+            toCity.setCustomValidity('Pickup and drop cities cannot be the same for this outstation journey.');
+        }
+
+        if (couponInput) {
+            couponInput.value = couponInput.value.trim().toUpperCase();
+        }
+
+        if (!form.reportValidity()) {
+            event.preventDefault();
+            return;
+        }
+
+        if (searchButton) {
+            searchButton.disabled = true;
+            searchButton.setAttribute('aria-busy', 'true');
+            searchButton.classList.add('opacity-70', 'cursor-not-allowed');
+            searchButton.innerHTML = `<span class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span> SEARCHING...`;
+        }
+    });
+
+    updateTripType();
+    
+    // Initialize Lucide Icons safely
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+})();
+</script>
 {% endblock %}

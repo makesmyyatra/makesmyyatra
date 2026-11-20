@@ -1,0 +1,342 @@
+
+{% extends 'base_public.html' %}
+{% block title %}Cancel Cab Booking — Makes My Yatra{% endblock %}
+{% block content %}
+
+<style>
+/* ==========================================
+   MAKES MY YATRA - CAB CANCELLATION
+========================================== */
+
+.mmy-cancel-page {
+    background: #f3f7fc;
+    min-height: 75vh;
+    color: #172b4d;
+}
+.mmy-cancel-page * {
+    box-sizing: border-box;
+}
+.mmy-cancel-card {
+    background: #fff;
+    border: 1px solid #e1eaf4;
+    border-radius: 17px;
+    box-shadow: 0 6px 24px rgba(20,54,91,.05);
+}
+.mmy-cancel-hero {
+    background: linear-gradient(115deg,#052b66,#0757b8 58%,#1687e8);
+    position: relative;
+    overflow: hidden;
+}
+.mmy-cancel-hero::after {
+    content: "";
+    position: absolute;
+    width: 260px;
+    height: 260px;
+    right: -90px;
+    top: -180px;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 50%;
+    box-shadow: 0 0 0 40px rgba(255,255,255,.04);
+}
+.mmy-cancel-info {
+    background: #fff;
+    border: 1px solid #e5ebf3;
+    border-radius: 11px;
+    padding: 14px;
+}
+.mmy-cancel-label {
+    display: block;
+    color: #718198;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+.mmy-cancel-value {
+    color: #172b4d;
+    font-size: 13px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+.mmy-cancel-textarea {
+    width: 100%;
+    min-height: 110px;
+    resize: vertical;
+    padding: 13px 14px;
+    border: 1px solid #d9e2ef;
+    border-radius: 10px;
+    background: #f8fbff;
+    color: #172b4d;
+    font-size: 13px;
+    outline: none;
+    transition: .2s;
+}
+.mmy-cancel-textarea:focus {
+    border-color: #1687e8;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(22,135,232,.1);
+}
+.mmy-cancel-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 47px;
+    padding: 12px 18px;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 900;
+    transition: .2s;
+}
+.mmy-cancel-keep {
+    background: #fff;
+    border: 1px solid #dbe4ef;
+    color: #334155;
+}
+.mmy-cancel-keep:hover {
+    background: #f1f5f9;
+}
+.mmy-cancel-confirm {
+    background: #e11d48;
+    color: #fff;
+}
+.mmy-cancel-confirm:hover {
+    background: #be123c;
+}
+.mmy-cancel-confirm:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+}
+.mmy-policy-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px dashed #f1d6a3;
+}
+.mmy-policy-row:last-child {
+    border-bottom: 0;
+}
+@media(max-width:640px) {
+    .mmy-cancel-btn {
+        width: 100%;
+    }
+}
+</style>
+
+<div class="mmy-cancel-page py-7 md:py-10">
+    <div class="max-w-3xl mx-auto px-4">
+
+        <!-- PAGE HEADER -->
+        <div class="mb-5">
+            <p class="text-xs font-extrabold uppercase tracking-widest text-blue-700">
+                BOOKING MANAGEMENT
+            </p>
+            <h1 class="mt-1 text-2xl md:text-3xl font-black text-slate-900">
+                Cancel cab booking
+            </h1>
+            <p class="mt-2 text-sm text-slate-500">
+                Review your journey details and cancellation policy before continuing.
+            </p>
+        </div>
+
+        <!-- BOOKING INFORMATION -->
+        <section class="mmy-cancel-card overflow-hidden mb-5">
+
+            <!-- BOOKING HEADER -->
+            <div class="mmy-cancel-hero p-5 md:p-6 text-white">
+                <div class="relative z-10 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-wider font-extrabold text-blue-100">
+                            BOOKING REFERENCE
+                        </p>
+                        <p class="mt-1 font-mono font-black text-xl md:text-2xl break-all">
+                            {{ booking.booking_id }}
+                        </p>
+                    </div>
+                    <span class="inline-flex items-center gap-2 rounded-full bg-white/15 border border-white/20 px-3 py-2 text-[10px] font-extrabold">
+                        <i data-lucide="alert-circle" class="w-4 h-4"></i>
+                        CANCELLATION REQUEST
+                    </span>
+                </div>
+            </div>
+
+            <div class="p-5 md:p-6">
+
+                <!-- TRIP DETAILS -->
+                <h2 class="text-sm font-black text-slate-900 mb-3 flex items-center gap-2">
+                    <i data-lucide="map-pinned" class="w-4 h-4 text-blue-600"></i>
+                    Booking information
+                </h2>
+
+                <div class="rounded-xl bg-blue-50/70 border border-blue-100 p-4 mb-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <span class="mmy-cancel-label">PICKUP CITY</span>
+                            <p class="mmy-cancel-value">{{ booking.pickup_city }}</p>
+                        </div>
+                        <div>
+                            <span class="mmy-cancel-label">DROP CITY</span>
+                            <p class="mmy-cancel-value">{{ booking.drop_city|default:"—" }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="mmy-cancel-info">
+                        <span class="mmy-cancel-label">GUEST NAME</span>
+                        <p class="mmy-cancel-value">{{ booking.guest_name }}</p>
+                    </div>
+                    <div class="mmy-cancel-info">
+                        <span class="mmy-cancel-label">CAB CATEGORY</span>
+                        <p class="mmy-cancel-value">{{ booking.category.name }}</p>
+                    </div>
+                    <div class="mmy-cancel-info">
+                        <span class="mmy-cancel-label">PICKUP DATE & TIME</span>
+                        <p class="mmy-cancel-value">
+                            {{ booking.pickup_datetime|date:"d M Y, g:i A" }}
+                        </p>
+                    </div>
+                    <div class="mmy-cancel-info">
+                        <span class="mmy-cancel-label">TRIP TYPE</span>
+                        <p class="mmy-cancel-value">{{ booking.get_trip_type_display }}</p>
+                    </div>
+                    <div class="mmy-cancel-info">
+                        <span class="mmy-cancel-label">TOTAL FARE</span>
+                        <p class="text-xl font-black text-[#0878d1]">
+                            ₹{{ booking.total_amount }}
+                        </p>
+                    </div>
+                    <div class="mmy-cancel-info">
+                        <span class="mmy-cancel-label">BOOKING STATUS</span>
+                        <p class="mmy-cancel-value">{{ booking.get_status_display }}</p>
+                    </div>
+                </div>
+
+                <!-- CANCELLATION POLICY -->
+                <div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                    <div class="flex items-center gap-2 text-amber-900">
+                        <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                        <h3 class="text-sm font-black">
+                            Cancellation and refund policy
+                        </h3>
+                    </div>
+                    <div class="mt-3">
+                        <div class="mmy-policy-row">
+                            <i data-lucide="check-circle" class="w-4 h-4 text-green-700 shrink-0 mt-0.5"></i>
+                            <div>
+                                <p class="text-xs font-extrabold text-amber-900">24+ hours before pickup</p>
+                                <p class="text-xs text-amber-800 mt-1">Full refund</p>
+                            </div>
+                        </div>
+                        <div class="mmy-policy-row">
+                            <i data-lucide="clock" class="w-4 h-4 text-amber-700 shrink-0 mt-0.5"></i>
+                            <div>
+                                <p class="text-xs font-extrabold text-amber-900">6–24 hours before pickup</p>
+                                <p class="text-xs text-amber-800 mt-1">50% refund</p>
+                            </div>
+                        </div>
+                        <div class="mmy-policy-row">
+                            <i data-lucide="alert-circle" class="w-4 h-4 text-rose-700 shrink-0 mt-0.5"></i>
+                            <div>
+                                <p class="text-xs font-extrabold text-amber-900">Less than 6 hours before pickup</p>
+                                <p class="text-xs text-amber-800 mt-1">No refund</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-amber-700 mt-3">
+                        Refund eligibility and amount are subject to the applicable booking cancellation terms.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CANCELLATION FORM -->
+        <section class="mmy-cancel-card p-5 md:p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                    <i data-lucide="message-square-text" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h2 class="font-black text-slate-900">
+                        Cancellation request
+                    </h2>
+                    <p class="text-[11px] text-slate-500 mt-1">
+                        Tell us why you are cancelling your trip.
+                    </p>
+                </div>
+            </div>
+
+            <form method="POST" id="mmy-cancel-form">
+                {% csrf_token %}
+
+                <label for="cancel-reason" class="mmy-cancel-label">
+                    REASON FOR CANCELLATION
+                    <span class="font-medium normal-case text-slate-400">
+                        (Optional)
+                    </span>
+                </label>
+
+                <textarea
+                    id="cancel-reason"
+                    name="cancellation_reason"
+                    rows="4"
+                    maxlength="1000"
+                    placeholder="Share why you need to cancel this trip..."
+                    class="mmy-cancel-textarea"
+                ></textarea>
+
+                <div class="mt-4 flex flex-col-reverse sm:flex-row gap-3">
+                    <a
+                        href="{% url 'cab_booking_detail' booking.booking_id %}"
+                        class="mmy-cancel-btn mmy-cancel-keep flex-1"
+                    >
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        KEEP MY BOOKING
+                    </a>
+
+                    <button
+                        type="submit"
+                        id="mmy-confirm-cancel"
+                        class="mmy-cancel-btn mmy-cancel-confirm flex-1"
+                    >
+                        <i data-lucide="x-circle" class="w-4 h-4"></i>
+                        CONFIRM CANCELLATION
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- FOOTER NOTE -->
+        <div class="mt-4 flex items-start gap-2 text-xs text-slate-500">
+            <i data-lucide="info" class="w-4 h-4 text-blue-600 shrink-0"></i>
+            <p>
+                Please check the cancellation terms carefully before submitting your request.
+            </p>
+        </div>
+
+    </div>
+</div>
+
+<!-- CANCELLATION CONFIRMATION -->
+<script>
+(function () {
+    'use strict';
+    const form = document.getElementById('mmy-cancel-form');
+    if (!form) return;
+    form.addEventListener('submit', function (event) {
+        if (!confirm('Are you sure you want to cancel this cab booking?')) {
+            event.preventDefault();
+            return;
+        }
+        const button = document.getElementById('mmy-confirm-cancel');
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = '<span class="inline-block w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></span> PROCESSING...';
+        }
+    });
+})();
+</script>
+
+{% endblock %}

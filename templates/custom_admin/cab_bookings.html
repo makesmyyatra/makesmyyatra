@@ -1,180 +1,303 @@
+
 {% extends 'custom_admin/base.html' %}
+
 {% block title %}Cab Bookings — Admin{% endblock %}
 {% block page_title %}Cab Bookings{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto space-y-6">
 
-  {% if messages %}
-  <div class="space-y-2">
-    {% for message in messages %}
-    <div class="p-3 rounded-xl text-xs font-bold {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% else %}bg-rose-50 text-rose-800 border border-rose-200{% endif %}">
-      {{ message }}
+    {% if messages %}
+    <div class="space-y-2">
+        {% for message in messages %}
+        <div class="p-3 rounded-xl text-xs font-bold
+            {% if message.tags == 'success' %}
+                bg-emerald-50 text-emerald-800 border border-emerald-200
+            {% elif message.tags == 'warning' %}
+                bg-amber-50 text-amber-800 border border-amber-200
+            {% else %}
+                bg-rose-50 text-rose-800 border border-rose-200
+            {% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
-  </div>
-  {% endif %}
+    {% endif %}
 
-  <div class="flex flex-wrap items-center justify-between gap-3">
-    <div>
-      <h2 class="text-2xl font-black text-slate-900">Cab Bookings</h2>
-      <p class="text-xs text-slate-500 mt-1">Total {{ bookings|length }} bookings</p>
-    </div>
-    <a href="{% url 'portal_cab_revenue' %}" class="bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase px-5 py-2.5 rounded-xl transition flex items-center gap-2">
-      <i data-lucide="trending-up" class="w-4 h-4"></i> Revenue Report
-    </a>
-  </div>
+    <!-- Page Header -->
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+            <h2 class="text-2xl font-black text-slate-900">Cab Bookings</h2>
+            <p class="text-xs text-slate-500 mt-1">
+                Total {{ bookings|length }} bookings
+            </p>
+        </div>
 
-  <!-- Filters -->
-  <div class="bg-white rounded-2xl border border-slate-200 p-4">
-    <form method="GET" class="flex flex-wrap gap-3">
-      <input type="text" name="q" value="{{ search_q }}" placeholder="Search booking ID, guest, phone, city..." class="flex-1 min-w-[200px] bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500">
-      <select name="status" class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold outline-none">
-        <option value="ALL" {% if selected_status == 'ALL' %}selected{% endif %}>All Status</option>
-        <option value="PENDING" {% if selected_status == 'PENDING' %}selected{% endif %}>Pending</option>
-        <option value="CONFIRMED" {% if selected_status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
-        <option value="ASSIGNED" {% if selected_status == 'ASSIGNED' %}selected{% endif %}>Assigned</option>
-        <option value="ONGOING" {% if selected_status == 'ONGOING' %}selected{% endif %}>Ongoing</option>
-        <option value="COMPLETED" {% if selected_status == 'COMPLETED' %}selected{% endif %}>Completed</option>
-        <option value="CANCELLED_BY_GUEST" {% if selected_status == 'CANCELLED_BY_GUEST' %}selected{% endif %}>Cancelled by Guest</option>
-        <option value="CANCELLED_BY_ADMIN" {% if selected_status == 'CANCELLED_BY_ADMIN' %}selected{% endif %}>Cancelled by Admin</option>
-      </select>
-      <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-5 py-2.5 rounded-xl transition">Filter</button>
-      <a href="{% url 'portal_cab_bookings' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm px-5 py-2.5 rounded-xl transition">Reset</a>
-    </form>
-  </div>
+        <a href="{% url 'portal_cab_revenue' %}"
+           class="bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase px-5 py-2.5 rounded-xl transition">
+            Revenue Report
+        </a>
+    </div>
 
-  <!-- Bookings Table -->
-  <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-      <!-- Bulk Actions Bar -->
-  <div class="bg-white rounded-2xl border border-slate-200 p-3 flex flex-wrap items-center justify-between gap-3">
-    <div class="flex items-center gap-2">
-      <label class="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
-        <input type="checkbox" id="selectAllCabs" onchange="toggleSelectAllCabs(this)" class="w-4 h-4 text-emerald-600 rounded">
-        <span>Select All</span>
-      </label>
-      <span id="selectedCountCabs" class="text-xs text-slate-500 hidden"></span>
+    <!-- Filters -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-4">
+        <form method="GET" class="flex flex-wrap gap-3">
+
+            <input
+                type="text"
+                name="q"
+                value="{{ search_q }}"
+                placeholder="Search booking ID, guest, phone, city..."
+                class="flex-1 min-w-[200px] bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+
+            <select name="status"
+                    class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold outline-none">
+
+                <option value="ALL" {% if selected_status == 'ALL' %}selected{% endif %}>All Status</option>
+                <option value="PENDING" {% if selected_status == 'PENDING' %}selected{% endif %}>Pending</option>
+                <option value="CONFIRMED" {% if selected_status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
+                <option value="ASSIGNED" {% if selected_status == 'ASSIGNED' %}selected{% endif %}>Assigned</option>
+                <option value="ONGOING" {% if selected_status == 'ONGOING' %}selected{% endif %}>Ongoing</option>
+                <option value="COMPLETED" {% if selected_status == 'COMPLETED' %}selected{% endif %}>Completed</option>
+                <option value="CANCELLED_BY_GUEST" {% if selected_status == 'CANCELLED_BY_GUEST' %}selected{% endif %}>Cancelled by Guest</option>
+                <option value="CANCELLED_BY_ADMIN" {% if selected_status == 'CANCELLED_BY_ADMIN' %}selected{% endif %}>Cancelled by Admin</option>
+
+            </select>
+
+            <button type="submit"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-5 py-2.5 rounded-xl transition">
+                Filter
+            </button>
+
+            <a href="{% url 'portal_cab_bookings' %}"
+               class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm px-5 py-2.5 rounded-xl transition">
+                Reset
+            </a>
+        </form>
     </div>
-    <div class="flex gap-2">
-      <form method="POST" action="{% url 'portal_cab_booking_actions' %}" id="deleteSelectedForm" class="inline">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="delete_selected">
-        <div id="selectedIdsContainer"></div>
-        <button type="submit" onclick="return confirmDeleteSelected()" class="px-4 py-2 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-xs rounded-lg transition">
-          <i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i> Delete Selected
-        </button>
-      </form>
-      
-      <form method="POST" action="{% url 'portal_cab_booking_actions' %}" class="inline">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="delete_all">
-        <button type="submit" onclick="return confirm('⚠️ Are you sure? ALL cab bookings will be permanently deleted. This cannot be undone!')" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs rounded-lg transition">
-          <i data-lucide="alert-triangle" class="w-3.5 h-3.5 inline"></i> Delete ALL Bookings
-        </button>
-      </form>
+
+    <!-- Bulk Actions -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-4">
+
+        <div class="flex flex-wrap items-center justify-between gap-3">
+
+            <div class="flex items-center gap-3">
+                <label class="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                    <input
+                        type="checkbox"
+                        id="selectAllCabs"
+                        class="w-4 h-4 text-emerald-600 rounded"
+                        onchange="toggleSelectAllCabs(this)"
+                    >
+                    Select All
+                </label>
+
+                <span id="selectedCountCabs"
+                      class="text-xs text-slate-500 hidden"></span>
+            </div>
+
+            <form method="POST"
+                  action="{% url 'portal_cab_booking_actions' %}"
+                  id="deleteSelectedForm">
+
+                {% csrf_token %}
+
+                <input type="hidden" name="action" value="delete_selected">
+
+                <div id="selectedIdsContainer"></div>
+
+                <button
+                    type="submit"
+                    onclick="return confirmDeleteSelected()"
+                    class="px-4 py-2 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-xs rounded-lg transition">
+                    Delete Selected
+                </button>
+            </form>
+        </div>
+
+        <p class="text-xs text-slate-500 mt-3">
+            Only unpaid pending bookings without payment activity are eligible for deletion.
+            Other selected bookings will be skipped.
+        </p>
+
     </div>
-  </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead class="bg-slate-50 border-b border-slate-200">
-          <tr class="text-left text-xs font-black text-slate-600 uppercase">
-            <th class="px-4 py-3 w-10">
-              <input type="checkbox" disabled class="w-4 h-4 text-slate-300">
-            </th>
-            <th class="px-4 py-3">Booking ID</th>
-            <th class="px-4 py-3">Guest</th>
-            <th class="px-4 py-3">Trip</th>
-            <th class="px-4 py-3">Cab Type</th>
-            <th class="px-4 py-3">Pickup</th>
-            <th class="px-4 py-3">Amount</th>
-            <th class="px-4 py-3">Status</th>
-            <th class="px-4 py-3">Action</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100">
-          {% for booking in bookings %}
-          <tr class="hover:bg-slate-50 transition">
-            <td class="px-4 py-3">
-              <input type="checkbox" name="selected_bookings" value="{{ booking.id }}" data-booking="{{ booking.booking_id }}" class="cab-checkbox w-4 h-4 text-emerald-600 rounded" onchange="updateSelectionCount()">
-            </td>
-            <td class="px-4 py-3 font-mono text-xs font-bold">{{ booking.booking_id }}</td>
-            <td class="px-4 py-3">
-              <div class="font-bold">{{ booking.guest_name }}</div>
-              <div class="text-xs text-slate-500">{{ booking.guest_phone }}</div>
-            </td>
-            <td class="px-4 py-3">
-              <div class="font-bold">{{ booking.pickup_city }}{% if booking.drop_city %} → {{ booking.drop_city }}{% endif %}</div>
-              <div class="text-xs text-slate-500">{{ booking.get_trip_type_display }}</div>
-            </td>
-            <td class="px-4 py-3 text-xs">{{ booking.category.name }}</td>
-            <td class="px-4 py-3 text-xs">{{ booking.pickup_datetime|date:"d M, g:i A" }}</td>
-            <td class="px-4 py-3 font-black text-emerald-700">₹{{ booking.total_amount }}</td>
-            <td class="px-4 py-3">
-              <span class="px-2 py-1 rounded-full text-[10px] font-black
-                {% if booking.status == 'CONFIRMED' or booking.status == 'ASSIGNED' or booking.status == 'ONGOING' %}bg-emerald-100 text-emerald-800
-                {% elif booking.status == 'COMPLETED' %}bg-blue-100 text-blue-800
-                {% elif 'CANCELLED' in booking.status %}bg-rose-100 text-rose-800
-                {% else %}bg-slate-100 text-slate-700{% endif %}">
-                {{ booking.get_status_display }}
-              </span>
-            </td>
-            <td class="px-4 py-3">
-              <a href="{% url 'portal_cab_booking_detail' booking.booking_id %}" class="text-xs font-bold text-emerald-600 hover:underline">View</a>
-            </td>
-          </tr>
-          {% empty %}
-          
-          <tr>
-            <td colspan="8" class="px-4 py-16 text-center">
-              <i data-lucide="inbox" class="w-12 h-12 text-slate-300 mx-auto mb-2"></i>
-              <p class="text-sm font-bold text-slate-600">No cab bookings yet</p>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+
+    <!-- Bookings Table -->
+    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+
+                <thead class="bg-slate-50 border-b border-slate-200">
+                    <tr class="text-left text-xs font-black text-slate-600 uppercase">
+
+                        <th class="px-4 py-3 w-10">Select</th>
+                        <th class="px-4 py-3">Booking ID</th>
+                        <th class="px-4 py-3">Guest</th>
+                        <th class="px-4 py-3">Trip</th>
+                        <th class="px-4 py-3">Cab Type</th>
+                        <th class="px-4 py-3">Pickup</th>
+                        <th class="px-4 py-3">Amount</th>
+                        <th class="px-4 py-3">Status</th>
+                        <th class="px-4 py-3">Action</th>
+
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y divide-slate-100">
+
+                    {% for booking in bookings %}
+
+                    <tr class="hover:bg-slate-50 transition">
+
+                        <td class="px-4 py-3">
+                            <input
+                                type="checkbox"
+                                name="selected_bookings"
+                                value="{{ booking.id }}"
+                                class="cab-checkbox w-4 h-4 text-emerald-600 rounded"
+                                onchange="updateSelectionCount()"
+                            >
+                        </td>
+
+                        <td class="px-4 py-3 font-mono text-xs font-bold">
+                            {{ booking.booking_id }}
+                        </td>
+
+                        <td class="px-4 py-3">
+                            <div class="font-bold">{{ booking.guest_name }}</div>
+                            <div class="text-xs text-slate-500">
+                                {{ booking.guest_phone }}
+                            </div>
+                        </td>
+
+                        <td class="px-4 py-3">
+                            <div class="font-bold">
+                                {{ booking.pickup_city }}
+                                {% if booking.drop_city %}
+                                    → {{ booking.drop_city }}
+                                {% endif %}
+                            </div>
+                            <div class="text-xs text-slate-500">
+                                {{ booking.get_trip_type_display }}
+                            </div>
+                        </td>
+
+                        <td class="px-4 py-3 text-xs">
+                            {% if booking.category %}
+                                {{ booking.category.name }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+
+                        <td class="px-4 py-3 text-xs">
+                            {{ booking.pickup_datetime|date:"d M, g:i A" }}
+                        </td>
+
+                        <td class="px-4 py-3 font-black text-emerald-700">
+                            ₹{{ booking.total_amount }}
+                        </td>
+
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-1 rounded-full text-[10px] font-black
+                                {% if booking.status == 'CONFIRMED' or booking.status == 'ASSIGNED' or booking.status == 'ONGOING' %}
+                                    bg-emerald-100 text-emerald-800
+                                {% elif booking.status == 'COMPLETED' %}
+                                    bg-blue-100 text-blue-800
+                                {% elif 'CANCELLED' in booking.status %}
+                                    bg-rose-100 text-rose-800
+                                {% else %}
+                                    bg-slate-100 text-slate-700
+                                {% endif %}">
+                                {{ booking.get_status_display }}
+                            </span>
+                        </td>
+
+                        <td class="px-4 py-3">
+                            <a href="{% url 'portal_cab_booking_detail' booking.booking_id %}"
+                               class="text-xs font-bold text-emerald-600 hover:underline">
+                                View
+                            </a>
+                        </td>
+
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+                        <td colspan="9" class="px-4 py-16 text-center">
+                            <p class="text-sm font-bold text-slate-600">
+                                No cab bookings found
+                            </p>
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
     </div>
-  </div>
 
 </div>
-{% endblock %}
 
 <script>
-  function toggleSelectAllCabs(source) {
+function toggleSelectAllCabs(source) {
     const checkboxes = document.querySelectorAll('.cab-checkbox');
-    checkboxes.forEach(cb => cb.checked = source.checked);
-    updateSelectionCount();
-  }
-  
-  function updateSelectionCount() {
-    const checked = document.querySelectorAll('.cab-checkbox:checked');
-    const countEl = document.getElementById('selectedCountCabs');
-    const container = document.getElementById('selectedIdsContainer');
-    
-    if (checked.length > 0) {
-      countEl.textContent = `${checked.length} selected`;
-      countEl.classList.remove('hidden');
-    } else {
-      countEl.classList.add('hidden');
-    }
-    
-    // Update form hidden inputs
-    container.innerHTML = '';
-    checked.forEach(cb => {
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'selected_bookings';
-      input.value = cb.value;
-      container.appendChild(input);
+
+    checkboxes.forEach(function(checkbox) {
+        checkbox.checked = source.checked;
     });
-  }
-  
-  function confirmDeleteSelected() {
+
+    updateSelectionCount();
+}
+
+function updateSelectionCount() {
     const checked = document.querySelectorAll('.cab-checkbox:checked');
-    if (checked.length === 0) {
-      alert('Please select at least one booking to delete.');
-      return false;
+    const countElement = document.getElementById('selectedCountCabs');
+    const container = document.getElementById('selectedIdsContainer');
+    const selectAll = document.getElementById('selectAllCabs');
+    const total = document.querySelectorAll('.cab-checkbox');
+
+    countElement.textContent = checked.length + ' selected';
+
+    if (checked.length > 0) {
+        countElement.classList.remove('hidden');
+    } else {
+        countElement.classList.add('hidden');
     }
-    return confirm(`⚠️ Delete ${checked.length} selected booking(s)? This cannot be undone.`);
-  }
+
+    selectAll.checked = total.length > 0 && checked.length === total.length;
+
+    container.innerHTML = '';
+
+    checked.forEach(function(checkbox) {
+        const input = document.createElement('input');
+
+        input.type = 'hidden';
+        input.name = 'selected_bookings';
+        input.value = checkbox.value;
+
+        container.appendChild(input);
+    });
+}
+
+function confirmDeleteSelected() {
+    const checked = document.querySelectorAll('.cab-checkbox:checked');
+
+    if (checked.length === 0) {
+        alert('Please select at least one booking to delete.');
+        return false;
+    }
+
+    return confirm(
+        'Are you sure you want to delete ' +
+        checked.length +
+        ' selected booking(s)? Only eligible unpaid pending bookings will be deleted.'
+    );
+}
 </script>
+
+{% endblock %}

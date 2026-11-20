@@ -1,5 +1,5 @@
 import io
-from decimal import Decimal
+from decimal import Decimal, ROUND_CEILING
 from datetime import datetime, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -14,8 +14,12 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django_ratelimit.decorators import ratelimit
 from xhtml2pdf import pisa
+from django.conf import settings
+from urllib.parse import quote
+import qrcode
+import io
+import base64
 import logging
-
 from .models import CabCategory, CabRoutePackage, CabBooking, CabReview, Coupon, CabPartner, PartnerWalletTransaction
 from .views import is_admin, _to_int, _normalize_phone
 
@@ -27,158 +31,432 @@ WAITING_CHARGE_PER_HOUR = Decimal('100')
 
 
 def calculate_cab_fare(category, trip_type, distance_km, pickup_time, waiting_hours=0, coupon=None):
-    distance_km = Decimal(str(distance_km)) if distance_km else Decimal('0')
-    waiting_hours = int(waiting_hours) if waiting_hours else 0
+    distance_km = Decimal(str(distance_km or 0))
+    waiting_hours = int(waiting_hours or 0)
 
-    if trip_type == 'ONE_WAY' and distance_km > 0:
-        base_fare = (distance_km * category.base_per_km_rate) + category.driver_allowance_per_day
+    rate = Decimal(str(category.base_per_km_rate))
+    allowance = Decimal(str(category.driver_allowance_per_day))
+    min_km = Decimal(str(category.min_km_per_day))
+
+    if min_km <= 0 or distance_km < 0 or waiting_hours < 0:
+        raise ValueError("Invalid fare calculation inputs.")
+
+    if trip_type == 'ONE_WAY':
+        base_fare = (distance_km * rate) + allowance
+
     elif trip_type == 'AIRPORT':
-        base_fare = (Decimal('25') * category.base_per_km_rate) + category.driver_allowance_per_day
+        base_fare = (Decimal('25') * rate) + allowance
+
     elif trip_type == 'ROUND_TRIP':
-        days = max(1, int(distance_km / category.min_km_per_day) + 1) if distance_km else 1
-        base_fare = (Decimal(category.min_km_per_day) * days * category.base_per_km_rate) + (category.driver_allowance_per_day * days)
+        days = max(
+            1,
+            int((distance_km / min_km).to_integral_value(
+                rounding=ROUND_CEILING
+            ))
+        )
+        base_fare = (min_km * days * rate) + (allowance * days)
+
     elif trip_type == 'HOURLY':
-        hours = max(4, int(distance_km / 40))
-        base_fare = Decimal(hours) * Decimal('250') + category.driver_allowance_per_day
+        hours = max(
+            4,
+            int((distance_km / Decimal('40')).to_integral_value(
+                rounding=ROUND_CEILING
+            ))
+        )
+        base_fare = (Decimal(hours) * Decimal('250')) + allowance
+
     else:
-        base_fare = category.base_per_km_rate * Decimal(category.min_km_per_day) + category.driver_allowance_per_day
+        raise ValueError("Unsupported trip type.")
 
     base_fare = base_fare.quantize(Decimal('0.01'))
+
     is_night = pickup_time.hour >= 22 or pickup_time.hour < 6
     night_charge = NIGHT_CHARGE if is_night else Decimal('0.00')
-    waiting_charge = (Decimal(waiting_hours) * WAITING_CHARGE_PER_HOUR).quantize(Decimal('0.01'))
-    state_tax = Decimal('500.00') if trip_type in ['ONE_WAY', 'ROUND_TRIP'] and distance_km > 200 else Decimal('0.00')
+
+    waiting_charge = (
+        Decimal(waiting_hours) * WAITING_CHARGE_PER_HOUR
+    ).quantize(Decimal('0.01'))
+
+    state_tax = (
+        Decimal('500.00')
+        if trip_type in ('ONE_WAY', 'ROUND_TRIP') and distance_km > 200
+        else Decimal('0.00')
+    )
 
     subtotal = base_fare + night_charge + waiting_charge + state_tax
+
     discount = Decimal('0.00')
+
     if coupon:
         is_valid, _ = coupon.is_valid()
         if is_valid:
             discount, _ = coupon.calculate_discount(subtotal)
 
-    taxable = max(Decimal('0'), subtotal - discount)
+    taxable = max(Decimal('0.00'), subtotal - discount)
     gst = (taxable * CAB_GST_RATE).quantize(Decimal('0.01'))
     total = (taxable + gst).quantize(Decimal('0.01'))
 
     return {
-        'base_fare': base_fare, 'night_charge': night_charge, 'waiting_charge': waiting_charge,
-        'state_tax': state_tax, 'subtotal': subtotal, 'discount': discount,
-        'taxable': taxable, 'gst': gst, 'total': total,
+        'base_fare': base_fare,
+        'night_charge': night_charge,
+        'waiting_charge': waiting_charge,
+        'state_tax': state_tax,
+        'subtotal': subtotal,
+        'discount': discount,
+        'taxable': taxable,
+        'gst': gst,
+        'total': total,
     }
-
 
 def cab_list(request):
     categories = CabCategory.objects.filter(is_active=True).order_by('seating_capacity')
-    popular_routes = CabRoutePackage.objects.filter(is_active=True).select_related('category').order_by('from_city', 'fixed_price')[:12]
-    return render(request, 'cabs/cab_list.html', {'categories': categories, 'popular_routes': popular_routes})
-
+    popular_routes = CabRoutePackage.objects.filter(
+        is_active=True
+    ).exclude(trip_type='HOURLY').select_related('category').order_by('from_city', 'fixed_price')[:12]
+    hourly_packages = CabRoutePackage.objects.filter(
+        trip_type='HOURLY', is_active=True
+    ).select_related('category').order_by('from_city', 'duration_hours')
+    return render(request, 'cabs/cab_list.html', {
+        'categories': categories,
+        'popular_routes': popular_routes,
+        'hourly_packages': hourly_packages,
+    })
 
 def cab_search(request):
     if request.method != 'POST':
         return redirect('cab_list')
 
-    trip_type = request.POST.get('trip_type', 'ONE_WAY')
+    # -----------------------------------------
+    # 1. GET SEARCH INPUTS
+    # -----------------------------------------
+    trip_type = request.POST.get('trip_type', 'ONE_WAY').strip().upper()
+    valid_trip_types = {'ONE_WAY', 'ROUND_TRIP', 'AIRPORT', 'HOURLY'}
+
+    if trip_type not in valid_trip_types:
+        messages.error(request, "Invalid trip type selected.")
+        return redirect('cab_list')
+
     from_city = request.POST.get('from_city', '').strip()
     to_city = request.POST.get('to_city', '').strip()
-    pickup_date_str = request.POST.get('pickup_date', '')
-    pickup_time_str = request.POST.get('pickup_time', '')
+    pickup_date_str = request.POST.get('pickup_date', '').strip()
+    pickup_time_str = request.POST.get('pickup_time', '10:00').strip() or '10:00'
+    
     distance_km = _to_int(request.POST.get('distance_km'), 0, 0, 5000)
-    category_id = request.POST.get('category_id')
-    coupon_code = request.POST.get('coupon_code', '').strip()
+    
+    category_id_str = request.POST.get('category_id', '').strip()
+    coupon_code = request.POST.get('coupon_code', '').strip().upper()
+    hourly_package_id = request.POST.get('hourly_package_id', '').strip()
 
+    # -----------------------------------------
+    # 2. BASIC VALIDATION
+    # -----------------------------------------
     if not from_city or not pickup_date_str:
-        messages.error(request, "Please fill required fields.")
+        messages.error(request, "Please enter a pickup city and pickup date.")
         return redirect('cab_list')
 
+    # Enforce destination for point-to-point trips
+    if trip_type in ('ONE_WAY', 'ROUND_TRIP') and not to_city:
+        messages.error(request, "Please enter a destination city for this trip type.")
+        return redirect('cab_list')
+
+    if trip_type in ('ONE_WAY', 'ROUND_TRIP') and to_city and from_city.casefold() == to_city.casefold():
+        messages.error(request, "Pickup and destination cities cannot be the same.")
+        return redirect('cab_list')
+
+    # Validate category ID
+    category_id = None
+    if category_id_str:
+        try:
+            category_id = int(category_id_str)
+        except (ValueError, TypeError):
+            messages.error(request, "Invalid cab category selected.")
+            return redirect('cab_list')
+
+    # -----------------------------------------
+    # 3. DATE AND TIME VALIDATION
+    # -----------------------------------------
     try:
         pickup_date = datetime.strptime(pickup_date_str, '%Y-%m-%d').date()
-        pickup_time = datetime.strptime(pickup_time_str or '10:00', '%H:%M').time()
-    except ValueError:
-        messages.error(request, "Invalid date/time.")
+        pickup_time = datetime.strptime(pickup_time_str, '%H:%M').time()
+    except (ValueError, TypeError):
+        messages.error(request, "Invalid pickup date or time format.")
         return redirect('cab_list')
 
-    if pickup_date < timezone.localdate():
+    today = timezone.localdate()
+
+    if pickup_date < today:
         messages.error(request, "Pickup date cannot be in the past.")
         return redirect('cab_list')
 
+    # Prevent past pickup time on today's date
+    if pickup_date == today:
+        current_time = timezone.localtime(timezone.now()) if timezone.is_aware(timezone.now()) else timezone.now()
+        current_clock = current_time.time().replace(second=0, microsecond=0)
+
+        if pickup_time <= current_clock:
+            messages.error(request, "Pickup time must be in the future.")
+            return redirect('cab_list')
+
+    # -----------------------------------------
+    # 4. LOAD & VALIDATE HOURLY PACKAGES
+    # -----------------------------------------
+    selected_package = None
+
+    if hourly_package_id and trip_type == 'HOURLY':
+        try:
+            package_pk = int(hourly_package_id)
+        except (ValueError, TypeError):
+            messages.error(request, "Invalid hourly package selected.")
+            return redirect('cab_list')
+
+        selected_package = CabRoutePackage.objects.filter(
+            id=package_pk,
+            trip_type='HOURLY',
+            is_active=True,
+            category__is_active=True
+        ).select_related('category').first()
+
+        if not selected_package:
+            messages.error(request, "Selected hourly package is unavailable. Please choose another.")
+            return redirect('cab_list')
+
+        # Prevent conflicting cab category selection
+        if category_id and category_id != selected_package.category_id:
+            messages.error(request, "Selected hourly package belongs to a different cab category.")
+            return redirect('cab_list')
+
+    # -----------------------------------------
+    # 5. LOAD ACTIVE CAB CATEGORIES
+    # -----------------------------------------
     categories = CabCategory.objects.filter(is_active=True)
+
     if category_id:
         categories = categories.filter(id=category_id)
 
-    coupon_obj = Coupon.objects.filter(code__iexact=coupon_code, is_active=True).first() if coupon_code else None
+    # Hourly package strictly determines its own category
+    if selected_package:
+        categories = categories.filter(id=selected_package.category_id)
 
+    # -----------------------------------------
+    # 6. VALIDATE COUPON
+    # -----------------------------------------
+    coupon_obj = None
+    if coupon_code:
+        coupon_obj = Coupon.objects.filter(code__iexact=coupon_code, is_active=True).first()
+
+    # -----------------------------------------
+    # 7. CALCULATE CAB FARES
+    # -----------------------------------------
     cabs_with_fare = []
+    gst_rate = Decimal(str(CAB_GST_RATE)) # Ensure it's a Decimal for safe math
+
     for cat in categories:
-        fare = calculate_cab_fare(cat, trip_type, distance_km, pickup_time, 0, coupon_obj)
-        cabs_with_fare.append({'category': cat, **fare})
+        if selected_package:
+            # Category is already filtered to match the package, so this is guaranteed
+            package_price = Decimal(str(selected_package.fixed_price))
+            gst_amount = (package_price * gst_rate).quantize(Decimal('0.01'))
+            
+            fare = {
+                'base_fare': package_price,
+                'night_charge': Decimal('0.00'),
+                'waiting_charge': Decimal('0.00'),
+                'state_tax': Decimal('0.00'),
+                'subtotal': package_price,
+                'discount': Decimal('0.00'),
+                'taxable': package_price,
+                'gst': gst_amount,
+                'total': (package_price + gst_amount).quantize(Decimal('0.01')),
+            }
+        else:
+            # Normal fare calculation (adjust the '0' arg if your function expects waiting_time/extra)
+            fare = calculate_cab_fare(cat, trip_type, distance_km, pickup_time, 0, coupon_obj)
 
-    return render(request, 'cabs/cab_search_results.html', {
-        'cabs': cabs_with_fare, 'trip_type': trip_type, 'from_city': from_city,
-        'to_city': to_city, 'pickup_date': pickup_date, 'pickup_time': pickup_time,
-        'distance_km': distance_km, 'coupon_code': coupon_code,
-        'coupon_valid': coupon_obj is not None,
-    })
+        cabs_with_fare.append({
+            'category': cat,
+            **fare,
+            'package': selected_package,
+        })
 
+    # -----------------------------------------
+    # 8. SEARCH RESULTS
+    # -----------------------------------------
+    # Pre-fetch hourly packages for the results page (e.g., for a "Modify Search" sidebar)
+    hourly_packages = CabRoutePackage.objects.filter(
+        trip_type='HOURLY',
+        is_active=True
+    ).select_related('category').order_by('from_city', 'duration_hours')
+
+    return render(
+        request,
+        'cabs/cab_search_results.html',
+        {
+            'cabs': cabs_with_fare,
+            'trip_type': trip_type,
+            'from_city': from_city,
+            'to_city': to_city,
+            'pickup_date': pickup_date,
+            'pickup_time': pickup_time,
+            'distance_km': distance_km,
+            'coupon_code': coupon_code,
+            'coupon_valid': coupon_obj is not None,
+            'hourly_packages': hourly_packages,
+            'selected_package': selected_package,
+        }
+    )
 
 @ratelimit(key='ip', rate='10/h', method='POST', block=True)
 def book_cab(request):
     if request.method != 'POST':
         return redirect('cab_list')
 
-    category_id = request.POST.get('category_id')
-    trip_type = request.POST.get('trip_type', 'ONE_WAY')
+    category_id = _to_int(request.POST.get('category_id'), 0, 1, 1000000)
+    trip_type = request.POST.get('trip_type', 'ONE_WAY').strip().upper()
     from_city = request.POST.get('from_city', '').strip()
     to_city = request.POST.get('to_city', '').strip()
     pickup_address = request.POST.get('pickup_address', '').strip()
-    pickup_date_str = request.POST.get('pickup_date', '')
-    pickup_time_str = request.POST.get('pickup_time', '')
+    pickup_date_str = request.POST.get('pickup_date', '').strip()
+    pickup_time_str = request.POST.get('pickup_time', '10:00').strip()
     distance_km = _to_int(request.POST.get('distance_km'), 0, 0, 5000)
     waiting_hours = _to_int(request.POST.get('waiting_hours'), 0, 0, 24)
+    hourly_package_id = request.POST.get('hourly_package_id', '').strip()
     coupon_code = request.POST.get('coupon_code', '').strip()
 
     guest_name = request.POST.get('guest_name', '').strip()
     guest_phone = request.POST.get('guest_phone', '').strip()
     guest_email = request.POST.get('guest_email', '').strip()
 
-    if not all([category_id, from_city, pickup_address, guest_name, guest_phone]):
+    valid_trip_types = ['ONE_WAY', 'ROUND_TRIP', 'AIRPORT', 'HOURLY']
+
+    if trip_type not in valid_trip_types:
+        messages.error(request, "Invalid trip type selected.")
+        return redirect('cab_list')
+
+    if not all([category_id, from_city, pickup_address, guest_name, guest_phone, pickup_date_str]):
         messages.error(request, "Please fill all required fields.")
         return redirect('cab_list')
 
-    if len(_normalize_phone(guest_phone)) < 10:
-        messages.error(request, "Please enter valid 10-digit phone.")
+    if trip_type in ['ONE_WAY', 'ROUND_TRIP'] and not to_city:
+        messages.error(request, "Please enter destination city.")
+        return redirect('cab_list')
+
+    if trip_type in ['ONE_WAY', 'ROUND_TRIP'] and from_city.lower() == to_city.lower():
+        messages.error(request, "Pickup and destination cities cannot be the same.")
+        return redirect('cab_list')
+
+    if trip_type in ['ONE_WAY', 'ROUND_TRIP'] and distance_km <= 0:
+        messages.error(request, "Valid journey distance is required.")
+        return redirect('cab_list')
+
+    normalized_phone = _normalize_phone(guest_phone)
+    if len(normalized_phone) < 10:
+        messages.error(request, "Please enter a valid 10-digit phone number.")
         return redirect('cab_list')
 
     try:
         pickup_date = datetime.strptime(pickup_date_str, '%Y-%m-%d').date()
-        pickup_time = datetime.strptime(pickup_time_str or '10:00', '%H:%M').time()
-        pickup_datetime = timezone.make_aware(datetime.combine(pickup_date, pickup_time))
-    except ValueError:
-        messages.error(request, "Invalid date/time.")
+        pickup_time = datetime.strptime(pickup_time_str, '%H:%M').time()
+        pickup_datetime = timezone.make_aware(
+            datetime.combine(pickup_date, pickup_time)
+        )
+    except (ValueError, TypeError):
+        messages.error(request, "Invalid pickup date or time.")
         return redirect('cab_list')
 
     if pickup_datetime < timezone.now():
-        messages.error(request, "Pickup cannot be in the past.")
+        messages.error(request, "Pickup date and time cannot be in the past.")
         return redirect('cab_list')
 
-    category = get_object_or_404(CabCategory, id=category_id, is_active=True)
+    category = get_object_or_404(
+        CabCategory,
+        id=category_id,
+        is_active=True
+    )
+
+    selected_package = None
+
+    if trip_type == 'HOURLY':
+        if not hourly_package_id:
+            messages.error(request, "Please select an hourly package.")
+            return redirect('cab_list')
+
+        selected_package = CabRoutePackage.objects.filter(
+            id=hourly_package_id,
+            trip_type='HOURLY',
+            is_active=True
+        ).first()
+
+        if not selected_package:
+            messages.error(request, "Selected hourly package is unavailable.")
+            return redirect('cab_list')
+
+        if selected_package.category_id != category.id:
+            messages.error(request, "Selected package does not match the cab category.")
+            return redirect('cab_list')
+
+        if selected_package.fixed_price <= 0:
+            messages.error(request, "Invalid hourly package price.")
+            return redirect('cab_list')
+
+        if coupon_code:
+            messages.error(request, "Coupon codes are not available for this fixed-price hourly package.")
+            return redirect('cab_list')
 
     coupon_obj = None
-    if coupon_code:
-        c = Coupon.objects.filter(code__iexact=coupon_code, is_active=True).first()
-        if c and c.is_valid()[0]:
-            coupon_obj = c
 
-    fare = calculate_cab_fare(category, trip_type, distance_km, pickup_time, waiting_hours, coupon_obj)
+    if coupon_code and trip_type != 'HOURLY':
+        coupon = Coupon.objects.filter(
+            code__iexact=coupon_code,
+            is_active=True
+        ).first()
+
+        if not coupon or not coupon.is_valid()[0]:
+            messages.error(request, "Invalid or expired coupon code.")
+            return redirect('cab_list')
+
+        coupon_obj = coupon
 
     try:
+        if selected_package:
+            package_price = Decimal(str(selected_package.fixed_price)).quantize(
+                Decimal('0.01')
+            )
+            gst = (package_price * CAB_GST_RATE).quantize(
+                Decimal('0.01')
+            )
+
+            fare = {
+                'base_fare': package_price,
+                'night_charge': Decimal('0.00'),
+                'waiting_charge': Decimal('0.00'),
+                'state_tax': Decimal('0.00'),
+                'subtotal': package_price,
+                'discount': Decimal('0.00'),
+                'taxable': package_price,
+                'gst': gst,
+                'total': package_price + gst,
+            }
+        else:
+            fare = calculate_cab_fare(
+                category,
+                trip_type,
+                distance_km,
+                pickup_time,
+                waiting_hours,
+                coupon_obj
+            )
+
+        total = Decimal(str(fare['total'])).quantize(Decimal('0.01'))
+        if total <= 0:
+            messages.error(request, "Unable to calculate a valid booking fare.")
+            return redirect('cab_list')
+
+        advance = (total * Decimal('0.20')).quantize(Decimal('0.01'))
+        balance = total - advance
+
         with transaction.atomic():
-        # 20% advance + 80% balance
-            total = fare['total']
-            advance = (total * Decimal('0.20')).quantize(Decimal('0.01'))
-            balance = total - advance
-            
             booking = CabBooking.objects.create(
                 category=category,
+                route_package=selected_package,
                 user=request.user if request.user.is_authenticated else None,
                 coupon=coupon_obj,
                 trip_type=trip_type,
@@ -189,39 +467,60 @@ def book_cab(request):
                 distance_km=distance_km,
                 waiting_hours=waiting_hours,
                 guest_name=guest_name,
-                guest_phone=guest_phone,
+                guest_phone=normalized_phone,
                 guest_email=guest_email,
                 base_fare=fare['base_fare'],
                 driver_allowance=category.driver_allowance_per_day,
+                toll_charges=Decimal('0.00'),
                 night_charge=fare['night_charge'],
                 state_tax=fare['state_tax'],
+                waiting_charges=fare.get('waiting_charge', Decimal('0.00')),
                 gst_amount=fare['gst'],
                 discount_amount=fare['discount'],
                 total_amount=total,
-                advance_amount=advance,#
+                advance_amount=advance,
                 balance_amount=balance,
                 payment_mode='PAY_TO_DRIVER',
-                payment_status='PENDING',# waiting for advance payment
-                status='PENDING',  # waiting for advance payment
+                payment_status='PENDING',
+                status='PENDING',
             )
-    except Exception as e:
-        logger.error(f"Cab booking failed: {e}")
-        messages.error(request, "Booking failed. Try again.")
+
+    except Exception:
+        logger.exception("Cab booking creation failed.")
+        messages.error(request, "Booking failed. Please try again.")
         return redirect('cab_list')
 
     if booking.guest_email:
         try:
             send_mail(
-                f"Cab Booking Confirmed — {booking.booking_id}",
-                f"Dear {booking.guest_name},\n\nYour cab booking is confirmed.\nBooking ID: {booking.booking_id}\nPickup: {booking.pickup_address}, {booking.pickup_city}\nDate: {booking.pickup_datetime.strftime('%d %b %Y, %I:%M %p')}\nTotal: Rs. {booking.total_amount} (Pay to driver)\n\n— Makes My Yatra",
+                f"Cab Booking Received — {booking.booking_id}",
+                (
+                    f"Dear {booking.guest_name},\n\n"
+                    f"Your cab booking request has been received.\n"
+                    f"Booking ID: {booking.booking_id}\n"
+                    f"Pickup: {booking.pickup_address}, {booking.pickup_city}\n"
+                    f"Destination: {booking.drop_city or 'As selected'}\n"
+                    f"Date: {booking.pickup_datetime.strftime('%d %b %Y, %I:%M %p')}\n"
+                    f"Total Fare: Rs. {booking.total_amount}\n"
+                    f"Advance Required: Rs. {booking.advance_amount}\n\n"
+                    f"Your booking will be confirmed after advance payment verification.\n\n"
+                    f"— Makes My Yatra"
+                ),
                 settings.DEFAULT_FROM_EMAIL,
                 [booking.guest_email],
                 fail_silently=True,
             )
         except Exception as e:
-            logger.warning(f"Cab email failed for {booking.booking_id}: {type(e).__name__}: {e}")
+            logger.warning(
+                "Cab email failed for %s: %s",
+                booking.booking_id,
+                type(e).__name__
+            )
 
-    messages.info(request, f"Booking created! Please pay ₹{booking.advance_amount} advance to confirm.")
+    messages.info(
+        request,
+        f"Booking created! Please pay ₹{booking.advance_amount} advance to proceed."
+    )
     return redirect('cab_pay_advance', booking_id=booking.booking_id)
 
 def cab_booking_detail(request, booking_id):
@@ -398,37 +697,152 @@ def portal_cab_booking_detail(request, booking_id):
     booking = get_object_or_404(CabBooking.objects.select_related('category', 'coupon'), booking_id=booking_id)
     return render(request, 'custom_admin/cab_booking_detail.html', {'booking': booking})
 
-
+@require_POST
 @user_passes_test(is_admin, login_url='portal_login')
 def portal_cab_booking_update(request, booking_id):
-    booking = get_object_or_404(CabBooking, booking_id=booking_id)
-    if request.method == 'POST':
-        new_status = request.POST.get('status', booking.status)
+    with transaction.atomic():
+        booking = get_object_or_404(
+            CabBooking.objects.select_for_update(),
+            booking_id=booking_id
+        )
+
+        new_status = request.POST.get('status', booking.status).strip()
+
+        # Admin cannot complete or mark no-show through this general form.
+        allowed_transitions = {
+            'PENDING': ['PENDING', 'CONFIRMED'],
+            'CONFIRMED': ['CONFIRMED', 'ASSIGNED'],
+            'ASSIGNED': ['ASSIGNED', 'ONGOING'],
+            'ONGOING': ['ONGOING'],
+        }
+
+        allowed_statuses = allowed_transitions.get(booking.status, [])
+
+        if new_status not in allowed_statuses:
+            messages.error(
+                request,
+                "Invalid status change. Use the correct booking action."
+            )
+            return redirect(
+                'portal_cab_booking_detail',
+                booking_id=booking.booking_id
+            )
+
+        driver_name = request.POST.get(
+            'driver_name',
+            booking.driver_name or ''
+        ).strip()
+
+        driver_phone = request.POST.get(
+            'driver_phone',
+            booking.driver_phone or ''
+        ).strip()
+
+        vehicle_number = request.POST.get(
+            'vehicle_number',
+            booking.vehicle_number or ''
+        ).strip().upper()
+
+        if new_status in ('ASSIGNED', 'ONGOING'):
+            has_partner = booking.assigned_partner_id is not None
+            has_driver_details = bool(driver_name and driver_phone)
+
+            if not has_partner and not has_driver_details:
+                messages.error(
+                    request,
+                    "Add driver name and phone or assign a partner first."
+                )
+                return redirect(
+                    'portal_cab_booking_detail',
+                    booking_id=booking.booking_id
+                )
+
         booking.status = new_status
-        booking.driver_name = request.POST.get('driver_name', booking.driver_name or '').strip()
-        booking.driver_phone = request.POST.get('driver_phone', booking.driver_phone or '').strip()
-        booking.vehicle_number = request.POST.get('vehicle_number', booking.vehicle_number or '').strip()
-        if new_status == 'COMPLETED' and booking.payment_status == 'PENDING':
-            booking.payment_status = 'PAID'
-        booking.save()
-        messages.success(request, f"Booking {booking.booking_id} updated.")
-    return redirect('portal_cab_booking_detail', booking_id=booking.booking_id)
+        booking.driver_name = driver_name
+        booking.driver_phone = driver_phone
+        booking.vehicle_number = vehicle_number
+
+        # Never mark payment PAID merely because a trip is completed.
+        # Payment must be verified separately.
+
+        booking.save(update_fields=[
+            'status',
+            'driver_name',
+            'driver_phone',
+            'vehicle_number',
+        ])
+
+    messages.success(
+        request,
+        f"Booking {booking.booking_id} updated successfully."
+    )
+
+    return redirect(
+        'portal_cab_booking_detail',
+        booking_id=booking.booking_id
+    )
 
 
+@require_POST
 @user_passes_test(is_admin, login_url='portal_login')
 def portal_cab_cancel(request, booking_id):
-    booking = get_object_or_404(CabBooking, booking_id=booking_id)
-    if booking.status in ('COMPLETED', 'CANCELLED', 'CANCELLED_BY_ADMIN', 'CANCELLED_BY_GUEST'):
-        messages.warning(request, "Cannot cancel.")
-        return redirect('portal_cab_booking_detail', booking_id=booking.booking_id)
-    booking.status = 'CANCELLED_BY_ADMIN'
-    booking.cancelled_by = 'ADMIN'
-    booking.cancelled_at = timezone.now()
-    booking.cancellation_reason = "Cancelled by admin"
-    booking.save()
-    messages.success(request, f"Booking {booking.booking_id} cancelled.")
-    return redirect('portal_cab_bookings')
+    with transaction.atomic():
+        booking = get_object_or_404(
+            CabBooking.objects.select_for_update(),
+            booking_id=booking_id
+        )
 
+        terminal_statuses = (
+            'COMPLETED',
+            'CANCELLED',
+            'CANCELLED_BY_ADMIN',
+            'CANCELLED_BY_GUEST',
+            'NO_SHOW',
+        )
+
+        if booking.status in terminal_statuses:
+            messages.warning(
+                request,
+                "This booking cannot be cancelled in its current status."
+            )
+            return redirect(
+                'portal_cab_booking_detail',
+                booking_id=booking.booking_id
+            )
+
+        reason = request.POST.get(
+            'cancellation_reason',
+            'Cancelled by admin'
+        ).strip()
+
+        if not reason:
+            reason = 'Cancelled by admin'
+
+        booking.status = 'CANCELLED_BY_ADMIN'
+        booking.cancelled_by = 'ADMIN'
+        booking.cancelled_at = timezone.now()
+        booking.cancellation_reason = reason
+
+        # Do not automatically mark a payment as refunded.
+        # Any refund must be verified and recorded separately.
+
+        booking.save(update_fields=[
+            'status',
+            'cancelled_by',
+            'cancelled_at',
+            'cancellation_reason',
+        ])
+
+    messages.success(
+        request,
+        f"Booking {booking.booking_id} cancelled successfully. "
+        "Any applicable refund must be processed separately."
+    )
+
+    return redirect(
+        'portal_cab_booking_detail',
+        booking_id=booking.booking_id
+    )
 
 @user_passes_test(is_admin, login_url='portal_login')
 def portal_cab_revenue(request):
@@ -644,47 +1058,140 @@ def portal_partner_toggle(request, partner_id):
     messages.success(request, f"{partner.name} is now {status}.")
     return redirect('portal_partner_detail', partner_id=partner.id)
 
+
 @user_passes_test(is_admin, login_url='portal_login')
 def portal_cab_assign_partner(request, booking_id):
     from django.db.models import F
-    booking = get_object_or_404(CabBooking, booking_id=booking_id)
-    
-    if booking.assigned_partner:
-        messages.warning(request, f"Already assigned to {booking.assigned_partner.name}.")
-        return redirect('portal_cab_booking_detail', booking_id=booking.booking_id)
-    
+
     if request.method == 'POST':
-        partner_id = request.POST.get('partner_id')
-        if not partner_id:
-            messages.error(request, "Select a partner.")
-            return redirect('portal_cab_assign_partner', booking_id=booking.booking_id)
-        
-        partner = get_object_or_404(CabPartner, id=partner_id)
-        
-        if not partner.can_accept_booking:
-            messages.error(request, f"{partner.name} cannot accept. Wallet: ₹{partner.wallet_balance}")
-            return redirect('portal_cab_assign_partner', booking_id=booking.booking_id)
-        
-        # NEW FLOW: Just assign and set status - commission deducts only when partner ACCEPTS
-        booking.assigned_partner = partner
-        booking.status = 'PARTNER_REQUESTED'
-        booking.save()
-        
+        with transaction.atomic():
+            booking = get_object_or_404(
+                CabBooking.objects.select_for_update(),
+                booking_id=booking_id
+            )
+
+            if booking.status != 'CONFIRMED':
+                messages.error(
+                    request,
+                    "Only confirmed bookings can be assigned."
+                )
+                return redirect(
+                    'portal_cab_booking_detail',
+                    booking_id=booking.booking_id
+                )
+
+            if not booking.advance_paid:
+                messages.error(
+                    request,
+                    "Advance payment must be verified before assigning a partner."
+                )
+                return redirect(
+                    'portal_cab_booking_detail',
+                    booking_id=booking.booking_id
+                )
+
+            if booking.assigned_partner_id:
+                messages.warning(
+                    request,
+                    "A partner is already assigned to this booking."
+                )
+                return redirect(
+                    'portal_cab_booking_detail',
+                    booking_id=booking.booking_id
+                )
+
+            partner_id = request.POST.get('partner_id')
+
+            if not partner_id or not partner_id.isdigit():
+                messages.error(request, "Please select a valid partner.")
+                return redirect(
+                    'portal_cab_assign_partner',
+                    booking_id=booking.booking_id
+                )
+
+            partner = get_object_or_404(
+                CabPartner.objects.select_for_update(),
+                id=int(partner_id)
+            )
+
+            if not partner.can_accept_booking:
+                messages.error(
+                    request,
+                    "This partner is not currently eligible."
+                )
+                return redirect(
+                    'portal_cab_assign_partner',
+                    booking_id=booking.booking_id
+                )
+
+            booking.assigned_partner = partner
+            booking.status = 'PARTNER_REQUESTED'
+            booking.save(update_fields=[
+                'assigned_partner',
+                'status'
+            ])
+
         messages.success(
-            request, 
-            f"✓ Booking sent to {partner.name} ({partner.phone}). "
-            f"Commission ₹{booking.base_fare * partner.commission_percentage / 100} will be deducted when partner accepts."
+            request,
+            "Partner request sent successfully. Commission will be settled after trip completion."
         )
-        return redirect('portal_cab_booking_detail', booking_id=booking.booking_id)
-    
+        return redirect(
+            'portal_cab_booking_detail',
+            booking_id=booking.booking_id
+        )
+
+    booking = get_object_or_404(
+        CabBooking,
+        booking_id=booking_id
+    )
+
     eligible = CabPartner.objects.filter(
-        status='ACTIVE', is_available=True,
+        status='ACTIVE',
+        is_available=True,
         wallet_balance__gte=F('min_wallet_required')
-    ).exclude(assigned_bookings__status='PARTNER_REQUESTED')
+    ).exclude(
+        assigned_bookings__status='PARTNER_REQUESTED'
+    ).distinct()
+
+    return render(
+        request,
+        'custom_admin/cab_assign_partner.html',
+        {
+            'booking': booking,
+            'partners': eligible,
+        }
+    )
+
+
+@login_required(login_url='partner_cab_login')
+def partner_cab_accept_booking(request, booking_id):
+    """Partner accepts booking - commission deducted NOW."""
+    if not hasattr(request.user, 'cab_partner'):
+        return redirect('index')
     
-    return render(request, 'custom_admin/cab_assign_partner.html', {
-        'booking': booking, 'partners': eligible,
-    })
+    partner = request.user.cab_partner
+    booking = get_object_or_404(
+        CabBooking, 
+        booking_id=booking_id, 
+        assigned_partner=partner,
+        status='PARTNER_REQUESTED'
+    )
+    
+    # Mark commission due (not deduct)
+    commission_rate = partner.commission_percentage / Decimal('100')
+    commission = (booking.base_fare * commission_rate).quantize(Decimal('0.01'))
+    
+    booking.assigned_partner = partner
+    booking.commission_amount = commission
+    booking.commission_deducted = True # Mark that commission is due
+    booking.status = 'ASSIGNED'
+    if not booking.driver_name:
+        booking.driver_name = partner.name
+        booking.driver_phone = partner.phone
+    booking.save()
+    
+    messages.success(request, f"✓ Booking accepted! Commission ₹{commission} noted (deducted from advance at trip end).")
+    return redirect('partner_cab_dashboard')
 
 @user_passes_test(is_admin, login_url='portal_login')
 def portal_partner_wallet_log(request):
@@ -775,37 +1282,6 @@ def partner_cab_dashboard(request):
         'total_earnings': total_earnings,
     }
     return render(request, 'cabs_partner/dashboard.html', context)
-
-
-@login_required(login_url='partner_cab_login')
-def partner_cab_accept_booking(request, booking_id):
-    """Partner accepts booking - commission deducted NOW."""
-    if not hasattr(request.user, 'cab_partner'):
-        return redirect('index')
-    
-    partner = request.user.cab_partner
-    booking = get_object_or_404(
-        CabBooking, 
-        booking_id=booking_id, 
-        assigned_partner=partner,
-        status='PARTNER_REQUESTED'
-    )
-    
-    # NEW FLOW: Mark commission due (not deduct)
-    commission_rate = partner.commission_percentage / Decimal('100')
-    commission = (booking.base_fare * commission_rate).quantize(Decimal('0.01'))
-    
-    booking.assigned_partner = partner
-    booking.commission_amount = commission
-    booking.commission_paid = False
-    booking.status = 'ASSIGNED'
-    if not booking.driver_name:
-        booking.driver_name = partner.name
-        booking.driver_phone = partner.phone
-    booking.save()
-    
-    messages.success(request, f"✓ Booking accepted! Commission ₹{commission} noted (deducted from advance at trip end).")
-    return redirect('partner_cab_dashboard')
 
 @login_required(login_url='partner_cab_login')
 def partner_cab_reject_booking(request, booking_id):
@@ -950,49 +1426,105 @@ def portal_partner_utr_approve(request, partner_id):
     return redirect('portal_partner_detail', partner_id=partner.id)
 
 # ============================================================
-# ADVANCE PAYMENT FLOW (20%)
+# ADVANCE PAYMENT FLOW (20%) — MANUAL UTR
 # ============================================================
 
 def cab_pay_advance(request, booking_id):
-    """Customer advance payment page with UPI QR + UTR form."""
-    from django.conf import settings
-    from urllib.parse import quote
-    import qrcode, io, base64
-    
+    """Customer submits UTR. UTR submission never confirms payment."""
     booking = get_object_or_404(CabBooking, booking_id=booking_id)
-    
+
     if booking.advance_paid:
-        messages.info(request, "Advance already paid. Booking is confirmed.")
+        messages.info(request, "Advance payment is already verified.")
         return redirect('cab_booking_detail', booking_id=booking_id)
-    
-    # UPI link
-    upi_id = getattr(settings, 'PARTNER_UPI_ID', 'yourbusiness@upi')
+
+    if booking.status in ('CANCELLED', 'CANCELLED_BY_ADMIN',
+                          'CANCELLED_BY_GUEST', 'NO_SHOW'):
+        messages.error(request, "Payment cannot be submitted for this booking.")
+        return redirect('cab_booking_detail', booking_id=booking_id)
+
+    upi_id = getattr(settings, 'PARTNER_UPI_ID', '').strip()
     business_name = getattr(settings, 'BUSINESS_NAME', 'Makes My Yatra')
-    
-    upi_link = f"upi://pay?pa={upi_id}&pn={quote(business_name)}&am={booking.advance_amount}&cu=INR&tn={quote(f'Advance for {booking.booking_id}')}"
-    
-    # Generate QR
-    qr = qrcode.QRCode(version=1, box_size=8, border=2)
-    qr.add_data(upi_link)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
-    buffer = io.BytesIO()
-    img.save(buffer, format='PNG')
-    qr_base64 = base64.b64encode(buffer.getvalue()).decode()
-    
-    # Handle UTR submission
+
+    upi_link = ''
+    qr_base64 = ''
+
+    # Do not generate a QR with a fake/default UPI ID.
+    if upi_id and upi_id != 'yourbusiness@upi':
+        upi_link = (
+            f"upi://pay?pa={quote(upi_id)}"
+            f"&pn={quote(business_name)}"
+            f"&am={booking.advance_amount}"
+            f"&cu=INR"
+            f"&tn={quote('Advance for ' + booking.booking_id)}"
+        )
+
+        try:
+            qr = qrcode.QRCode(version=1, box_size=8, border=2)
+            qr.add_data(upi_link)
+            qr.make(fit=True)
+            img = qr.make_image(fill_color="black", back_color="white")
+
+            buffer = io.BytesIO()
+            img.save(buffer, format='PNG')
+            qr_base64 = base64.b64encode(buffer.getvalue()).decode()
+        except Exception:
+            logger.exception("Cab advance QR generation failed.")
+            messages.error(request, "Payment QR is temporarily unavailable.")
+
     if request.method == 'POST':
         utr = request.POST.get('utr', '').strip()
-        if not utr or len(utr) < 6:
-            messages.error(request, "Valid UTR (min 6 chars) required.")
+
+        if not upi_id or upi_id == 'yourbusiness@upi':
+            messages.error(request, "Business UPI ID is not configured yet.")
+        elif len(utr) < 6 or len(utr) > 50:
+            messages.error(request, "Please enter a valid UTR/reference number.")
+        elif booking.advance_utr and booking.status == 'ADVANCE_PENDING':
+            messages.warning(
+                request,
+                "Your UTR is already submitted and is awaiting admin verification."
+            )
         else:
-            booking.advance_utr = utr
-            booking.advance_utr_submitted_at = timezone.now()
-            booking.status = 'ADVANCE_PENDING'
-            booking.save()
-            messages.success(request, f"✓ UTR submitted! Booking will be confirmed after admin verification.")
-            return redirect('cab_booking_detail', booking_id=booking_id)
-    
+            try:
+                with transaction.atomic():
+                    locked_booking = CabBooking.objects.select_for_update().get(
+                        pk=booking.pk
+                    )
+
+                    if locked_booking.advance_paid:
+                        messages.info(request, "Advance is already verified.")
+                    elif locked_booking.status in (
+                        'CANCELLED', 'CANCELLED_BY_ADMIN',
+                        'CANCELLED_BY_GUEST', 'NO_SHOW'
+                    ):
+                        messages.error(request, "This booking is not accepting payment.")
+                    elif locked_booking.advance_utr and (
+                        locked_booking.status == 'ADVANCE_PENDING'
+                    ):
+                        messages.warning(
+                            request,
+                            "A UTR is already awaiting verification."
+                        )
+                    else:
+                        locked_booking.advance_utr = utr
+                        locked_booking.advance_utr_submitted_at = timezone.now()
+                        locked_booking.status = 'ADVANCE_PENDING'
+                        locked_booking.save(update_fields=[
+                            'advance_utr',
+                            'advance_utr_submitted_at',
+                            'status',
+                        ])
+                        messages.success(
+                            request,
+                            "UTR submitted. Booking will be confirmed only "
+                            "after the payment is verified by admin."
+                        )
+                        return redirect(
+                            'cab_booking_detail',
+                            booking_id=booking_id
+                        )
+            except CabBooking.DoesNotExist:
+                messages.error(request, "Booking not found.")
+
     return render(request, 'cabs/cab_pay_advance.html', {
         'booking': booking,
         'upi_id': upi_id,
@@ -1003,176 +1535,340 @@ def cab_pay_advance(request, booking_id):
 
 
 # ============================================================
-# ADMIN — ADVANCE VERIFICATION + NO-SHOW + COMPLETE TRIP
+# ADMIN — VERIFY ADVANCE / MARK NO-SHOW
 # ============================================================
 
 @user_passes_test(is_admin, login_url='portal_login')
+@require_POST
 def portal_cab_verify_advance(request, booking_id):
-    """Admin verifies customer advance UTR."""
-    booking = get_object_or_404(CabBooking, booking_id=booking_id)
-    
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        
+    """Admin verifies UTR against actual bank/UPI statement."""
+
+    action = request.POST.get('action', '').strip()
+
+    with transaction.atomic():
+        booking = get_object_or_404(
+            CabBooking.objects.select_for_update(),
+            booking_id=booking_id
+        )
+
         if action == 'approve':
+            if booking.advance_paid:
+                messages.info(request, "This advance is already verified.")
+                return redirect(
+                    'portal_cab_booking_detail',
+                    booking_id=booking.booking_id
+                )
+
+            if not booking.advance_utr or not booking.advance_utr_submitted_at:
+                messages.error(request, "No UTR has been submitted.")
+                return redirect(
+                    'portal_cab_booking_detail',
+                    booking_id=booking.booking_id
+                )
+
+            if booking.status != 'ADVANCE_PENDING':
+                messages.error(
+                    request,
+                    "Booking is not in the advance verification queue."
+                )
+                return redirect(
+                    'portal_cab_booking_detail',
+                    booking_id=booking.booking_id
+                )
+
+            # IMPORTANT:
+            # Admin must first confirm this exact payment in the bank statement.
             booking.advance_paid = True
             booking.advance_paid_at = timezone.now()
             booking.status = 'CONFIRMED'
-            booking.save()
-            
-            # Email customer
-            try:
-                if booking.guest_email:
+            booking.save(update_fields=[
+                'advance_paid',
+                'advance_paid_at',
+                'status',
+            ])
+
+            messages.success(
+                request,
+                f"Advance ₹{booking.advance_amount} marked verified. "
+                "Booking confirmed."
+            )
+
+            if booking.guest_email:
+                try:
                     send_mail(
                         f"Booking Confirmed — {booking.booking_id}",
-                        f"Dear {booking.guest_name},\n\n"
-                        f"Advance Rs. {booking.advance_amount} received.\n"
-                        f"Booking {booking.booking_id} is CONFIRMED.\n\n"
-                        f"Balance to pay driver: Rs. {booking.balance_amount}\n\n"
-                        f"— Makes My Yatra",
-                        settings.DEFAULT_FROM_EMAIL, [booking.guest_email],
+                        (
+                            f"Dear {booking.guest_name},\n\n"
+                            f"Your advance payment of ₹{booking.advance_amount} "
+                            f"has been verified.\n"
+                            f"Booking {booking.booking_id} is CONFIRMED.\n\n"
+                            f"Balance to pay: ₹{booking.balance_amount}\n\n"
+                            f"— Makes My Yatra"
+                        ),
+                        settings.DEFAULT_FROM_EMAIL,
+                        [booking.guest_email],
                         fail_silently=True,
                     )
-            except Exception as e:
-                logger.warning(f"Confirm email failed: {e}")
-            
-            messages.success(request, f"✓ Advance ₹{booking.advance_amount} verified. Booking CONFIRMED.")
-        
-        elif action == 'reject':
-            booking.advance_utr = None
-            booking.advance_utr_submitted_at = None
-            booking.status = 'PENDING'
-            booking.save()
-            messages.warning(request, "Advance UTR rejected.")
-        
-        elif action == 'no_show':
-            booking.status = 'NO_SHOW'
-            booking.cancelled_at = timezone.now()
-            booking.cancellation_reason = "Customer no-show — advance forfeited"
-            
-            # Driver compensation ₹200 from advance
-            if booking.assigned_partner:
-                driver_comp = min(Decimal('200.00'), booking.advance_amount)
-                booking.driver_wallet_credit = driver_comp
-                partner = booking.assigned_partner
-                
-                from .models import PartnerWalletTransaction
-                balance_before = partner.wallet_balance
-                partner.wallet_balance += driver_comp
-                partner.save()
-                
-                PartnerWalletTransaction.objects.create(
-                    partner=partner, txn_type='ADJUSTMENT',
-                    amount=driver_comp,
-                    balance_before=balance_before,
-                    balance_after=partner.wallet_balance,
-                    booking=booking,
-                    notes=f"No-show compensation for {booking.booking_id}",
-                    created_by=request.user,
-                )
-                
-                booking.driver_settled = True
-                booking.driver_settled_at = timezone.now()
-            
-            booking.save()
-            messages.warning(request, f"Booking marked NO-SHOW. Advance ₹{booking.advance_amount} forfeited. Driver compensated ₹200.")
-        
-        return redirect('portal_cab_booking_detail', booking_id=booking.booking_id)
-    
-    return redirect('portal_cab_booking_detail', booking_id=booking.booking_id)
+                except Exception:
+                    logger.exception("Cab booking confirmation email failed.")
 
+        elif action == 'reject':
+            if booking.advance_paid:
+                messages.error(
+                    request,
+                    "A verified payment cannot be rejected from this screen."
+                )
+            elif not booking.advance_utr:
+                messages.warning(request, "There is no submitted UTR to reject.")
+            else:
+                booking.advance_utr = None
+                booking.advance_utr_submitted_at = None
+                booking.status = 'PENDING'
+                booking.save(update_fields=[
+                    'advance_utr',
+                    'advance_utr_submitted_at',
+                    'status',
+                ])
+                messages.warning(
+                    request,
+                    "UTR rejected. Customer can submit a corrected reference."
+                )
+
+        elif action == 'no_show':
+            if booking.status not in ('CONFIRMED', 'ASSIGNED', 'ONGOING'):
+                messages.error(
+                    request,
+                    "Only a confirmed or assigned booking can be marked no-show."
+                )
+            elif booking.status == 'NO_SHOW':
+                messages.info(request, "Booking is already marked no-show.")
+            else:
+                booking.status = 'NO_SHOW'
+                booking.cancelled_at = timezone.now()
+                booking.cancellation_reason = "Customer no-show"
+                booking.save(update_fields=[
+                    'status',
+                    'cancelled_at',
+                    'cancellation_reason',
+                ])
+
+                # No automatic advance forfeiture or wallet credit here.
+                # Handle compensation/refund only according to the approved
+                # business policy and after checking the actual payment.
+                messages.warning(
+                    request,
+                    "Booking marked NO-SHOW. Advance/refund and driver "
+                    "compensation must be reconciled according to business policy."
+                )
+
+        else:
+            messages.error(request, "Invalid action.")
+
+    return redirect(
+        'portal_cab_booking_detail',
+        booking_id=booking_id
+    )
+
+# ============================================================
+# ADMIN — COMPLETE TRIP + WAITING CHARGES + DRIVER SETTLEMENT
+# ============================================================
 
 @user_passes_test(is_admin, login_url='portal_login')
 def portal_cab_complete_trip(request, booking_id):
-    """Admin marks trip complete with waiting charges + driver settlement."""
-    booking = get_object_or_404(CabBooking, booking_id=booking_id)
-    
+    """Complete an ongoing trip and settle partner advance only once."""
+
     if request.method == 'POST':
-        waiting_minutes = _to_int(request.POST.get('waiting_minutes'), 0, 0, 180)
-        
-        # Waiting: 15 min free, then ₹50 per 15 min
-        if waiting_minutes <= 15:
-            waiting_charges = Decimal('0.00')
-        else:
-            extra_blocks = (waiting_minutes - 15) // 15
-            waiting_charges = Decimal(extra_blocks * 50)
-        
-        booking.waiting_minutes = waiting_minutes
-        booking.waiting_charges = waiting_charges
-        booking.status = 'COMPLETED'
-        
-        # Update balance
-        new_balance = booking.balance_amount + waiting_charges
-        booking.balance_amount = new_balance
-        booking.total_amount = booking.total_amount + waiting_charges
-        
-        # Driver settlement = advance - commission
-        if booking.assigned_partner and booking.advance_paid:
-            commission = booking.commission_amount or Decimal('0.00')
-            driver_credit = booking.advance_amount - commission
-            booking.driver_wallet_credit = driver_credit
-            
-            partner = booking.assigned_partner
-            from .models import PartnerWalletTransaction
-            balance_before = partner.wallet_balance
-            partner.wallet_balance += driver_credit
-            partner.save()
-            
-            PartnerWalletTransaction.objects.create(
-                partner=partner, txn_type='ADJUSTMENT',
-                amount=driver_credit,
-                balance_before=balance_before,
-                balance_after=partner.wallet_balance,
-                booking=booking,
-                notes=f"Advance settlement for {booking.booking_id}",
-                created_by=request.user,
+        waiting_minutes = _to_int(
+            request.POST.get('waiting_minutes'),
+            0,
+            0,
+            180
+        )
+
+        with transaction.atomic():
+            booking = get_object_or_404(
+                CabBooking.objects.select_for_update(),
+                booking_id=booking_id
             )
-            
-            booking.driver_settled = True
-            booking.driver_settled_at = timezone.now()
-        
-        booking.save()
-        
+
+            if booking.status == 'COMPLETED':
+                messages.info(request, "This trip has already been completed.")
+                return redirect(
+                    'portal_cab_booking_detail',
+                    booking_id=booking.booking_id
+                )
+
+            if booking.status != 'ONGOING':
+                messages.error(
+                    request,
+                    "Only an ONGOING trip can be marked completed."
+                )
+                return redirect(
+                    'portal_cab_booking_detail',
+                    booking_id=booking.booking_id
+                )
+
+            # First 15 minutes are free.
+            # Every started 15-minute block after that is chargeable.
+            if waiting_minutes <= 15:
+                waiting_charges = Decimal('0.00')
+            else:
+                extra_blocks = (waiting_minutes - 15 + 14) // 15
+                waiting_charges = Decimal(extra_blocks * 50)
+
+            booking.waiting_minutes = waiting_minutes
+            booking.waiting_charges = waiting_charges
+            booking.balance_amount = (
+                booking.balance_amount or Decimal('0.00')
+            ) + waiting_charges
+            booking.total_amount = (
+                booking.total_amount or Decimal('0.00')
+            ) + waiting_charges
+
+            # Settle partner only when advance is verified.
+            if booking.assigned_partner and booking.advance_paid:
+                if booking.driver_settled:
+                    messages.error(
+                        request,
+                        "Partner settlement is already recorded. "
+                        "Please check the wallet ledger."
+                    )
+                    return redirect(
+                        'portal_cab_booking_detail',
+                        booking_id=booking.booking_id
+                    )
+
+                commission = booking.commission_amount or Decimal('0.00')
+                driver_credit = max(
+                    Decimal('0.00'),
+                    booking.advance_amount - commission
+                )
+
+                partner = CabPartner.objects.select_for_update().get(
+                    pk=booking.assigned_partner_id
+                )
+
+                balance_before = partner.wallet_balance
+                partner.wallet_balance = balance_before + driver_credit
+                partner.save(update_fields=['wallet_balance'])
+
+                PartnerWalletTransaction.objects.create(
+                    partner=partner,
+                    txn_type='ADJUSTMENT',
+                    amount=driver_credit,
+                    balance_before=balance_before,
+                    balance_after=partner.wallet_balance,
+                    booking=booking,
+                    notes=f"Advance settlement for {booking.booking_id}",
+                    created_by=request.user,
+                )
+
+                booking.driver_wallet_credit = driver_credit
+                booking.driver_settled = True
+                booking.driver_settled_at = timezone.now()
+
+            booking.status = 'COMPLETED'
+            booking.save()
+
         messages.success(
             request,
-            f"✓ Trip completed. Waiting: {waiting_minutes} min (₹{waiting_charges}). "
-            f"Driver wallet credited: ₹{booking.driver_wallet_credit}"
+            f"Trip completed. Waiting charges: ₹{waiting_charges}. "
+            f"Partner wallet credit: ₹{booking.driver_wallet_credit or 0}."
         )
-        return redirect('portal_cab_booking_detail', booking_id=booking.booking_id)
-    
-    return render(request, 'custom_admin/cab_complete_trip.html', {'booking': booking})
+        return redirect(
+            'portal_cab_booking_detail',
+            booking_id=booking.booking_id
+        )
+
+    booking = get_object_or_404(CabBooking, booking_id=booking_id)
+
+    return render(
+        request,
+        'custom_admin/cab_complete_trip.html',
+        {'booking': booking}
+    )
 
 # ============================================================
-# ADMIN — BULK DELETE CAB BOOKINGS
+# ADMIN — SAFE CAB BOOKING DELETION
 # ============================================================
 
 @user_passes_test(is_admin, login_url='portal_login')
+@require_POST
 def portal_cab_booking_actions(request):
-    """Bulk delete cab bookings — selected or all."""
-    if request.method == "POST":
-        action = request.POST.get("action")
-        
-        if action == "delete_selected":
-            selected_ids = request.POST.getlist("selected_bookings")
-            if selected_ids:
-                count = CabBooking.objects.filter(id__in=selected_ids).delete()[0]
-                messages.success(request, f"{count} selected cab bookings deleted successfully.")
-            else:
-                messages.warning(request, "No bookings selected.")
-        
-        elif action == "delete_all":
-            count = CabBooking.objects.count()
-            CabBooking.objects.all().delete()
-            messages.success(request, f"All {count} cab bookings deleted successfully!")
-    
+    """Delete only eligible unpaid pending bookings."""
+
+    action = request.POST.get('action', '').strip()
+
+    if action == 'delete_selected':
+        selected_ids = request.POST.getlist('selected_bookings')
+
+        if not selected_ids:
+            messages.warning(request, "No bookings selected.")
+            return redirect('portal_cab_bookings')
+
+        eligible_bookings = CabBooking.objects.filter(
+            id__in=selected_ids,
+            status='PENDING',
+            advance_paid=False,
+            advance_utr__isnull=True,
+            payment_status='PENDING',
+        )
+
+        count = eligible_bookings.count()
+        eligible_bookings.delete()
+
+        messages.success(
+            request,
+            f"{count} eligible unpaid pending bookings deleted."
+        )
+
+        skipped = len(selected_ids) - count
+        if skipped > 0:
+            messages.warning(
+                request,
+                f"{skipped} bookings were not deleted because they "
+                "may have payment activity or a different status."
+            )
+
+    elif action == 'delete_all':
+        messages.error(
+            request,
+            "Bulk deletion of all bookings is disabled to protect "
+            "customer and payment records."
+        )
+
+    else:
+        messages.error(request, "Invalid booking action.")
+
     return redirect('portal_cab_bookings')
 
 
 @user_passes_test(is_admin, login_url='portal_login')
+@require_POST
 def portal_cab_booking_delete(request, booking_id):
-    """Delete single cab booking."""
-    booking = get_object_or_404(CabBooking, booking_id=booking_id)
-    bid = booking.booking_id
-    booking.delete()
+    """Delete one eligible unpaid pending booking."""
+
+    with transaction.atomic():
+        booking = get_object_or_404(
+            CabBooking.objects.select_for_update(),
+            booking_id=booking_id
+        )
+
+        if (
+            booking.status != 'PENDING'
+            or booking.advance_paid
+            or booking.advance_utr
+            or booking.payment_status != 'PENDING'
+        ):
+            messages.error(
+                request,
+                "This booking cannot be deleted because it may contain "
+                "payment activity or important booking history."
+            )
+            return redirect('portal_cab_bookings')
+
+        bid = booking.booking_id
+        booking.delete()
+
     messages.success(request, f"Booking {bid} deleted.")
     return redirect('portal_cab_bookings')

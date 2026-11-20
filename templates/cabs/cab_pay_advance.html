@@ -1,81 +1,321 @@
 {% extends 'base_public.html' %}
+
 {% block title %}Pay Advance — {{ booking.booking_id }}{% endblock %}
+
 {% block content %}
-<div class="max-w-2xl mx-auto px-4 py-8">
 
-  {% if messages %}
-  {% for message in messages %}
-  <div class="mb-4 p-3 rounded-xl text-xs font-bold {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% else %}bg-rose-50 text-rose-800 border border-rose-200{% endif %}">{{ message }}</div>
-  {% endfor %}
-  {% endif %}
-
-  <div class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+<style>
+    .mmy-pay-page { background: #f3f7fc; min-height: 75vh; color: #172b4d; }
+    .mmy-pay-page * { box-sizing: border-box; }
+    .mmy-pay-card { background: #fff; border: 1px solid #e1eaf4; border-radius: 17px; box-shadow: 0 6px 24px rgba(20,54,91,.05); }
+    .mmy-pay-hero { background: linear-gradient(115deg, #052b66, #0757b8 58%, #1687e8); position: relative; overflow: hidden; }
+    .mmy-pay-hero:after { content: ""; position: absolute; width: 260px; height: 260px; right: -90px; top: -170px; border: 1px solid rgba(255,255,255,.15); border-radius: 50%; box-shadow: 0 0 0 35px rgba(255,255,255,.04), 0 0 0 70px rgba(255,255,255,.025); }
+    .mmy-pay-input { width: 100%; height: 49px; min-width: 0; border: 1px solid #d9e2ef; background: #f8fbff; border-radius: 10px; padding: 0 13px; font-size: 13px; color: #172b4d; outline: none; transition: .2s; }
+    .mmy-pay-input:focus { border-color: #1687e8; box-shadow: 0 0 0 3px rgba(22,135,232,.1); background: #fff; }
+    .mmy-pay-label { display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; color: #64748b; margin-bottom: 7px; }
+    .mmy-pay-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; background: #0878d1; color: white; border-radius: 10px; padding: 12px 16px; font-size: 12px; font-weight: 900; transition: .2s; border: none; cursor: pointer; }
+    .mmy-pay-btn:hover { background: #0668b8; transform: translateY(-1px); }
+    .mmy-pay-btn:disabled { opacity: .65; cursor: not-allowed; transform: none; }
+    .mmy-pay-icon { width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: #eaf4ff; color: #0878d1; border-radius: 12px; flex-shrink: 0; }
+    .mmy-pay-fare-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px dashed #e5eaf1; font-size: 12px; }
+    .mmy-pay-fare-row:last-child { border: 0; }
+    .mmy-pay-copy { border-radius: 9px; background: #15803d; color: #fff; padding: 10px 14px; font-size: 11px; font-weight: 900; white-space: nowrap; border: none; cursor: pointer; transition: .2s; }
+    .mmy-pay-copy:hover { background: #166534; }
+    .mmy-pay-qr { width: 190px; height: 190px; object-fit: contain; background: white; border: 5px solid white; border-radius: 12px; box-shadow: 0 3px 12px rgba(0,0,0,.07); }
     
-    <div class="bg-gradient-to-r from-amber-500 to-amber-600 text-white p-6 text-center">
-      <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
-        <i data-lucide="credit-card" class="w-8 h-8"></i>
-      </div>
-      <h1 class="text-2xl font-black">Pay 20% Advance</h1>
-      <p class="text-amber-100 text-sm mt-1">Confirm your booking by paying advance</p>
+    @media(max-width: 640px) {
+        .mmy-pay-qr { width: 165px; height: 165px; }
+    }
+</style>
+
+<div class="mmy-pay-page py-6 md:py-9">
+    <div class="max-w-5xl mx-auto px-4">
+
+        <!-- PAGE HEADER -->
+        <div class="mb-5">
+            <p class="text-xs font-extrabold uppercase tracking-widest text-blue-700">SECURE PAYMENT STEP</p>
+            <h1 class="text-2xl md:text-3xl font-black text-slate-900 mt-1">Complete your advance payment</h1>
+            <p class="text-sm text-slate-500 mt-1">Make your advance payment and submit the transaction reference for verification.</p>
+        </div>
+
+        <!-- DJANGO MESSAGES -->
+        {% if messages %}
+        <div class="mb-4 space-y-2">
+            {% for message in messages %}
+            <div class="flex items-start gap-2 rounded-xl border px-4 py-3 text-xs font-bold
+                {% if message.tags == 'success' %}border-green-200 bg-green-50 text-green-800
+                {% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-800
+                {% else %}border-rose-200 bg-rose-50 text-rose-800{% endif %}">
+                <i data-lucide="{% if message.tags == 'success' %}check-circle{% else %}alert-circle{% endif %}" class="w-4 h-4 shrink-0" aria-hidden="true"></i>
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+
+            <!-- PAYMENT DETAILS -->
+            <section class="mmy-pay-card lg:col-span-3 overflow-hidden">
+
+                <!-- ADVANCE AMOUNT HEADER -->
+                <div class="mmy-pay-hero p-5 md:p-6 text-white">
+                    <div class="relative z-10 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-xl bg-white/15 border border-white/10 flex items-center justify-center">
+                                <i data-lucide="wallet-cards" class="w-6 h-6" aria-hidden="true"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] uppercase font-extrabold tracking-wider text-blue-100">ADVANCE AMOUNT TO PAY</p>
+                                <h2 class="text-2xl md:text-3xl font-black mt-1">₹{{ booking.advance_amount }}</h2>
+                            </div>
+                        </div>
+                        <span class="hidden sm:inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-2 text-[10px] font-extrabold">
+                            <i data-lucide="shield-check" class="w-4 h-4" aria-hidden="true"></i> PAYMENT
+                        </span>
+                    </div>
+                </div>
+
+                <div class="p-5 md:p-6">
+
+                    <!-- BOOKING REFERENCE -->
+                    <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                        <p class="mmy-pay-label">BOOKING REFERENCE</p>
+                        <p class="font-mono font-black text-slate-900 text-base">{{ booking.booking_id }}</p>
+                        <div class="grid grid-cols-2 gap-3 mt-4">
+                            <div>
+                                <span class="text-[10px] text-slate-500 font-bold uppercase">Route</span>
+                                <p class="text-xs font-extrabold text-slate-900 mt-1 break-words">{{ booking.pickup_city }} → {{ booking.drop_city|default:"—" }}</p>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-slate-500 font-bold uppercase">Cab category</span>
+                                <p class="text-xs font-extrabold text-slate-900 mt-1">{{ booking.category.name }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FARE SUMMARY -->
+                    <div class="rounded-xl border border-blue-100 bg-blue-50/60 p-4 mt-4">
+                        <div class="mmy-pay-fare-row">
+                            <span class="text-slate-600">Total booking fare</span>
+                            <b class="text-slate-900">₹{{ booking.total_amount }}</b>
+                        </div>
+                        <div class="mmy-pay-fare-row">
+                            <span class="font-extrabold text-blue-800">Advance payment (20%)</span>
+                            <b class="text-lg text-blue-800">₹{{ booking.advance_amount }}</b>
+                        </div>
+                        <div class="flex justify-between items-center gap-3 pt-3">
+                            <span class="text-xs text-slate-500">Balance payable to driver</span>
+                            <b class="text-sm font-black text-slate-900">₹{{ booking.balance_amount }}</b>
+                        </div>
+                    </div>
+
+                    <!-- UPI PAYMENT -->
+                    <div class="rounded-xl border border-green-200 bg-green-50 p-4 mt-4">
+
+                        <div class="flex items-center gap-2">
+                            <div class="w-9 h-9 rounded-lg bg-green-100 text-green-700 flex items-center justify-center">
+                                <i data-lucide="smartphone" class="w-5 h-5" aria-hidden="true"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-extrabold uppercase tracking-wider text-green-800">PAY USING UPI</p>
+                                <p class="text-[10px] text-green-700 mt-0.5">Use your preferred UPI application.</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 rounded-xl border border-green-200 bg-white p-3">
+                            <p class="mmy-pay-label">BUSINESS UPI ID</p>
+                            <div class="flex items-center justify-between gap-2">
+                                <p class="font-mono text-sm md:text-base font-black text-green-900 break-all" id="mmy-upi-id">{{ upi_id }}</p>
+                                <button type="button" id="mmy-copy-upi" data-upi="{{ upi_id }}" class="mmy-pay-copy">
+                                    <i data-lucide="copy" class="inline w-3.5 h-3.5 mr-1" aria-hidden="true"></i> Copy
+                                </button>
+                            </div>
+                            <p id="mmy-copy-status" class="text-[10px] text-green-700 mt-2" aria-live="polite"></p>
+                        </div>
+
+                        <p class="text-xs font-bold text-green-900 mt-3">Business: {{ business_name }}</p>
+                        <p class="text-[11px] text-green-800 mt-1">Transfer exactly ₹{{ booking.advance_amount }} using this UPI ID.</p>
+
+                        <!-- QR CODE -->
+                        <div class="mt-5 pt-4 border-t border-green-200 text-center">
+                            <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 mb-3">OR SCAN UPI QR CODE</p>
+                            {% if qr_base64 %}
+                                <img src="data:image/png;base64,{{ qr_base64 }}" alt="UPI payment QR code" class="mmy-pay-qr mx-auto">
+                            {% else %}
+                                <div class="w-40 h-40 mx-auto rounded-xl border border-green-200 bg-white flex flex-col items-center justify-center text-slate-400">
+                                    <i data-lucide="qr-code" class="w-10 h-10" aria-hidden="true"></i>
+                                    <p class="text-xs font-bold mt-2">QR unavailable</p>
+                                </div>
+                            {% endif %}
+                            <p class="text-[10px] text-slate-500 mt-3">Verify the recipient and amount in your UPI app before paying.</p>
+                        </div>
+
+                    </div>
+
+                    <!-- PAYMENT INSTRUCTIONS -->
+                    <div class="mt-4 rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+                        <p class="text-xs font-extrabold text-blue-900 mb-2">PAYMENT INSTRUCTIONS</p>
+                        <div class="space-y-2 text-[11px] text-slate-600">
+                            <p class="flex gap-2"><span class="font-black text-blue-700">01.</span> Copy the UPI ID or scan the QR code.</p>
+                            <p class="flex gap-2"><span class="font-black text-blue-700">02.</span> Verify the recipient and transfer the exact advance amount.</p>
+                            <p class="flex gap-2"><span class="font-black text-blue-700">03.</span> Keep your UTR or transaction reference.</p>
+                            <p class="flex gap-2"><span class="font-black text-blue-700">04.</span> Submit your transaction reference for verification.</p>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- PAYMENT VERIFICATION -->
+            <aside class="mmy-pay-card lg:col-span-2 p-5 md:p-6 h-fit">
+
+                <div class="flex items-center gap-3">
+                    <div class="mmy-pay-icon">
+                        <i data-lucide="clipboard-check" class="w-5 h-5" aria-hidden="true"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-slate-900">Payment verification</h3>
+                        <p class="text-[10px] text-slate-500 mt-1">Submit your transaction reference.</p>
+                    </div>
+                </div>
+
+                {% if not booking.advance_utr %}
+
+                <div class="mt-4 rounded-xl bg-slate-50 border border-slate-100 p-3">
+                    <p class="text-xs text-slate-600 leading-relaxed">After completing your UPI payment, enter the UTR or transaction ID below. Your payment will be checked by the team.</p>
+                </div>
+
+                <form method="POST" class="mt-5 space-y-3" id="mmy-utr-form">
+                    {% csrf_token %}
+
+                    <div>
+                        <label for="utr" class="mmy-pay-label">UTR / TRANSACTION ID</label>
+                        <input
+                            id="utr"
+                            type="text"
+                            name="utr"
+                            required
+                            minlength="6"
+                            maxlength="100"
+                            autocomplete="off"
+                            placeholder="Enter transaction reference"
+                            class="mmy-pay-input font-mono font-bold"
+                        >
+                        <p class="text-[10px] text-slate-400 mt-2">Enter the exact transaction reference shown by your UPI app.</p>
+                    </div>
+
+                    <button type="submit" id="mmy-submit-utr" class="mmy-pay-btn">
+                        <i data-lucide="send" class="w-4 h-4" aria-hidden="true"></i> SUBMIT FOR VERIFICATION
+                    </button>
+                </form>
+
+                {% else %}
+
+                <div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                    <div class="flex items-center gap-2 text-amber-800">
+                        <i data-lucide="clock-3" class="w-5 h-5" aria-hidden="true"></i>
+                        <p class="text-sm font-extrabold">Awaiting verification</p>
+                    </div>
+                    <p class="text-xs text-amber-800 mt-3">Your transaction reference has been submitted:</p>
+                    <div class="mt-2 rounded-lg border border-amber-200 bg-white p-3">
+                        <p class="break-all font-mono text-sm font-black text-slate-900">{{ booking.advance_utr }}</p>
+                    </div>
+                    <p class="mt-3 text-[11px] leading-relaxed text-amber-700">The team will verify your payment and update your booking status. Please retain your transaction receipt.</p>
+                </div>
+
+                {% endif %}
+
+                <!-- BACK TO BOOKING -->
+                <div class="mt-5 pt-4 border-t border-slate-100">
+                    <a href="{% url 'cab_booking_detail' booking.booking_id %}" class="inline-flex items-center gap-2 text-xs font-extrabold text-[#0878d1] hover:text-blue-900">
+                        <i data-lucide="arrow-left" class="w-4 h-4" aria-hidden="true"></i> Back to booking details
+                    </a>
+                </div>
+
+            </aside>
+        </div>
+
+        <!-- SECURITY NOTE -->
+        <div class="mt-5 flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4">
+            <i data-lucide="shield-check" class="w-5 h-5 text-blue-600 shrink-0" aria-hidden="true"></i>
+            <p class="text-[11px] text-slate-500 leading-relaxed">Never share your UPI PIN, OTP or banking password with anyone. Makes My Yatra will never ask you to disclose these details for payment verification.</p>
+        </div>
+
     </div>
-
-    <div class="p-6 space-y-4">
-      
-      <!-- Booking Summary -->
-      <div class="bg-slate-50 rounded-xl p-4">
-        <p class="text-[10px] uppercase font-bold text-slate-500">Booking ID</p>
-        <p class="font-mono font-black text-slate-900">{{ booking.booking_id }}</p>
-        
-        <div class="grid grid-cols-2 gap-3 mt-3 text-sm">
-          <div><span class="text-xs text-slate-500 block">Route</span><b>{{ booking.pickup_city }} → {{ booking.drop_city|default:"—" }}</b></div>
-          <div><span class="text-xs text-slate-500 block">Cab</span><b>{{ booking.category.name }}</b></div>
-        </div>
-        
-        <div class="mt-3 pt-3 border-t border-slate-200 space-y-1.5 text-sm">
-          <div class="flex justify-between"><span class="text-slate-600">Total Fare</span><b>₹{{ booking.total_amount }}</b></div>
-          <div class="flex justify-between text-amber-700"><span class="font-bold">Advance (20%)</span><b class="text-lg">₹{{ booking.advance_amount }}</b></div>
-          <div class="flex justify-between text-slate-500 text-xs"><span>Balance to pay driver</span><span>₹{{ booking.balance_amount }}</span></div>
-        </div>
-      </div>
-
-      <!-- UPI Payment -->
-      <div class="bg-emerald-50 rounded-xl p-4 border-2 border-emerald-300">
-        <p class="text-[10px] font-black uppercase text-emerald-700 mb-2">Pay via UPI to:</p>
-        <div class="flex items-center justify-between gap-2 mb-2">
-          <p class="text-lg font-black text-emerald-800 font-mono break-all">{{ upi_id }}</p>
-          <button type="button" onclick="navigator.clipboard.writeText('{{ upi_id }}'); this.innerText='✓'; setTimeout(()=>this.innerText='Copy', 2000)" class="px-3 py-1.5 bg-emerald-600 text-white text-[10px] font-black rounded-lg">Copy</button>
-        </div>
-        <p class="text-[10px] text-emerald-700"><b>Business:</b> {{ business_name }}</p>
-        <p class="text-[10px] text-slate-600 mt-1">Pay ₹{{ booking.advance_amount }} via PhonePe, GPay, Paytm, etc.</p>
-        
-        <div class="mt-3 text-center">
-          <p class="text-[10px] text-slate-500 mb-2">Or scan QR code:</p>
-          <img src="data:image/png;base64,{{ qr_base64 }}" alt="UPI QR" class="w-48 h-48 mx-auto border-4 border-white rounded-xl shadow-md">
-        </div>
-      </div>
-
-      <!-- UTR Submit -->
-      {% if not booking.advance_utr %}
-      <form method="POST" class="bg-white border-2 border-slate-200 rounded-xl p-4">
-        {% csrf_token %}
-        <p class="text-xs font-black text-slate-900 mb-2">After payment, enter UTR / Transaction ID:</p>
-        <div class="flex gap-2">
-          <input type="text" name="utr" required minlength="6" placeholder="e.g. 1234567890" class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono font-bold outline-none focus:ring-2 focus:ring-emerald-500">
-          <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase px-5 py-2.5 rounded-lg">Submit</button>
-        </div>
-      </form>
-      {% else %}
-      <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-4">
-        <p class="text-xs font-black text-amber-800">⏳ UTR Submitted — Awaiting Verification</p>
-        <p class="text-xs text-amber-700 mt-1">UTR: <b>{{ booking.advance_utr }}</b></p>
-        <p class="text-[10px] text-amber-600 mt-1">Admin will verify and confirm your booking shortly.</p>
-      </div>
-      {% endif %}
-
-      <div class="text-center pt-2">
-        <a href="{% url 'cab_booking_detail' booking.booking_id %}" class="text-xs font-bold text-slate-500 hover:text-slate-700">View Booking Details →</a>
-      </div>
-    </div>
-  </div>
 </div>
+
+<script>
+    (function() {
+        'use strict';
+
+        // Copy UPI ID functionality
+        const copyButton = document.getElementById('mmy-copy-upi');
+        const copyStatus = document.getElementById('mmy-copy-status');
+
+        if (copyButton) {
+            copyButton.addEventListener('click', async function() {
+                const upi = copyButton.dataset.upi || '';
+
+                if (!upi) {
+                    copyStatus.textContent = 'UPI ID is unavailable.';
+                    return;
+                }
+
+                try {
+                    if (navigator.clipboard && window.isSecureContext) {
+                        await navigator.clipboard.writeText(upi);
+                    } else {
+                        const temp = document.createElement('textarea');
+                        temp.value = upi;
+                        temp.style.position = 'fixed';
+                        temp.style.opacity = '0';
+                        document.body.appendChild(temp);
+                        temp.select();
+                        const copied = document.execCommand('copy');
+                        temp.remove();
+                        if (!copied) throw new Error('Copy failed');
+                    }
+
+                    copyButton.innerHTML = '<i data-lucide="check" class="inline w-3.5 h-3.5 mr-1" aria-hidden="true"></i> Copied';
+                    copyStatus.textContent = 'UPI ID copied successfully.';
+
+                } catch (error) {
+                    copyStatus.textContent = 'Unable to copy. Please select the UPI ID manually.';
+                }
+
+                setTimeout(function() {
+                    copyButton.innerHTML = '<i data-lucide="copy" class="inline w-3.5 h-3.5 mr-1" aria-hidden="true"></i> Copy';
+                }, 1800);
+            });
+        }
+
+        // UTR form validation
+        const utrForm = document.getElementById('mmy-utr-form');
+
+        if (utrForm) {
+            utrForm.addEventListener('submit', function(event) {
+                if (!utrForm.reportValidity()) {
+                    event.preventDefault();
+                    return;
+                }
+
+                const input = document.getElementById('utr');
+                input.value = input.value.trim();
+
+                const button = document.getElementById('mmy-submit-utr');
+                if (button) {
+                    button.disabled = true;
+                    button.innerHTML = '<span class="inline-block w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></span> SUBMITTING...';
+                }
+            });
+        }
+
+        // Initialize Lucide Icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    })();
+</script>
+
 {% endblock %}

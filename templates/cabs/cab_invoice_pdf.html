@@ -1,0 +1,424 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cab Invoice — {{ booking.booking_id }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 25px;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background: #fff;
+            color: #172b4d;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+        .invoice {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            width: 100%;
+            background: #0757b8;
+            color: #fff;
+            padding: 23px 25px;
+            border-radius: 10px 10px 0 0;
+        }
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .brand {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: -.5px;
+            color: #fff;
+            margin: 0;
+        }
+        .brand-subtitle {
+            color: #dbeafe;
+            font-size: 10px;
+            margin: 3px 0 0;
+        }
+        .invoice-label {
+            text-align: right;
+            color: #dbeafe;
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .invoice-title {
+            text-align: right;
+            color: #fff;
+            font-size: 19px;
+            font-weight: 900;
+            margin: 3px 0 0;
+        }
+        .header-bottom {
+            height: 4px;
+            background: #38bdf8;
+        }
+        .section {
+            margin-top: 16px;
+            page-break-inside: avoid;
+        }
+        .section-title {
+            font-size: 11px;
+            font-weight: 900;
+            color: #0757b8;
+            text-transform: uppercase;
+            letter-spacing: .7px;
+            margin: 0 0 9px;
+        }
+        .info-box {
+            border: 1px solid #e1eaf4;
+            border-radius: 7px;
+            padding: 13px;
+            background: #fff;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .info-table td {
+            width: 50%;
+            padding: 7px 8px;
+            vertical-align: top;
+        }
+        .label {
+            display: block;
+            color: #718198;
+            font-size: 9px;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: .5px;
+            margin-bottom: 3px;
+        }
+        .value {
+            display: block;
+            color: #172b4d;
+            font-size: 11px;
+            font-weight: bold;
+            overflow-wrap: anywhere;
+        }
+        .booking-id {
+            color: #0757b8;
+            font-size: 13px;
+            font-weight: 900;
+        }
+        .route-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 7px;
+            padding: 13px;
+        }
+        .route-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .route-table td {
+            width: 50%;
+            vertical-align: top;
+            padding: 5px 8px;
+        }
+        .fare-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+        .fare-table th {
+            background: #0757b8;
+            color: #fff;
+            text-align: left;
+            padding: 10px 12px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+        .fare-table th.right,
+        .fare-table td.right {
+            text-align: right;
+        }
+        .fare-table td {
+            padding: 9px 12px;
+            border-bottom: 1px solid #edf1f6;
+            color: #334155;
+            font-size: 11px;
+        }
+        .fare-table tr:nth-child(even) td {
+            background: #f8fbff;
+        }
+        .fare-table .discount {
+            color: #15803d;
+            font-weight: bold;
+        }
+        .total-row td {
+            background: #eff6ff !important;
+            border-top: 2px solid #0878d1;
+            border-bottom: 0;
+            color: #0757b8;
+            font-size: 14px;
+            font-weight: 900;
+            padding: 12px;
+        }
+        .payment-box {
+            border: 1px solid #bfdbfe;
+            background: #f0f7ff;
+            border-radius: 7px;
+            padding: 13px;
+        }
+        .payment-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .payment-table td {
+            width: 50%;
+            padding: 7px 8px;
+        }
+        .payment-amount {
+            font-size: 17px;
+            font-weight: 900;
+            color: #0757b8;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 9px;
+            font-weight: bold;
+            background: #e0f2fe;
+            color: #075985;
+        }
+        .footer {
+            margin-top: 24px;
+            padding: 15px 10px;
+            text-align: center;
+            border-top: 1px solid #e1eaf4;
+            color: #64748b;
+            font-size: 9px;
+        }
+        .footer-brand {
+            color: #0757b8;
+            font-size: 12px;
+            font-weight: 900;
+            margin-bottom: 4px;
+        }
+        .footer-note {
+            margin-top: 7px;
+            color: #94a3b8;
+            font-size: 8px;
+        }
+        .no-break {
+            page-break-inside: avoid;
+        }
+    </style>
+</head>
+<body>
+<div class="invoice">
+
+    <!-- INVOICE HEADER -->
+    <div class="header">
+        <table class="header-table">
+            <tr>
+                <td width="58%">
+                    <h1 class="brand">Makes My Yatra</h1>
+                    <p class="brand-subtitle">Your Journey, Our Responsibility</p>
+                </td>
+                <td width="42%">
+                    <div class="invoice-label">OFFICIAL DOCUMENT</div>
+                    <div class="invoice-title">CAB INVOICE</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="header-bottom"></div>
+
+    <!-- BOOKING INFORMATION -->
+    <div class="section">
+        <h2 class="section-title">Booking information</h2>
+        <div class="info-box">
+            <table class="info-table">
+                <tr>
+                    <td width="50%">
+                        <span class="label">Booking ID</span>
+                        <span class="booking-id">{{ booking.booking_id }}</span>
+                    </td>
+                    <td width="50%">
+                        <span class="label">Booking date</span>
+                        <span class="value">{{ booking.created_at|date:"d M Y" }}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="label">Guest name</span>
+                        <span class="value">{{ booking.guest_name }}</span>
+                    </td>
+                    <td>
+                        <span class="label">Phone number</span>
+                        <span class="value">{{ booking.guest_phone }}</span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- JOURNEY INFORMATION -->
+    <div class="section">
+        <h2 class="section-title">Journey information</h2>
+        <div class="route-box">
+            <table class="route-table">
+                <tr>
+                    <td width="50%">
+                        <span class="label">Pickup city</span>
+                        <span class="value">{{ booking.pickup_city }}</span>
+                    </td>
+                    <td width="50%">
+                        <span class="label">Drop city</span>
+                        <span class="value">{{ booking.drop_city|default:"—" }}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="label">Pickup address</span>
+                        <span class="value">{{ booking.pickup_address }}</span>
+                    </td>
+                    <td>
+                        <span class="label">Pickup date and time</span>
+                        <span class="value">{{ booking.pickup_datetime|date:"d M Y, g:i A" }}</span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- CAB INFORMATION -->
+    <div class="section">
+        <h2 class="section-title">Cab information</h2>
+        <div class="info-box">
+            <table class="info-table">
+                <tr>
+                    <td>
+                        <span class="label">Cab category</span>
+                        <span class="value">{{ booking.category.name }}</span>
+                    </td>
+                    <td>
+                        <span class="label">Trip type</span>
+                        <span class="value">{{ booking.get_trip_type_display }}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="label">Booking status</span>
+                        <span class="status">{{ booking.get_status_display }}</span>
+                    </td>
+                    <td>
+                        <span class="label">Seating capacity</span>
+                        <span class="value">{{ booking.category.seating_capacity }} Seater</span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- FARE BREAKDOWN -->
+    <div class="section no-break">
+        <h2 class="section-title">Fare breakdown</h2>
+        <table class="fare-table">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th class="right">Amount (INR)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Base fare</td>
+                    <td class="right">₹{{ booking.base_fare }}</td>
+                </tr>
+
+                {% if booking.night_charge > 0 %}
+                <tr>
+                    <td>Night charge</td>
+                    <td class="right">₹{{ booking.night_charge }}</td>
+                </tr>
+                {% endif %}
+
+                {% if booking.waiting_charges > 0 %}
+                <tr>
+                    <td>Waiting charge</td>
+                    <td class="right">₹{{ booking.waiting_charges }}</td>
+                </tr>
+                {% endif %}
+
+                {% if booking.state_tax > 0 %}
+                <tr>
+                    <td>State tax</td>
+                    <td class="right">₹{{ booking.state_tax }}</td>
+                </tr>
+                {% endif %}
+
+                {% if booking.discount_amount > 0 %}
+                <tr>
+                    <td class="discount">
+                        Discount{% if booking.coupon %} ({{ booking.coupon.code }}){% endif %}
+                    </td>
+                    <td class="right discount">− ₹{{ booking.discount_amount }}</td>
+                </tr>
+                {% endif %}
+
+                <tr>
+                    <td>GST</td>
+                    <td class="right">₹{{ booking.gst_amount }}</td>
+                </tr>
+
+                <tr class="total-row">
+                    <td>TOTAL AMOUNT</td>
+                    <td class="right">₹{{ booking.total_amount }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- PAYMENT SUMMARY -->
+    <div class="section no-break">
+        <h2 class="section-title">Payment summary</h2>
+        <div class="payment-box">
+            <table class="payment-table">
+                <tr>
+                    <td>
+                        <span class="label">Advance paid / recorded</span>
+                        <span class="payment-amount">₹{{ booking.advance_amount }}</span>
+                    </td>
+                    <td>
+                        <span class="label">Balance to driver</span>
+                        <span class="payment-amount">₹{{ booking.balance_amount }}</span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div class="footer-brand">Makes My Yatra</div>
+        <div>Thank you for choosing Makes My Yatra for your journey.</div>
+        <div>Helpdesk: helpdesk@makesmyyatra.com</div>
+        <div class="footer-note">
+            This is a computer-generated invoice. Please retain it for your records.
+            Additional toll, parking and extra-distance charges may apply as per booking terms.
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

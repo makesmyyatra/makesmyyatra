@@ -1,73 +1,495 @@
+
 {% extends 'base_public.html' %}
 {% block title %}Track Cab Booking — Makes My Yatra{% endblock %}
 {% block content %}
-<div class="max-w-2xl mx-auto px-4 py-8">
 
-  <div class="text-center mb-6">
-    <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
-      <i data-lucide="search" class="w-8 h-8"></i>
+<style>
+/* ==========================================
+   MAKES MY YATRA - CAB TRACKING
+   MMT INSPIRED DESIGN
+========================================== */
+
+.mmy-track-page {
+    background: #f3f7fc;
+    min-height: 75vh;
+    color: #172b4d;
+}
+
+.mmy-track-page * {
+    box-sizing: border-box;
+}
+
+.mmy-track-card {
+    background: #fff;
+    border: 1px solid #e1eaf4;
+    border-radius: 17px;
+    box-shadow: 0 6px 22px rgba(20,54,91,.05);
+}
+
+.mmy-track-hero {
+    background: linear-gradient(115deg, #052b66, #0757b8 58%, #1687e8);
+    position: relative;
+    overflow: hidden;
+}
+
+.mmy-track-hero::after {
+    content: "";
+    position: absolute;
+    width: 280px;
+    height: 280px;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 50%;
+    right: -90px;
+    top: -190px;
+    box-shadow: 0 0 0 40px rgba(255,255,255,.04);
+}
+
+.mmy-track-input {
+    width: 100%;
+    height: 49px;
+    padding: 0 13px;
+    border: 1px solid #d9e2ef;
+    background: #f8fbff;
+    border-radius: 10px;
+    color: #172b4d;
+    font-size: 13px;
+    outline: none;
+    transition: .2s;
+}
+
+.mmy-track-input:focus {
+    border-color: #1687e8;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(22,135,232,.1);
+}
+
+.mmy-track-input::placeholder {
+    color: #94a3b8;
+}
+
+.mmy-track-label {
+    display: block;
+    margin-bottom: 7px;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+}
+
+.mmy-track-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 49px;
+    padding: 12px 18px;
+    background: #0878d1;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 900;
+    transition: .2s;
+}
+
+.mmy-track-btn:hover {
+    background: #0668b8;
+    transform: translateY(-1px);
+}
+
+.mmy-track-btn:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.mmy-track-info {
+    background: #fff;
+    border: 1px solid #e5ebf3;
+    border-radius: 12px;
+    padding: 15px;
+    min-width: 0;
+}
+
+.mmy-track-value {
+    color: #172b4d;
+    font-size: 13px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+.mmy-track-detail-label {
+    display: block;
+    margin-bottom: 6px;
+    color: #718198;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+}
+
+.mmy-track-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px;
+    border-radius: 30px;
+    font-size: 11px;
+    font-weight: 900;
+}
+
+.mmy-track-driver {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 13px;
+}
+
+.mmy-track-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 17px;
+    background: #0878d1;
+    color: #fff;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 800;
+    transition: .2s;
+}
+
+.mmy-track-action:hover {
+    background: #0668b8;
+}
+
+@media (max-width: 640px) {
+    .mmy-track-hero h1 {
+        font-size: 24px;
+    }
+}
+</style>
+
+<div class="mmy-track-page py-7 md:py-10">
+    <div class="max-w-3xl mx-auto px-4">
+
+        <!-- PAGE HEADER -->
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-blue-100 text-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="map-pinned" class="w-8 h-8"></i>
+            </div>
+            <p class="text-xs font-extrabold uppercase tracking-widest text-blue-700">
+                JOURNEY ASSISTANCE
+            </p>
+            <h1 class="text-2xl md:text-3xl font-black text-slate-900 mt-1">
+                Track Your Cab Booking
+            </h1>
+            <p class="text-sm text-slate-500 mt-2">
+                Enter your booking ID and registered contact details to view your journey.
+            </p>
+        </div>
+
+        <!-- SEARCH FORM -->
+        <section class="mmy-track-card p-5 md:p-6 mb-6">
+            <div class="flex items-center gap-3 mb-5">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center">
+                    <i data-lucide="search" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h2 class="font-black text-slate-900">
+                        Find your booking
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-1">
+                        Enter your booking reference below.
+                    </p>
+                </div>
+            </div>
+
+            <form method="POST" id="mmy-track-form">
+                {% csrf_token %}
+
+                <div class="space-y-4">
+                    <div>
+                        <label for="booking-id" class="mmy-track-label">
+                            BOOKING ID *
+                        </label>
+                        <input
+                            id="booking-id"
+                            type="text"
+                            name="booking_id"
+                            value="{{ query_id }}"
+                            required
+                            maxlength="100"
+                            placeholder="MMY-CAB-A1B2C3D4E5"
+                            autocomplete="off"
+                            class="mmy-track-input font-mono font-bold"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="contact-info" class="mmy-track-label">
+                            REGISTERED PHONE OR EMAIL
+                        </label>
+                        <input
+                            id="contact-info"
+                            type="text"
+                            name="contact_info"
+                            value="{{ contact_info }}"
+                            placeholder="Enter registered phone number or email"
+                            autocomplete="off"
+                            class="mmy-track-input"
+                        >
+                        <p class="text-[10px] text-slate-400 mt-2">
+                            Use the phone number or email provided when making the booking.
+                        </p>
+                    </div>
+
+                    <button
+                        type="submit"
+                        id="mmy-track-submit"
+                        class="mmy-track-btn"
+                    >
+                        <i data-lucide="search-check" class="w-4 h-4"></i>
+                        TRACK BOOKING
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- BOOKING DETAILS -->
+        {% if booking %}
+        <section class="mmy-track-card overflow-hidden">
+
+            <!-- BOOKING HEADER -->
+            <div class="mmy-track-hero p-5 md:p-6 text-white">
+                <div class="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <p class="text-[10px] text-blue-100 uppercase font-extrabold tracking-wider">
+                            BOOKING REFERENCE
+                        </p>
+                        <h2 class="font-black text-xl md:text-2xl mt-1 break-all">
+                            {{ booking.booking_id }}
+                        </h2>
+                        <p class="text-xs text-blue-100 mt-1">
+                            Your cab booking information.
+                        </p>
+                    </div>
+
+                    <span class="mmy-track-status self-start
+                        {% if booking.status == 'CONFIRMED' %}bg-green-100 text-green-800
+                        {% elif booking.status == 'COMPLETED' %}bg-blue-100 text-blue-800
+                        {% elif 'CANCELLED' in booking.status %}bg-rose-100 text-rose-800
+                        {% else %}bg-amber-100 text-amber-800{% endif %}">
+                        <i data-lucide="circle-dot" class="w-3.5 h-3.5"></i>
+                        {{ booking.get_status_display }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="p-5 md:p-6">
+
+                <!-- ROUTE DETAILS -->
+                <div class="rounded-xl border border-blue-100 bg-blue-50/60 p-4 mb-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center gap-3">
+                        <div>
+                            <p class="text-[10px] font-extrabold uppercase tracking-wider text-blue-700">
+                                PICKUP CITY
+                            </p>
+                            <p class="text-lg font-black text-slate-900 mt-1">
+                                {{ booking.pickup_city }}
+                            </p>
+                        </div>
+                        <div class="hidden sm:flex w-9 h-9 rounded-full bg-white items-center justify-center text-blue-600">
+                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-extrabold uppercase tracking-wider text-blue-700">
+                                DROP CITY
+                            </p>
+                            <p class="text-lg font-black text-slate-900 mt-1">
+                                {{ booking.drop_city|default:"—" }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOOKING INFORMATION -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="mmy-track-info">
+                        <span class="mmy-track-detail-label">GUEST</span>
+                        <p class="mmy-track-value">
+                            {{ booking.guest_name }}
+                        </p>
+                    </div>
+
+                    <div class="mmy-track-info">
+                        <span class="mmy-track-detail-label">PHONE</span>
+                        <p class="mmy-track-value">
+                            {{ booking.guest_phone }}
+                        </p>
+                    </div>
+
+                    <div class="mmy-track-info">
+                        <span class="mmy-track-detail-label">CAB CATEGORY</span>
+                        <p class="mmy-track-value">
+                            {{ booking.category.name }}
+                        </p>
+                    </div>
+
+                    <div class="mmy-track-info">
+                        <span class="mmy-track-detail-label">TRIP TYPE</span>
+                        <p class="mmy-track-value">
+                            {{ booking.get_trip_type_display }}
+                        </p>
+                    </div>
+
+                    <div class="mmy-track-info">
+                        <span class="mmy-track-detail-label">PICKUP DATE</span>
+                        <p class="mmy-track-value">
+                            {{ booking.pickup_datetime|date:"d M Y" }}
+                        </p>
+                    </div>
+
+                    <div class="mmy-track-info">
+                        <span class="mmy-track-detail-label">PICKUP TIME</span>
+                        <p class="mmy-track-value">
+                            {{ booking.pickup_datetime|time:"g:i A" }}
+                        </p>
+                    </div>
+
+                    <div class="mmy-track-info sm:col-span-2">
+                        <span class="mmy-track-detail-label">PICKUP ADDRESS</span>
+                        <p class="mmy-track-value">
+                            {{ booking.pickup_address }}, {{ booking.pickup_city }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- DRIVER DETAILS -->
+                {% if booking.driver_name %}
+                <div class="mmy-track-driver p-4 mt-4">
+                    <div class="flex items-start gap-3">
+                        <div class="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
+                            <i data-lucide="user-check" class="w-5 h-5"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <p class="text-[10px] font-black text-blue-800 uppercase tracking-wider">
+                                    DRIVER ASSIGNED
+                                </p>
+                                <span class="rounded-full bg-green-100 text-green-800 px-3 py-1 text-[10px] font-extrabold">
+                                    Assigned
+                                </span>
+                            </div>
+                            <p class="font-black text-lg text-slate-900 mt-1">
+                                {{ booking.driver_name }}
+                            </p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                                <div>
+                                    <p class="text-[10px] uppercase font-bold text-slate-500">
+                                        DRIVER PHONE
+                                    </p>
+                                    <p class="text-sm font-bold text-slate-800 mt-1">
+                                        {{ booking.driver_phone }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] uppercase font-bold text-slate-500">
+                                        VEHICLE NUMBER
+                                    </p>
+                                    <p class="text-sm font-bold text-slate-800 mt-1">
+                                        {{ booking.vehicle_number }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 mt-4 flex items-start gap-3">
+                    <i data-lucide="info" class="w-5 h-5 text-blue-600 shrink-0"></i>
+                    <div>
+                        <p class="text-sm font-extrabold text-slate-800">
+                            Driver details pending
+                        </p>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Driver and vehicle information will appear here once assigned.
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- TOTAL FARE -->
+                <div class="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-slate-100">
+                    <div>
+                        <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                            TOTAL BOOKING FARE
+                        </p>
+                        <p class="text-xs text-slate-400 mt-1">
+                            Including applicable GST
+                        </p>
+                    </div>
+                    <p class="text-2xl font-black text-[#0878d1]">
+                        ₹{{ booking.total_amount }}
+                    </p>
+                </div>
+
+                <!-- FULL DETAILS BUTTON -->
+                <div class="mt-5 pt-4 border-t border-slate-100">
+                    <a
+                        href="{% url 'cab_booking_detail' booking.booking_id %}"
+                        class="mmy-track-action w-full sm:w-auto"
+                    >
+                        <i data-lucide="file-text" class="w-4 h-4"></i>
+                        VIEW FULL BOOKING DETAILS
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- FOOTER INFORMATION -->
+        <div class="mt-5 flex items-start gap-2 text-xs text-slate-500">
+            <i data-lucide="shield-check" class="w-4 h-4 text-blue-600 shrink-0"></i>
+            <p>
+                Your booking information is displayed according to the details submitted for verification.
+            </p>
+        </div>
+
     </div>
-    <h1 class="text-2xl font-black text-slate-900">Track Your Cab Booking</h1>
-    <p class="text-sm text-slate-500 mt-1">Enter your booking ID and phone/email to view details</p>
-  </div>
-
-  <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 mb-6">
-    <form method="POST">
-      {% csrf_token %}
-      <div class="space-y-3">
-        <input type="text" name="booking_id" value="{{ query_id }}" required placeholder="Booking ID (e.g. MMY-CAB-A1B2C3D4E5)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500 font-mono transition">
-        <input type="text" name="contact_info" value="{{ contact_info }}" placeholder="Phone number or email used at booking" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500 transition">
-        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm uppercase tracking-wider px-6 py-3 rounded-xl shadow-lg transition">
-          Track Booking
-        </button>
-      </div>
-    </form>
-  </div>
-
-  {% if booking %}
-  <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
-    <div class="bg-slate-900 text-white p-5 flex items-center justify-between">
-      <div>
-        <p class="text-[10px] text-slate-400 uppercase font-bold">Booking ID</p>
-        <p class="font-black text-lg">{{ booking.booking_id }}</p>
-      </div>
-      <span class="px-3 py-1 rounded-full text-xs font-black
-        {% if booking.status == 'CONFIRMED' %}bg-emerald-400 text-emerald-900
-        {% elif booking.status == 'COMPLETED' %}bg-blue-400 text-blue-900
-        {% elif 'CANCELLED' in booking.status %}bg-rose-400 text-rose-900
-        {% else %}bg-slate-400 text-slate-900{% endif %}">
-        {{ booking.get_status_display }}
-      </span>
-    </div>
-
-    <div class="p-6 grid grid-cols-2 gap-4 text-sm">
-      <div><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Guest</span><b>{{ booking.guest_name }}</b></div>
-      <div><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Phone</span><b>{{ booking.guest_phone }}</b></div>
-      <div><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Cab</span><b>{{ booking.category.name }}</b></div>
-      <div><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Trip Type</span><b>{{ booking.get_trip_type_display }}</b></div>
-      <div><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Pickup Date</span><b>{{ booking.pickup_datetime|date:"d M Y" }}</b></div>
-      <div><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Time</span><b>{{ booking.pickup_datetime|time:"g:i A" }}</b></div>
-      <div class="col-span-2"><span class="text-xs text-slate-500 uppercase font-bold block mb-1">Address</span><b>{{ booking.pickup_address }}, {{ booking.pickup_city }}</b></div>
-      
-      {% if booking.driver_name %}
-      <div class="col-span-2 bg-emerald-50 border border-emerald-200 rounded-xl p-4 mt-2">
-        <p class="text-xs font-black text-emerald-800 uppercase mb-1">🚗 Driver Assigned</p>
-        <p class="font-black text-base">{{ booking.driver_name }}</p>
-        <p class="text-sm text-slate-700">{{ booking.driver_phone }} • {{ booking.vehicle_number }}</p>
-      </div>
-      {% endif %}
-    </div>
-
-    <div class="bg-slate-50 px-6 py-4 border-t border-slate-200 flex justify-between text-lg font-black">
-      <span>Total</span>
-      <span class="text-emerald-700">₹{{ booking.total_amount }}</span>
-    </div>
-
-    <div class="p-4 text-center">
-      <a href="{% url 'cab_booking_detail' booking.booking_id %}" class="text-sm font-bold text-emerald-600 hover:underline">View Full Details →</a>
-    </div>
-  </div>
-  {% endif %}
-
 </div>
+
+<!-- FORM SUBMISSION -->
+<script>
+(function () {
+    'use strict';
+
+    const form = document.getElementById('mmy-track-form');
+
+    if (!form) return;
+
+    form.addEventListener('submit', function (event) {
+        if (!form.reportValidity()) {
+            event.preventDefault();
+            return;
+        }
+
+        const bookingInput = form.querySelector('[name="booking_id"]');
+        bookingInput.value = bookingInput.value.trim();
+
+        const button = document.getElementById('mmy-track-submit');
+
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = `
+                <span class="inline-block w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
+                SEARCHING...
+            `;
+        }
+    });
+})();
+</script>
+
 {% endblock %}

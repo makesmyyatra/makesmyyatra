@@ -117,7 +117,6 @@ urlpatterns = [
     path('portal/cabs/<int:cab_id>/edit/', cabs_views.portal_cab_edit, name='portal_cab_edit'),
     path('portal/cabs/<int:cab_id>/delete/', cabs_views.portal_cab_delete, name='portal_cab_delete'),
     path('portal/cab-bookings/', cabs_views.portal_cab_bookings, name='portal_cab_bookings'),
-    path('portal/cab-bookings/<str:booking_id>/', cabs_views.portal_cab_booking_detail, name='portal_cab_booking_detail'),
     path('portal/cab-bookings/<str:booking_id>/update/', cabs_views.portal_cab_booking_update, name='portal_cab_booking_update'),
     path('portal/cab-bookings/<str:booking_id>/cancel/', cabs_views.portal_cab_cancel, name='portal_cab_cancel'),
     path('portal/cab-revenue/', cabs_views.portal_cab_revenue, name='portal_cab_revenue'),
@@ -149,7 +148,8 @@ urlpatterns = [
     path('portal/cab-bookings/<str:booking_id>/verify-advance/', cabs_views.portal_cab_verify_advance, name='portal_cab_verify_advance'),
     path('portal/cab-bookings/<str:booking_id>/complete-trip/', cabs_views.portal_cab_complete_trip, name='portal_cab_complete_trip'),
 
-    # Cab Bookings Bulk Delete
-    path('portal/cab-bookings/actions/', cabs_views.portal_cab_booking_actions, name='portal_cab_booking_actions'),
-    path('portal/cab-bookings/<str:booking_id>/delete/', cabs_views.portal_cab_booking_delete, name='portal_cab_booking_delete'),
+    # Static actions URL MUST come before the dynamic booking_id URL
+    path('portal/cab-bookings/actions/',cabs_views.portal_cab_booking_actions,name='portal_cab_booking_actions'),
+    path('portal/cab-bookings/<str:booking_id>/',cabs_views.portal_cab_booking_detail,name='portal_cab_booking_detail'),
+
 ]

@@ -1,88 +1,474 @@
 {% extends 'base_public.html' %}
-{% block title %}Cab Options — Makes My Yatra{% endblock %}
+{% block title %}Available Cabs — Makes My Yatra{% endblock %}
 {% block content %}
-<div class="max-w-6xl mx-auto px-4 py-8">
+<style>
+.mmy-results {
+    background: #f3f7fc;
+    min-height: 70vh;
+    color: #172b4d;
+}
+.mmy-results * {
+    box-sizing: border-box;
+}
+.mmy-result-card {
+    background: #fff;
+    border: 1px solid #e1eaf4;
+    border-radius: 17px;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(20,54,91,.045);
+    transition: .22s ease;
+}
+.mmy-result-card:hover {
+    border-color: #c4dcf5;
+    box-shadow: 0 12px 30px rgba(20,54,91,.09);
+}
+.mmy-results-hero {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(
+        115deg,
+        #052b66 0%,
+        #0757b8 58%,
+        #1687e8 100%
+    );
+}
+.mmy-results-hero::after {
+    content: "";
+    position: absolute;
+    width: 340px;
+    height: 340px;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 50%;
+    right: -100px;
+    top: -220px;
+    box-shadow:
+        0 0 0 40px rgba(255,255,255,.04),
+        0 0 0 80px rgba(255,255,255,.025);
+}
+.mmy-result-input {
+    width: 100%;
+    height: 46px;
+    min-width: 0;
+    padding: 0 12px;
+    border: 1px solid #d9e2ef;
+    border-radius: 9px;
+    background: #fff;
+    font-size: 13px;
+    color: #172b4d;
+    outline: none;
+    transition: .2s ease;
+}
+.mmy-result-input:focus {
+    border-color: #1687e8;
+    box-shadow: 0 0 0 3px rgba(22,135,232,.1);
+}
+.mmy-result-input::placeholder {
+    color: #94a3b8;
+}
+.mmy-result-label {
+    display: block;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 7px;
+}
+.mmy-result-btn {
+    min-height: 46px;
+    background: #0878d1;
+    color: #fff;
+    transition: .2s ease;
+}
+.mmy-result-btn:hover {
+    background: #0668b8;
+    transform: translateY(-1px);
+}
+.mmy-result-btn:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+    transform: none;
+}
+.mmy-result-icon {
+    width: 43px;
+    height: 43px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: #eaf4ff;
+    color: #0878d1;
+}
+.mmy-result-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 10px;
+    background: #eff6ff;
+    color: #0759a6;
+    border-radius: 30px;
+    font-size: 10px;
+    font-weight: 800;
+}
+.mmy-result-price {
+    color: #0878d1;
+    letter-spacing: -1px;
+}
+.mmy-result-details {
+    border-top: 1px solid #edf1f6;
+}
+.mmy-result-details summary {
+    list-style: none;
+    cursor: pointer;
+}
+.mmy-result-details summary::-webkit-details-marker {
+    display: none;
+}
 
-  <div class="mb-6 flex items-center justify-between flex-wrap gap-3">
-    <div>
-      <h1 class="text-2xl font-black text-slate-900">Available Cabs</h1>
-      <p class="text-sm text-slate-500 mt-1">
-        {{ from_city }}{% if to_city %} → {{ to_city }}{% endif %} • 
-        {{ pickup_date|date:"d M Y" }} at {{ pickup_time|time:"g:i A" }}
-        {% if distance_km %} • {{ distance_km }} km{% endif %}
-      </p>
+.mmy-result-details summary:focus-visible {
+    outline: 2px solid #1687e8;
+    outline-offset: 4px;
+}
+
+.mmy-result-details[open] .mmy-detail-arrow {
+    transform: rotate(180deg);
+}
+
+.mmy-detail-arrow {
+    transition: .2s ease;
+}
+
+.mmy-fare-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px dashed #e5eaf1;
+    font-size: 12px;
+}
+
+.mmy-fare-row:last-child {
+    border-bottom: 0;
+}
+
+.mmy-result-form {
+    background: #f8fbff;
+    border-top: 1px solid #e8eef6;
+}
+
+.mmy-result-form-label {
+    display: block;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.mmy-result-route {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.mmy-result-empty {
+    border: 1px solid #e1eaf4;
+    border-radius: 17px;
+    background: #fff;
+    box-shadow: 0 5px 20px rgba(20,54,91,.045);
+}
+
+.mmy-result-route-card {
+    background: #fff;
+    border: 1px solid #e1eaf4;
+    border-radius: 12px;
+}
+@media(max-width: 640px) {
+    .mmy-results-hero h1 {
+        font-size: 25px;
+    }
+    .mmy-result-price {
+        font-size: 29px;
+    }
+}
+</style>
+<div class="mmy-results py-7 md:py-10">
+    <div class="max-w-6xl mx-auto px-4">
+        <!-- HEADER / JOURNEY SUMMARY -->
+        <section class="mmy-results-hero rounded-2xl text-white p-5 md:p-7 mb-6 shadow-lg shadow-blue-900/10 relative">
+            <div class="relative z-10">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+                    <div class="min-w-0">
+                        <div class="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-bold">
+                            <i data-lucide="badge-check" class="w-4 h-4" aria-hidden="true"></i> JOURNEY OPTIONS
+                        </div>
+                        <h1 class="text-2xl md:text-3xl font-black mt-3">Choose your cab</h1>
+                        <p class="text-sm text-blue-100 mt-2">Compare available cab categories and choose the ride that suits your journey.</p>
+                    </div>
+                    <a href="{% url 'cab_list' %}" class="inline-flex items-center justify-center gap-2 self-start md:self-auto rounded-xl border border-white/35 bg-white/10 hover:bg-white/20 px-5 py-3 text-xs font-extrabold transition">
+                        <i data-lucide="sliders-horizontal" class="w-4 h-4" aria-hidden="true"></i> MODIFY SEARCH
+                    </a>
+                </div>
+
+                <!-- ROUTE SUMMARY -->
+                <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div class="rounded-xl border border-white/15 bg-white/10 backdrop-blur-sm p-3">
+                        <p class="text-[10px] uppercase font-bold tracking-wider text-blue-100">PICKUP</p>
+                        <p class="font-extrabold text-sm mt-1">{{ from_city }}</p>
+                    </div>
+                    <div class="rounded-xl border border-white/15 bg-white/10 backdrop-blur-sm p-3">
+                        <p class="text-[10px] uppercase font-bold tracking-wider text-blue-100">DESTINATION</p>
+                        <p class="font-extrabold text-sm mt-1">{% if to_city %}{{ to_city }}{% else %}As per trip package{% endif %}</p>
+                    </div>
+                    <div class="rounded-xl border border-white/15 bg-white/10 backdrop-blur-sm p-3">
+                        <p class="text-[10px] uppercase font-bold tracking-wider text-blue-100">PICKUP DATE & TIME</p>
+                        <p class="font-extrabold text-sm mt-1">{{ pickup_date|date:"d M Y" }} · {{ pickup_time|time:"g:i A" }}</p>
+                    </div>
+                    <div class="rounded-xl border border-white/15 bg-white/10 backdrop-blur-sm p-3">
+                        <p class="text-[10px] uppercase font-bold tracking-wider text-blue-100">JOURNEY TYPE</p>
+                        <p class="font-extrabold text-sm mt-1">
+                            {% if trip_type == 'ONE_WAY' %}One Way{% elif trip_type == 'ROUND_TRIP' %}Round Trip{% elif trip_type == 'AIRPORT' %}Airport Transfer{% elif trip_type == 'HOURLY' %}Hourly Rental{% else %}{{ trip_type }}{% endif %}
+                            {% if distance_km %}· {{ distance_km }} km{% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- COUPON MESSAGE -->
+        {% if coupon_code %}
+            {% if coupon_valid %}
+            <div class="mb-5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 flex gap-3 items-start">
+                <i data-lucide="ticket-check" class="w-5 h-5 text-blue-700 shrink-0" aria-hidden="true"></i>
+                <div>
+                    <p class="text-sm font-extrabold text-blue-900">Coupon code found: {{ coupon_code }}</p>
+                    <p class="text-xs text-blue-700 mt-1">Eligible discount, if any, is shown in the fare breakdown below.</p>
+                </div>
+            </div>
+            {% else %}
+            <div class="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex gap-3 items-start">
+                <i data-lucide="alert-circle" class="w-5 h-5 text-amber-700 shrink-0" aria-hidden="true"></i>
+                <div>
+                    <p class="text-sm font-extrabold text-amber-900">Coupon not found or inactive</p>
+                    <p class="text-xs text-amber-800 mt-1">Please check the coupon code and its eligibility.</p>
+                </div>
+            </div>
+            {% endif %}
+        {% endif %}
+
+        <!-- SELECTED HOURLY PACKAGE -->
+        {% if selected_package %}
+        <div class="mb-5 rounded-xl border border-blue-200 bg-blue-50 p-4">
+            <div class="flex items-start gap-3">
+                <div class="w-10 h-10 shrink-0 rounded-xl bg-white text-blue-700 flex items-center justify-center">
+                    <i data-lucide="clock-3" class="w-5 h-5" aria-hidden="true"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-extrabold text-blue-900">Hourly package selected</p>
+                    <p class="text-xs text-blue-800 mt-1">{{ selected_package.from_city }} · {{ selected_package.duration_hours }} hours · {{ selected_package.distance_km }} km · {{ selected_package.category.name }}</p>
+                    <p class="font-black text-blue-900 mt-2">Package price: ₹{{ selected_package.fixed_price }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- RESULTS HEADER -->
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5">
+            <div>
+                <p class="text-xs font-extrabold tracking-widest text-blue-700 uppercase">AVAILABLE OPTIONS</p>
+                <h2 class="text-xl md:text-2xl font-black text-slate-900 mt-1">Select your preferred cab</h2>
+                <p class="text-xs text-slate-500 mt-1">Review the fare and trip details before booking.</p>
+            </div>
+            <a href="{% url 'cab_list' %}" class="inline-flex items-center gap-2 text-xs font-extrabold text-[#0878d1] hover:text-blue-900">
+                <i data-lucide="edit-3" class="w-4 h-4" aria-hidden="true"></i> Change trip details
+            </a>
+        </div>
+
+        <!-- CAB RESULTS -->
+        <div class="flex flex-col gap-5">
+            {% for cab in cabs %}
+            <article class="mmy-result-card">
+                <!-- CAB TOP SECTION -->
+                <div class="p-5 md:p-6">
+                    <div class="flex flex-col md:flex-row md:items-center gap-5">
+                        <div class="w-24 h-24 shrink-0 rounded-2xl bg-gradient-to-br from-blue-50 to-sky-100 text-[#0878d1] flex items-center justify-center mx-auto md:mx-0">
+                            <i data-lucide="car-front" class="w-14 h-14" aria-hidden="true"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h3 class="text-xl md:text-2xl font-black text-slate-900">{{ cab.category.name }}</h3>
+                                <span class="mmy-result-badge"><i data-lucide="check-circle" class="w-3 h-3" aria-hidden="true"></i> Cab category</span>
+                                {% if selected_package %}<span class="rounded-full bg-purple-50 px-2.5 py-1 text-[10px] font-extrabold text-purple-700">FIXED PACKAGE</span>{% endif %}
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1">Suitable for your selected trip.</p>
+                            
+                            <div class="mt-4 flex flex-wrap gap-x-5 gap-y-3 text-xs text-slate-600">
+                                <span class="inline-flex items-center gap-1.5"><i data-lucide="users" class="w-4 h-4 text-blue-600" aria-hidden="true"></i> {{ cab.category.seating_capacity }} Seats</span>
+                                <span class="inline-flex items-center gap-1.5"><i data-lucide="briefcase-business" class="w-4 h-4 text-blue-600" aria-hidden="true"></i> {{ cab.category.luggage_capacity }} Bags</span>
+                                {% if cab.category.ac_available %}<span class="inline-flex items-center gap-1.5"><i data-lucide="snowflake" class="w-4 h-4 text-blue-600" aria-hidden="true"></i> Air Conditioned</span>{% endif %}
+                            </div>
+
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                <span class="rounded-lg bg-slate-100 px-3 py-2 text-[11px] font-bold text-slate-700">Base ₹{{ cab.base_fare }}</span>
+                                {% if cab.night_charge > 0 %}<span class="rounded-lg bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-800">Night +₹{{ cab.night_charge }}</span>{% endif %}
+                                {% if cab.waiting_charge > 0 %}<span class="rounded-lg bg-purple-50 px-3 py-2 text-[11px] font-bold text-purple-800">Waiting +₹{{ cab.waiting_charge }}</span>{% endif %}
+                                {% if cab.state_tax > 0 %}<span class="rounded-lg bg-blue-50 px-3 py-2 text-[11px] font-bold text-blue-800">State tax +₹{{ cab.state_tax }}</span>{% endif %}
+                                {% if cab.discount > 0 %}<span class="rounded-lg bg-green-50 px-3 py-2 text-[11px] font-bold text-green-800">Discount −₹{{ cab.discount }}</span>{% endif %}
+                            </div>
+                        </div>
+
+                        <!-- PRICE -->
+                        <div class="md:min-w-[190px] md:border-l md:border-slate-100 md:pl-6 md:text-right">
+                            <p class="text-[10px] uppercase font-extrabold tracking-wider text-slate-500">TOTAL FARE</p>
+                            <p class="mt-1 text-3xl font-black mmy-result-price">₹{{ cab.total }}</p>
+                            <p class="text-[11px] font-semibold text-green-700 mt-1"><i data-lucide="check-circle" class="inline w-3 h-3" aria-hidden="true"></i> Inclusive of GST</p>
+                            <p class="text-[10px] text-slate-400 mt-2">Final amount subject to confirmed booking terms.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FARE BREAKDOWN -->
+                <details class="mmy-result-details">
+                    <summary class="flex items-center justify-between gap-3 px-5 md:px-6 py-4 hover:bg-slate-50 transition">
+                        <span class="inline-flex items-center gap-2 text-sm font-extrabold text-slate-700">
+                            <i data-lucide="receipt-text" class="w-4 h-4 text-blue-600" aria-hidden="true"></i> View fare breakdown
+                        </span>
+                        <span class="inline-flex items-center gap-2 text-xs font-bold text-[#0878d1]">Fare details <i data-lucide="chevron-down" class="w-4 h-4 mmy-detail-arrow" aria-hidden="true"></i></span>
+                    </summary>
+                    <div class="px-5 md:px-6 pb-5">
+                        <div class="max-w-xl rounded-xl border border-slate-100 bg-slate-50 p-4">
+                            <div class="mmy-fare-row"><span class="text-slate-600">Base fare</span><span class="font-bold text-slate-900">₹{{ cab.base_fare }}</span></div>
+                            <div class="mmy-fare-row"><span class="text-slate-600">Night charges</span><span class="font-bold text-slate-900">₹{{ cab.night_charge }}</span></div>
+                            <div class="mmy-fare-row"><span class="text-slate-600">Waiting charges</span><span class="font-bold text-slate-900">₹{{ cab.waiting_charge }}</span></div>
+                            <div class="mmy-fare-row"><span class="text-slate-600">State tax</span><span class="font-bold text-slate-900">₹{{ cab.state_tax }}</span></div>
+                            <div class="mmy-fare-row"><span class="font-bold text-slate-700">Subtotal</span><span class="font-extrabold text-slate-900">₹{{ cab.subtotal }}</span></div>
+                            <div class="mmy-fare-row"><span class="text-green-700">Coupon discount</span><span class="font-extrabold text-green-700">− ₹{{ cab.discount }}</span></div>
+                            <div class="mmy-fare-row"><span class="text-slate-600">Taxable amount</span><span class="font-bold text-slate-900">₹{{ cab.taxable }}</span></div>
+                            <div class="mmy-fare-row"><span class="text-slate-600">GST</span><span class="font-bold text-slate-900">₹{{ cab.gst }}</span></div>
+                            <div class="flex items-center justify-between gap-3 pt-4 mt-2 border-t border-slate-200">
+                                <span class="font-black text-slate-900">Grand total</span>
+                                <span class="text-xl font-black text-[#0878d1]">₹{{ cab.total }}</span>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-3">Fare is based on the current search calculation. Applicable additional charges, if any, will follow the confirmed booking terms.</p>
+                    </div>
+                </details>
+
+                <!-- BOOKING FORM -->
+                <div class="mmy-result-form p-5 md:px-6 md:py-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-5">
+                        <div>
+                            <p class="text-xs font-extrabold tracking-widest uppercase text-blue-700">COMPLETE YOUR BOOKING</p>
+                            <h4 class="text-lg font-black text-slate-900 mt-1">Passenger details</h4>
+                            <p class="text-xs text-slate-500 mt-1">Enter your details to request this cab.</p>
+                        </div>
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-2 text-[10px] font-extrabold text-green-700 self-start">
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5" aria-hidden="true"></i> Secure booking form
+                        </span>
+                    </div>
+
+                    <form action="{% url 'book_cab' %}" method="POST" class="mmy-book-cab-form">
+                        {% csrf_token %}
+                        {% if selected_package %}<input type="hidden" name="hourly_package_id" value="{{ selected_package.id }}">{% endif %}
+                        <input type="hidden" name="category_id" value="{{ cab.category.id }}">
+                        <input type="hidden" name="trip_type" value="{{ trip_type }}">
+                        <input type="hidden" name="from_city" value="{{ from_city }}">
+                        <input type="hidden" name="to_city" value="{{ to_city }}">
+                        <input type="hidden" name="pickup_date" value="{{ pickup_date|date:'Y-m-d' }}">
+                        <input type="hidden" name="pickup_time" value="{{ pickup_time|time:'H:i' }}">
+                        <input type="hidden" name="distance_km" value="{{ distance_km }}">
+                        <input type="hidden" name="coupon_code" value="{{ coupon_code }}">
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                            <div class="lg:col-span-2">
+                                <label class="mmy-result-form-label">FULL PICKUP ADDRESS *</label>
+                                <input type="text" name="pickup_address" required maxlength="255" autocomplete="street-address" placeholder="House, street, landmark..." class="mmy-result-input">
+                            </div>
+                            <div>
+                                <label class="mmy-result-form-label">PASSENGER NAME *</label>
+                                <input type="text" name="guest_name" required maxlength="150" autocomplete="name" placeholder="Your full name" class="mmy-result-input">
+                            </div>
+                            <div>
+                                <label class="mmy-result-form-label">PHONE NUMBER *</label>
+                                <input type="tel" name="guest_phone" required minlength="10" maxlength="15" pattern="[0-9+\- ]{10,15}" autocomplete="tel" placeholder="Mobile number" class="mmy-result-input">
+                            </div>
+                            <div>
+                                <label class="mmy-result-form-label">EMAIL ADDRESS</label>
+                                <input type="email" name="guest_email" maxlength="254" autocomplete="email" placeholder="Email (optional)" class="mmy-result-input">
+                            </div>
+                        </div>
+
+                        <div class="mt-5 pt-4 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div>
+                                <p class="text-[10px] text-slate-500 uppercase font-extrabold tracking-wider">Selected cab fare</p>
+                                <p class="text-xl font-black text-[#0878d1] mt-1">₹{{ cab.total }} <span class="text-[10px] font-semibold text-slate-400">including GST</span></p>
+                            </div>
+                            <button type="submit" class="mmy-result-btn inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3.5 text-xs font-black uppercase tracking-wider shadow-lg shadow-blue-700/15">
+                                <i data-lucide="check-circle" class="w-4 h-4" aria-hidden="true"></i> BOOK THIS CAB <i data-lucide="arrow-right" class="w-4 h-4" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </article>
+            {% empty %}
+            <div class="mmy-result-empty px-6 py-14 md:py-16 text-center">
+                <div class="mx-auto w-20 h-20 rounded-3xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <i data-lucide="car-front" class="w-10 h-10" aria-hidden="true"></i>
+                </div>
+                <h2 class="mt-5 text-xl md:text-2xl font-black text-slate-900">No cabs found for this search</h2>
+                <p class="mt-2 text-sm text-slate-500 max-w-md mx-auto">We could not find matching cab categories for your selected trip. Try changing your cab preference or search details.</p>
+                <a href="{% url 'cab_list' %}" class="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-[#0878d1] hover:bg-[#0668b8] px-6 py-3.5 text-sm font-extrabold text-white transition shadow-md">
+                    <i data-lucide="search" class="w-4 h-4" aria-hidden="true"></i> SEARCH AGAIN
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- BOTTOM INFORMATION -->
+        {% if cabs %}
+        <div class="mt-7 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="mmy-result-route-card flex items-center gap-3 p-4">
+                <div class="mmy-result-icon"><i data-lucide="receipt-text" class="w-5 h-5" aria-hidden="true"></i></div>
+                <div><p class="text-xs font-extrabold text-slate-800">Fare breakdown</p><p class="text-[10px] text-slate-500 mt-1">Review your fare details.</p></div>
+            </div>
+            <div class="mmy-result-route-card flex items-center gap-3 p-4">
+                <div class="mmy-result-icon"><i data-lucide="calendar-check" class="w-5 h-5" aria-hidden="true"></i></div>
+                <div><p class="text-xs font-extrabold text-slate-800">Journey details</p><p class="text-[10px] text-slate-500 mt-1">Verify your pickup information.</p></div>
+            </div>
+            <div class="mmy-result-route-card flex items-center gap-3 p-4">
+                <div class="mmy-result-icon"><i data-lucide="headset" class="w-5 h-5" aria-hidden="true"></i></div>
+                <div><p class="text-xs font-extrabold text-slate-800">Booking assistance</p><p class="text-[10px] text-slate-500 mt-1">Support according to booking terms.</p></div>
+            </div>
+        </div>
+        {% endif %}
+
+        <p class="mt-7 text-center text-xs text-slate-400">
+            <i data-lucide="info" class="inline w-3.5 h-3.5 mr-1" aria-hidden="true"></i> Please review your journey details and fare before confirming your booking.
+        </p>
     </div>
-    <a href="{% url 'cab_list' %}" class="text-sm text-emerald-600 font-bold hover:underline">← Modify Search</a>
-  </div>
-
-  {% if coupon_valid %}
-  <div class="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm font-bold text-emerald-800">
-    ✓ Coupon "{{ coupon_code }}" applied
-  </div>
-  {% endif %}
-
-  <div class="space-y-4">
-    {% for cab in cabs %}
-    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl transition-all">
-      
-      <div class="p-5 flex flex-col md:flex-row md:items-center gap-4">
-        <div class="w-20 h-20 bg-gradient-to-tr from-emerald-50 to-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center flex-shrink-0">
-          <i data-lucide="car" class="w-10 h-10"></i>
-        </div>
-
-        <div class="flex-1">
-          <h3 class="text-xl font-black text-slate-900">{{ cab.category.name }}</h3>
-          <p class="text-xs text-slate-500 mt-0.5">
-            {{ cab.category.seating_capacity }} seats • {{ cab.category.luggage_capacity }} bags
-            {% if cab.category.ac_available %}• AC{% endif %}
-          </p>
-          
-          <div class="flex flex-wrap gap-2 mt-3 text-[11px]">
-            <span class="bg-slate-100 text-slate-700 px-2 py-1 rounded-md font-bold">Base ₹{{ cab.base_fare }}</span>
-            {% if cab.night_charge > 0 %}<span class="bg-amber-100 text-amber-800 px-2 py-1 rounded-md font-bold">Night +₹{{ cab.night_charge }}</span>{% endif %}
-            {% if cab.state_tax > 0 %}<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-md font-bold">State Tax +₹{{ cab.state_tax }}</span>{% endif %}
-            {% if cab.discount > 0 %}<span class="bg-emerald-100 text-emerald-800 px-2 py-1 rounded-md font-bold">-₹{{ cab.discount }}</span>{% endif %}
-          </div>
-        </div>
-
-        <div class="text-right flex-shrink-0">
-          <p class="text-[10px] text-slate-500 uppercase font-bold">Total (incl. GST)</p>
-          <p class="text-3xl font-black text-emerald-600">₹{{ cab.total }}</p>
-          <p class="text-[10px] text-slate-400">Pay to driver</p>
-        </div>
-      </div>
-
-      <form action="{% url 'book_cab' %}" method="POST" class="bg-slate-50 border-t border-slate-200 p-5">
-        {% csrf_token %}
-        <input type="hidden" name="category_id" value="{{ cab.category.id }}">
-        <input type="hidden" name="trip_type" value="{{ trip_type }}">
-        <input type="hidden" name="from_city" value="{{ from_city }}">
-        <input type="hidden" name="to_city" value="{{ to_city }}">
-        <input type="hidden" name="pickup_date" value="{{ pickup_date|date:'Y-m-d' }}">
-        <input type="hidden" name="pickup_time" value="{{ pickup_time|time:'H:i' }}">
-        <input type="hidden" name="distance_km" value="{{ distance_km }}">
-        <input type="hidden" name="coupon_code" value="{{ coupon_code }}">
-
-        <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
-          <input type="text" name="pickup_address" required placeholder="Full pickup address *" class="md:col-span-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500 transition">
-          <input type="text" name="guest_name" required placeholder="Your name *" class="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500 transition">
-          <input type="tel" name="guest_phone" required placeholder="Phone *" pattern="[0-9+\- ]{10,15}" class="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500 transition">
-          <input type="email" name="guest_email" placeholder="Email (optional)" class="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500 transition">
-          <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl shadow-md transition">
-            Book Now
-          </button>
-        </div>
-      </form>
-    </div>
-    {% empty %}
-    <div class="bg-white rounded-2xl border border-slate-200 p-16 text-center">
-      <i data-lucide="car" class="w-16 h-16 text-slate-300 mx-auto mb-4"></i>
-      <h3 class="text-lg font-black text-slate-800">No cabs available</h3>
-      <p class="text-sm text-slate-500 mt-1">Try different dates or contact support.</p>
-      <a href="{% url 'cab_list' %}" class="inline-block mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl transition">Back to Search</a>
-    </div>
-    {% endfor %}
-  </div>
-
 </div>
+
+<script>
+(function () {
+    'use strict';
+    const forms = document.querySelectorAll('.mmy-book-cab-form');
+    forms.forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            const button = form.querySelector('button[type="submit"]');
+            if (button && button.disabled) { event.preventDefault(); return; }
+            if (!form.reportValidity()) { event.preventDefault(); return; }
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = `<span class="inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span> PROCESSING...`;
+            }
+        });
+    });
+    if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+})();
+</script>
+
 {% endblock %}

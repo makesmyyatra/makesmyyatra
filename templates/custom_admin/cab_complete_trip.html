@@ -1,49 +1,116 @@
+```html
 {% extends 'custom_admin/base.html' %}
 {% block title %}Complete Trip — {{ booking.booking_id }}{% endblock %}
 {% block page_title %}Complete Trip{% endblock %}
 
 {% block content %}
 <div class="max-w-2xl mx-auto">
-  <a href="{% url 'portal_cab_booking_detail' booking.booking_id %}" class="text-xs font-bold text-emerald-600">← Back to Booking</a>
-  
-  <div class="mt-4 bg-white rounded-2xl border p-6 space-y-4">
-    <div class="bg-emerald-50 rounded-xl p-4">
-      <p class="text-[10px] font-black text-emerald-700 uppercase">Booking</p>
-      <p class="font-mono font-bold text-lg">{{ booking.booking_id }}</p>
-      <p class="text-sm text-slate-600">{{ booking.pickup_city }} → {{ booking.drop_city|default:"—" }}</p>
-      <p class="text-sm text-slate-600">Guest: {{ booking.guest_name }} • {{ booking.guest_phone }}</p>
+    <a href="{% url 'portal_cab_booking_detail' booking.booking_id %}"
+       class="text-xs font-bold text-emerald-600">
+        ← Back to Booking
+    </a>
+
+    <div class="mt-4 bg-white rounded-2xl border p-6 space-y-4">
+        <div class="bg-emerald-50 rounded-xl p-4">
+            <p class="text-[10px] font-black text-emerald-700 uppercase">Booking</p>
+            <p class="font-mono font-bold text-lg">{{ booking.booking_id }}</p>
+            <p class="text-sm text-slate-600">
+                {{ booking.pickup_city }} → {{ booking.drop_city|default:"—" }}
+            </p>
+            <p class="text-sm text-slate-600">
+                Guest: {{ booking.guest_name }} • {{ booking.guest_phone }}
+            </p>
+            <p class="text-sm mt-2">
+                Status: <b>{{ booking.status }}</b>
+            </p>
+        </div>
+
+        {% if booking.status == 'ONGOING' %}
+        <form method="POST" class="space-y-4">
+            {% csrf_token %}
+
+            <div>
+                <label class="block text-xs font-black text-slate-700 uppercase mb-2">
+                    Waiting Time (Minutes)
+                </label>
+                <input
+                    type="number"
+                    name="waiting_minutes"
+                    min="0"
+                    max="180"
+                    value="0"
+                    required
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-lg font-black outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                <p class="text-[10px] text-slate-500 mt-1">
+                    First 15 min free, then ₹50 per started 15-minute block.
+                </p>
+            </div>
+
+            <div class="bg-slate-50 rounded-xl p-4 space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span>Advance Amount:</span>
+                    <b>₹{{ booking.advance_amount }}</b>
+                </div>
+
+                <div class="flex justify-between">
+                    <span>Advance Verified:</span>
+                    {% if booking.advance_paid %}
+                        <b class="text-emerald-600">Yes</b>
+                    {% else %}
+                        <b class="text-red-600">No</b>
+                    {% endif %}
+                </div>
+
+                <div class="flex justify-between">
+                    <span>Commission:</span>
+                    <b>₹{{ booking.commission_amount|default:0 }}</b>
+                </div>
+
+                <div class="flex justify-between">
+                    <span>Driver Settlement:</span>
+                    <b class="text-emerald-700">Advance − Commission</b>
+                </div>
+
+                <div class="flex justify-between border-t border-slate-300 pt-2">
+                    <span>Current Customer Balance:</span>
+                    <b>₹{{ booking.balance_amount }}</b>
+                </div>
+            </div>
+
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
+                <p><b>⚠️ Confirmation:</b> Completing this trip will:</p>
+                <ul class="list-disc list-inside mt-1 space-y-1">
+                    <li>Update waiting charges.</li>
+                    <li>Update the customer's remaining balance.</li>
+                    <li>Set booking status to COMPLETED.</li>
+                    <li>Settle the partner advance only if payment is verified.</li>
+                </ul>
+            </div>
+
+            <div class="flex gap-3">
+                <a
+                    href="{% url 'portal_cab_booking_detail' booking.booking_id %}"
+                    class="flex-1 text-center px-5 py-3 rounded-xl border text-xs font-bold"
+                >
+                    Cancel
+                </a>
+
+                <button
+                    type="submit"
+                    onclick="return confirm('Mark trip as COMPLETED? Please verify trip and payment details first.')"
+                    class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase py-3 rounded-xl"
+                >
+                    Complete Trip
+                </button>
+            </div>
+        </form>
+        {% else %}
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
+            This booking is not ONGOING. Only ongoing trips can be completed.
+        </div>
+        {% endif %}
     </div>
-
-    <form method="POST" class="space-y-4">
-      {% csrf_token %}
-      
-      <div>
-        <label class="block text-xs font-black text-slate-700 uppercase mb-2">Waiting Time (Minutes)</label>
-        <input type="number" name="waiting_minutes" min="0" max="180" value="0" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-lg font-black outline-none focus:ring-2 focus:ring-emerald-500">
-        <p class="text-[10px] text-slate-500 mt-1">First 15 min free, then ₹50 per 15 min block</p>
-      </div>
-
-      <div class="bg-slate-50 rounded-xl p-4 space-y-1.5 text-sm">
-        <div class="flex justify-between"><span>Advance Paid:</span><b class="text-emerald-600">₹{{ booking.advance_amount }}</b></div>
-        <div class="flex justify-between"><span>Commission:</span><b>₹{{ booking.commission_amount|default:0 }}</b></div>
-        <div class="flex justify-between text-emerald-700"><span>Driver Wallet Credit:</span><b>₹{{ booking.advance_amount|add:booking.commission_amount|default:0 }}</b></div>
-        <div class="flex justify-between border-t border-slate-300 pt-2 text-base font-black"><span>Balance Customer Pays Driver:</span><b>₹{{ booking.balance_amount }}</b></div>
-      </div>
-
-      <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
-        <p><b>⚠️ Confirmation:</b> Marking trip as completed will:</p>
-        <ul class="list-disc list-inside mt-1 space-y-0.5">
-          <li>Credit driver wallet (advance - commission)</li>
-          <li>Update balance (add waiting charges)</li>
-          <li>Set status to COMPLETED</li>
-        </ul>
-      </div>
-
-      <div class="flex gap-3">
-        <a href="{% url 'portal_cab_booking_detail' booking.booking_id %}" class="flex-1 text-center px-5 py-3 rounded-xl border text-xs font-bold">Cancel</a>
-        <button type="submit" onclick="return confirm('Mark trip as COMPLETED? This will credit driver wallet.')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase py-3 rounded-xl">Complete Trip</button>
-      </div>
-    </form>
-  </div>
 </div>
 {% endblock %}
+```
