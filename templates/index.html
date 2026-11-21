@@ -254,7 +254,7 @@
                 <i data-lucide="chevron-right" class="ml-auto text-slate-400"></i>
             </a>
             <a href="{% url 'partner_login' %}" class="flex items-center gap-4 p-4 font-semibold text-slate-800">
-                <i data-lucide="key-round" class="text-amber-600"></i> Partner Login
+                <i data-lucide="key-round" class="text-amber-600"></i> MMY Sathi
                 <i data-lucide="chevron-right" class="ml-auto text-slate-400"></i>
             </a>
             <a href="{% url 'portal_login' %}" class="flex items-center gap-4 p-4 font-semibold text-slate-800">
@@ -263,7 +263,7 @@
             </a>
         </div>
 
-        <p class="text-center text-xs text-slate-400 mt-6">MakesMyYatra · Travel Made Easier</p>
+        <p class="text-center text-xs text-slate-400 mt-6">MakesMyYatra -> Travel Made Easier</p>
     </div>
 </aside>
 
@@ -306,7 +306,7 @@
         <a href="{% url 'index' %}" class="mmy-pill">⛰️ MMY</a>
       </div>
       <div class="flex items-center gap-3">
-        <a href="{% url 'partner_register' %}" style="font-weight:900;color:#2878c8;font-size:15px">Partner</a>
+        <a href="{% url 'partner_register' %}" style="font-weight:900;color:#2878c8;font-size:15px">MMY Sathi</a>
         <a href="{% url 'track_booking' %}" class="mmy-biz">My Trips</a>
       </div>
     </div>
@@ -325,7 +325,7 @@
         <a href="{% url 'partner_register' %}" class="dt-link"><span class="ic"><i data-lucide="building-2" class="w-5 h-5"></i></span><span><strong>List Your Property</strong><small>Grow your business!</small></span></a>
         <a href="{% url 'track_booking' %}" class="dt-link"><span class="ic"><i data-lucide="briefcase" class="w-5 h-5"></i></span><span><strong>My Trips</strong><small>Manage your bookings</small></span></a>
         <a href="{% url 'support_request' %}" class="dt-link"><span class="ic"><i data-lucide="headset" class="w-5 h-5"></i></span><span><strong>Support</strong><small>24x7 traveller help</small></span></a>
-        <a href="{% url 'partner_login' %}" class="dt-login"><i data-lucide="key-round" class="w-4 h-4"></i> Partner Login</a>
+        <a href="{% url 'partner_login' %}" class="dt-login"><i data-lucide="key-round" class="w-4 h-4"></i>MMY Sathi</a>
         <span class="dt-lang">INR &nbsp;|&nbsp; English</span>
       </div>
     </div>
@@ -819,7 +819,7 @@
   <button type="button" onclick="document.getElementById('offersSection').scrollIntoView({behavior:'smooth'})"><i data-lucide="percent" class="w-6 h-6"></i>Offers</button>
   <a href="{% url 'cab_list' %}"><i data-lucide="car" class="w-6 h-6"></i>Cabs</a>
 </nav>
-<a href="{% url 'support_request' %}" class="mmy-fab md:hidden" aria-label="Ask for help"><i data-lucide="headset" class="w-6 h-6"></i>Ask MMY</a>
+<a href="{% url 'support_request' %}" class="mmy-fab md:hidden" aria-label="Ask for help"><i data-lucide="headset" class="w-6 h-6"></i>Help MMY</a>
 
 <script>
 /* ================= CONFIG ================= */
@@ -885,7 +885,7 @@ function renderExplore() {
 const M_TOP = ['flights','hotels','packages','trains'];
 const M_GRID = ['airport-cabs','villas','outstation-cabs','forex','tours','hourly','visa','insurance','getaways','giftcards','flightstatus','pnr'];
 // Mobile tile labels (MMT style, wraps on 2 lines)
-const M_LABELS = { trains:'Trains/ Bus', 'airport-cabs':'Airport Cabs &amp; Rentals', villas:'Villas &amp; Homestays', 'outstation-cabs':'Outstation Cabs', forex:'Forex Card &amp; Currency', tours:'Tours &amp; Attractions', getaways:'Nearby Getaways' };
+const M_LABELS = { trains:'Trains', 'airport-cabs':'Airport Cabs &amp; Rentals', villas:'Villas &amp; Homestays', 'outstation-cabs':'Outstation Cabs', forex:'Forex Card &amp; Currency', tours:'Tours &amp; Attractions', getaways:'Nearby Getaways' };
 
 // [value, label, hint]  (value = city name sent to your search view)
 const CITIES = [
@@ -1363,6 +1363,55 @@ lucide.createIcons();
   window.addEventListener('resize', update);
   update(); setTimeout(update, 400);
 })();
+</script>
+<!-- WELCOME10 OFFER POPUP -->
+<div id="welcomeOffer" class="fixed inset-0 z-[9999] flex items-start justify-center bg-black/50 px-4 pt-20">
+
+    <div class="relative w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-2xl">
+
+        <button onclick="closeWelcomeOffer()"
+            class="absolute right-4 top-3 text-2xl text-gray-500 hover:text-black">
+            &times;
+        </button>
+
+        <div class="mb-3 text-4xl">🎉</div>
+
+        <p class="text-sm font-bold uppercase tracking-widest text-orange-600">
+            Welcome to
+        </p>
+
+        <h2 class="mt-1 text-2xl font-extrabold text-gray-900">
+            MakesMyYatra
+        </h2>
+
+        <p class="mt-3 text-lg font-semibold text-gray-700">
+            Get 10% OFF on Your First Booking!
+        </p>
+
+        <div class="my-4 rounded-xl border-2 border-dashed border-orange-400 bg-orange-50 p-3">
+            <p class="text-xs font-semibold text-gray-600">USE COUPON CODE</p>
+            <p class="mt-1 text-2xl font-extrabold tracking-widest text-orange-600">
+                WELCOME10
+            </p>
+        </div>
+
+        <p class="mb-4 text-xs text-gray-500">
+            Valid on your first eligible booking across MakesMyYatra services.
+            Terms & conditions apply.
+        </p>
+
+        <button onclick="closeWelcomeOffer()"
+            class="w-full rounded-xl bg-orange-600 px-5 py-3 font-bold text-white transition hover:bg-orange-700">
+            Explore Offers
+        </button>
+
+    </div>
+</div>
+
+<script>
+function closeWelcomeOffer() {
+    document.getElementById("welcomeOffer").style.display = "none";
+}
 </script>
 
 </body>

@@ -11,7 +11,7 @@ from django.db import models
 from django.db.models import Sum
 from django.contrib.admin.models import LogEntry 
 from django.contrib.auth.models import Group, User
-from core.models import Booking, Coupon, EmergencySupport, Hotel, MealPlan, RoomType
+from core.models import Booking, Coupon, EmergencySupport, Hotel, MealPlan, RoomType, Welcome10Redemption
 from decimal import Decimal
 from datetime import datetime, date
 from .utils import purge_expired_emergency_requests
@@ -154,7 +154,7 @@ def book_hotel(request):
     meal_plan_id = request.POST.get('meal_plan_id')
     guest_name = request.POST.get('guest_name', 'Guest').strip()
     guest_phone = request.POST.get('guest_phone', '').strip()
-    guest_email = request.POST.get('guest_email', '').strip()
+    guest_email = request.POST.get('guest_email', '').strip().lower()
     check_in_str = request.POST.get('check_in')
     check_out_str = request.POST.get('check_out')
     adults_count = _to_int(request.POST.get('adults_count'), 2, 1, 20)
@@ -213,28 +213,74 @@ def book_hotel(request):
     discount_percentage = Decimal('0.00')
     flat_discount_amount = Decimal('0.00')
     applied_coupon_obj = None
+    welcome10_applied = False
 
-    if check_in_date and (check_in_date - timezone.localdate()).days >= 7:
+    if (check_in_date - timezone.localdate()).days >= 7:
         discount_percentage = Decimal('10.00')
 
-    if nights >= 3 and Decimal('15.00') > discount_percentage:
-        discount_percentage = Decimal('15.00')
+    if nights >= 3:
+        discount_percentage = max(discount_percentage, Decimal('15.00'))
 
     coupon_input = (request.POST.get('coupon_code') or '').strip()
+
     if coupon_input:
-        coupon_match = Coupon.objects.filter(code__iexact=coupon_input, is_active=True).first()
+        coupon_match = Coupon.objects.filter(
+            code__iexact=coupon_input,
+            is_active=True
+        ).first()
+
         today = timezone.localdate()
-        if coupon_match and (coupon_match.valid_till is None or coupon_match.valid_till >= today):
+        if not coupon_match or (
+            coupon_match.valid_till and coupon_match.valid_till < today
+        ):
+            messages.warning(request, f"Coupon '{coupon_input}' is invalid or expired.")
+
+        elif coupon_input.upper() == 'WELCOME10':
+            already_used = (
+                Welcome10Redemption.objects.filter(email=guest_email).exists()
+                or Booking.objects.filter(
+                    guest_email__iexact=guest_email,
+                    status='CONFIRMED'
+                ).exists()
+                or CabBooking.objects.filter(
+                    guest_email__iexact=guest_email,
+                    advance_paid=True,
+                    status='CONFIRMED'
+                ).exists()
+            )
+
+            if already_used:
+                messages.warning(
+                    request,
+                    "WELCOME10 is valid only for your first successful booking."
+                )
+
+            elif (
+                coupon_match.discount_type == 'percentage'
+                and coupon_match.discount_value == Decimal('10.00')
+            ):
+                applied_coupon_obj = coupon_match
+                discount_percentage = max(
+                    discount_percentage,
+                    Decimal('10.00')
+                )
+                welcome10_applied = True
+
+            else:
+                messages.warning(
+                    request,
+                    "WELCOME10 coupon configuration is incorrect."
+                )
+
+        else:
             applied_coupon_obj = coupon_match
+
             if coupon_match.discount_type == 'flat':
                 flat_discount_amount = coupon_match.discount_value
                 discount_percentage = Decimal('0.00')
-            else:
-                if coupon_match.discount_value > discount_percentage:
-                    discount_percentage = coupon_match.discount_value
-        else:
-            messages.warning(request, f"Coupon '{coupon_input}' is either invalid or expired.")
 
+            elif coupon_match.discount_value > discount_percentage:
+                discount_percentage = coupon_match.discount_value
     # Compute bill
     bill = calculate_stay_pricing(
         base_price=base_rate,
@@ -304,6 +350,13 @@ def book_hotel(request):
                 status='CONFIRMED',
                 transaction_id=f"TXN-{uuid.uuid4().hex[:8].upper()}"
             )
+            if welcome10_applied:
+                Welcome10Redemption.objects.create(
+                    email=guest_email,
+                    booking_type='HOTEL',
+                    booking_id=booking.booking_id
+                )    
+                    
     except RoomType.DoesNotExist:
         messages.error(request, "Room not available. Please try again.")
         return redirect('index')
@@ -1613,51 +1666,151 @@ def portal_booking_send_whatsapp(request, booking_id):
 @require_POST
 @ratelimit(key='ip', rate='20/m', method='POST', block=True)
 def apply_coupon_ajax(request):
-    """Preview only. Rate, meal price, offers and surge are read from the DB, never from the client."""
+    """Preview only. Pricing and eligibility are checked from the DB."""
+
     coupon_code = request.POST.get('coupon_code', '').strip()
+    guest_email = request.POST.get('guest_email', '').strip().lower()
+
     if not coupon_code:
-        return JsonResponse({'success': False, 'message': 'Please enter a coupon code.'}, status=400)
+        return JsonResponse({
+            'success': False,
+            'message': 'Please enter a coupon code.'
+        }, status=400)
 
     today = timezone.localdate()
-    coupon = Coupon.objects.filter(code__iexact=coupon_code, is_active=True).first()
-    if not coupon or (coupon.valid_till and coupon.valid_till < today):
-        return JsonResponse({'success': False, 'message': 'Invalid or expired coupon.'}, status=400)
+
+    coupon = Coupon.objects.filter(
+        code__iexact=coupon_code,
+        is_active=True
+    ).first()
+
+    if not coupon or (
+        coupon.valid_till and coupon.valid_till < today
+    ):
+        return JsonResponse({
+            'success': False,
+            'message': 'Invalid or expired coupon.'
+        }, status=400)
+
+    # WELCOME10 first successful booking eligibility
+    if coupon_code.upper() == 'WELCOME10':
+
+        if not guest_email:
+            return JsonResponse({
+                'success': False,
+                'message': 'Please enter your email to use WELCOME10.'
+            }, status=400)
+
+        already_used = (
+            Welcome10Redemption.objects.filter(
+                email__iexact=guest_email
+            ).exists()
+            or Booking.objects.filter(
+                guest_email__iexact=guest_email,
+                status='CONFIRMED'
+            ).exists()
+            or CabBooking.objects.filter(
+                guest_email__iexact=guest_email,
+                advance_paid=True,
+                status='CONFIRMED'
+            ).exists()
+        )
+
+        if already_used:
+            return JsonResponse({
+                'success': False,
+                'message': 'WELCOME10 is valid only for your first successful booking.'
+            }, status=400)
+
+        if not (
+            coupon.discount_type == 'percentage'
+            and coupon.discount_value == Decimal('10.00')
+        ):
+            return JsonResponse({
+                'success': False,
+                'message': 'WELCOME10 coupon configuration is incorrect.'
+            }, status=400)
 
     hotel = Hotel.objects.filter(
         id=_to_int(request.POST.get('hotel_id'), 0, 0, 10**9),
         is_active=True,
-        is_verified=True   
+        is_verified=True
     ).first()
 
     if not hotel:
-        return JsonResponse({'success': False, 'message': 'Hotel not found.'}, status=400)
+        return JsonResponse({
+            'success': False,
+            'message': 'Hotel not found.'
+        }, status=400)
+
     try:
-        check_in = datetime.strptime(request.POST.get('check_in', ''), '%Y-%m-%d').date()
-        check_out = datetime.strptime(request.POST.get('check_out', ''), '%Y-%m-%d').date()
+        check_in = datetime.strptime(
+            request.POST.get('check_in', ''),
+            '%Y-%m-%d'
+        ).date()
+
+        check_out = datetime.strptime(
+            request.POST.get('check_out', ''),
+            '%Y-%m-%d'
+        ).date()
+
     except ValueError:
-        return JsonResponse({'success': False, 'message': 'Please select valid dates first.'}, status=400)
+        return JsonResponse({
+            'success': False,
+            'message': 'Please select valid dates first.'
+        }, status=400)
+
     nights = (check_out - check_in).days
+
     if nights < 1 or nights > 30:
-        return JsonResponse({'success': False, 'message': 'Please select valid dates first.'}, status=400)
+        return JsonResponse({
+            'success': False,
+            'message': 'Please select valid dates first.'
+        }, status=400)
 
     room_type = hotel.room_types.first()
-    base_rate = room_type.base_price if room_type else Decimal('1800.00')
-    code = (request.POST.get('meal_plan_id') or '').strip().upper()
-    meal_extra = Decimal('0.00')
-    if code:
-        plan = MealPlan.objects.filter(room_type=room_type, plan_code__iexact=code).first() if room_type else None
-        meal_extra = plan.additional_price if plan else MEAL_FALLBACK_RATES.get(code, Decimal('0.00'))
+    base_rate = (
+        room_type.base_price
+        if room_type else Decimal('1800.00')
+    )
 
-    # same offer rules as book_hotel
+    code = (
+        request.POST.get('meal_plan_id') or ''
+    ).strip().upper()
+
+    meal_extra = Decimal('0.00')
+
+    if code:
+        plan = (
+            MealPlan.objects.filter(
+                room_type=room_type,
+                plan_code__iexact=code
+            ).first()
+            if room_type else None
+        )
+
+        meal_extra = (
+            plan.additional_price
+            if plan else MEAL_FALLBACK_RATES.get(
+                code, Decimal('0.00')
+            )
+        )
+
+    # Same offer rules as book_hotel
     discount_percentage = Decimal('0.00')
+
     if (check_in - today).days >= 7:
         discount_percentage = Decimal('10.00')
+
     if nights >= 3:
         discount_percentage = Decimal('15.00')
+
     flat_discount = Decimal('0.00')
+
     if coupon.discount_type == 'flat':
         flat_discount = coupon.discount_value
         discount_percentage = Decimal('0.00')
+
     elif coupon.discount_value > discount_percentage:
         discount_percentage = coupon.discount_value
 
@@ -1666,13 +1819,20 @@ def apply_coupon_ajax(request):
         meal_extra=meal_extra,
         check_in=check_in,
         check_out=check_out,
-        rooms=_to_int(request.POST.get('rooms_count'), 1, 1, 10),
-        adults=_to_int(request.POST.get('adults_count'), 2, 1, 20),
-        children=_to_int(request.POST.get('children_count'), 0, 0, 10),
+        rooms=_to_int(
+            request.POST.get('rooms_count'), 1, 1, 10
+        ),
+        adults=_to_int(
+            request.POST.get('adults_count'), 2, 1, 20
+        ),
+        children=_to_int(
+            request.POST.get('children_count'), 0, 0, 10
+        ),
         discount_percent=discount_percentage,
         flat_discount=flat_discount,
         surge_percent=20,
     )
+
     return JsonResponse({
         'success': True,
         'message': f"Coupon '{coupon.code}' applied!",

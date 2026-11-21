@@ -513,7 +513,20 @@ class CabBooking(models.Model):
         max_digits=10, decimal_places=2, default=0.00,
         help_text="Balance to pay driver in cash (80% minus waiting)"
     )
-    
+    # ============ RIDE GUARANTEE ============
+    ride_guarantee_opted = models.BooleanField(
+        default=False,
+        help_text="Customer opted for Ride Guarantee (15 min late = full refund + ₹300 voucher)"
+    )
+    ride_guarantee_fee = models.DecimalField(
+        max_digits=8, decimal_places=2, default=0.0,
+        help_text="Fee charged for Ride Guarantee (e.g., ₹49)"
+    )
+    ride_guarantee_claimed = models.BooleanField(default=False)
+    ride_guarantee_claimed_at = models.DateTimeField(null=True, blank=True)
+    ride_guarantee_refund_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.0
+    )
     # ============ WAITING CHARGES ============
     waiting_minutes = models.IntegerField(default=0, help_text="Extra waiting beyond 15 min free")
     waiting_charges = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
@@ -659,3 +672,12 @@ class PartnerWalletTransaction(models.Model):
     
     def __str__(self):
         return f"{self.partner.name} - {self.txn_type} ₹{self.amount}"
+
+class Welcome10Redemption(models.Model):
+    email = models.EmailField(max_length=254, unique=True)
+    booking_type = models.CharField(max_length=20)
+    booking_id = models.CharField(max_length=50)
+    redeemed_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"WELCOME10 - {self.email}"

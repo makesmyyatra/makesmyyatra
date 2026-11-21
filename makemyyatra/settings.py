@@ -123,18 +123,18 @@ TEMPLATES = [
 WSGI_APPLICATION = 'makemyyatra.wsgi.application'
 
 DATABASE_URL = config('DATABASE_URL', default='')
-if not DATABASE_URL:
-    if DEBUG:
-        DATABASE_URL = 'sqlite:///' + str(BASE_DIR / 'db.sqlite3')
-    else:
-        raise ImproperlyConfigured(
-            'DATABASE_URL environment variable is required in production.'
-        )
+
+if DEBUG:
+    DATABASE_URL = 'sqlite:///' + str(BASE_DIR / 'db.sqlite3')
+elif not DATABASE_URL:
+    raise ImproperlyConfigured(
+        'DATABASE_URL environment variable is required in production.'
+    )
 
 DATABASES = {
     'default': dj_database_url.config(
         default=DATABASE_URL,
-        conn_max_age=600,
+        conn_max_age=0 if DEBUG else 600,
         conn_health_checks=True,
         ssl_require=not DEBUG
     )
@@ -187,14 +187,20 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 CACHE_CONTROL = 'no-cache, no-store, must-revalidate'
 
-# Email Settings
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-EMAIL_HOST = config('EMAIL_HOST', default='smtp.office365.com')
-EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+# Email Setting
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = config('EMAIL_HOST', default='smtpout.secureserver.net')
+EMAIL_PORT = config('EMAIL_PORT', default=465, cast=int)
+EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=True, cast=bool)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=False, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='MakesMyYatra <bookings@makesmyyatra.com>')
+DEFAULT_FROM_EMAIL = config(
+    'DEFAULT_FROM_EMAIL',
+    default='MakesMyYatra <booking@makesmyyatra.com>'
+)
+
 
 # Third-party APIs
 FAST2SMS_API_KEY = config('FAST2SMS_API_KEY', default='')

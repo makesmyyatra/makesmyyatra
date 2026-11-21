@@ -5,7 +5,6 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.utils import timezone
-from django.db import transaction
 from django.db.models import Sum, Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_POST
@@ -19,8 +18,9 @@ from urllib.parse import quote
 import qrcode
 import io
 import base64
+from django.db import IntegrityError, transaction
 import logging
-from .models import CabCategory, CabRoutePackage, CabBooking, CabReview, Coupon, CabPartner, PartnerWalletTransaction
+from .models import CabCategory, CabRoutePackage, CabBooking, CabReview, Coupon, CabPartner, PartnerWalletTransaction,Welcome10Redemption, Booking
 from .views import is_admin, _to_int, _normalize_phone
 
 logger = logging.getLogger(__name__)
@@ -401,7 +401,7 @@ def book_cab(request):
             messages.error(request, "Coupon codes are not available for this fixed-price hourly package.")
             return redirect('cab_list')
 
-    coupon_obj = None
+        coupon_obj = None
 
     if coupon_code and trip_type != 'HOURLY':
         coupon = Coupon.objects.filter(
@@ -412,6 +412,41 @@ def book_cab(request):
         if not coupon or not coupon.is_valid()[0]:
             messages.error(request, "Invalid or expired coupon code.")
             return redirect('cab_list')
+
+        if coupon_code.upper() == 'WELCOME10':
+            guest_email = guest_email.strip().lower()
+
+            already_used = (
+                Welcome10Redemption.objects.filter(
+                    email__iexact=guest_email
+                ).exists()
+                or Booking.objects.filter(
+                    guest_email__iexact=guest_email,
+                    status='CONFIRMED'
+                ).exists()
+                or CabBooking.objects.filter(
+                    guest_email__iexact=guest_email,
+                    advance_paid=True,
+                    status='CONFIRMED'
+                ).exists()
+            )
+
+            if already_used:
+                messages.error(
+                    request,
+                    "WELCOME10 is valid only for your first successful booking."
+                )
+                return redirect('cab_list')
+
+            if not (
+                coupon.discount_type == 'percentage'
+                and coupon.discount_value == Decimal('10.00')
+            ):
+                messages.error(
+                    request,
+                    "WELCOME10 coupon configuration is incorrect."
+                )
+                return redirect('cab_list')
 
         coupon_obj = coupon
 
@@ -1576,7 +1611,7 @@ def portal_cab_verify_advance(request, booking_id):
                     booking_id=booking.booking_id
                 )
 
-            # IMPORTANT:
+                        # IMPORTANT:
             # Admin must first confirm this exact payment in the bank statement.
             booking.advance_paid = True
             booking.advance_paid_at = timezone.now()
@@ -1587,6 +1622,34 @@ def portal_cab_verify_advance(request, booking_id):
                 'status',
             ])
 
+            # Redeem WELCOME10 only after verified cab advance.
+            if (
+                booking.coupon
+                and booking.coupon.code.strip().upper() == 'WELCOME10'
+                and booking.guest_email
+            ):
+                try:
+                    with transaction.atomic():
+                        Welcome10Redemption.objects.create(
+                            email=booking.guest_email.strip().lower(),
+                            booking_type='CAB',
+                            booking_id=booking.booking_id
+                        )
+                except IntegrityError:
+                    logger.exception(
+                        "WELCOME10 redemption conflict for cab booking %s",
+                        booking.booking_id
+                    )
+                    messages.warning(
+                        request,
+                        "Booking confirmed, but WELCOME10 needs admin review."
+                    )
+
+            messages.success(
+                request,
+                f"Advance ₹{booking.advance_amount} marked verified. "
+                "Booking confirmed."
+            )
             messages.success(
                 request,
                 f"Advance ₹{booking.advance_amount} marked verified. "
