@@ -20,37 +20,77 @@
   }
 </style>
 <style>
-  body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f2f4f8; }
-   .hero-bg {
-    position: relative;
-    background: linear-gradient(135deg, rgba(5,19,34,0.92) 0%, rgba(12,43,77,0.85) 55%, rgba(21,69,124,0.80) 100%),
-                url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
-    background-attachment: fixed;}
+  :root {
+    --mmy-ink: #20242c;
+    --mmy-muted: #667085;
+    --mmy-blue: #2878c8;
+    --mmy-gold: #bd922d;
+    --mmy-cream: #fbf7e9;
+    --mmy-line: #e8e8e8;
+  }
+  body { font-family:'Plus Jakarta Sans',sans-serif; background:#fff; color:var(--mmy-ink); }
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-  .mmt-nav-pill-wrapper { background:#fff; border-radius:9999px; box-shadow:0 4px 25px rgba(0,0,0,.2); width:max-content; max-width:100%; margin:0 auto; transform:translateY(28px); position:relative; z-index:30; border:1px solid #edf2f7; display:flex; flex-wrap:nowrap; }
-  .mmt-nav-item { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:8px 16px; cursor:pointer; color:#555; white-space:nowrap; border-radius:9999px; transition:all .2s ease; flex:0 0 auto; }
-  .mmt-nav-item:hover, .mmt-nav-item.active-pill { color:#008cff; }
-  .mmt-nav-item.active-pill { background:#eaf5ff; font-weight:800; }
+  /* ---- Hero (light theme) ---- */
+  .hero-bg {
+    position: relative;
+    background: #fff !important;
+    color: var(--mmy-ink) !important;
+    padding-bottom: clamp(28px,5vw,76px) !important;
+  }
+  .hero-bg .text-white { color:#20242c !important; }
+  .hero-bg .text-slate-200, .hero-bg .text-slate-300, .hero-bg .text-slate-400 { color:#667085 !important; }
+  .hero-bg .text-blue-400 { color:#2878c8 !important; }
+  .hero-bg .bg-white\/10, .hero-bg .bg-white\/5 { background:#fff !important; border-color:#e7eaf0 !important; }
+  .hero-bg .border-white\/20, .hero-bg .border-white\/10 { border-color:#e5e7eb !important; }
+  .hero-bg .bg-slate-900\/60 { background:#f5f7fa !important; border-color:#e5e7eb !important; color:#344054 !important; }
+  .hero-bg .bg-gradient-to-tr { background:linear-gradient(145deg,#e7f1ff,#fff0c9) !important; color:#286da8 !important; box-shadow:0 3px 10px rgba(39,105,170,.12) !important; }
+  .hero-bg .shadow-blue-500\/30 { box-shadow:0 3px 10px rgba(39,105,170,.12) !important; }
+  .hero-bg a .text-emerald-300, .hero-bg a .text-emerald-200 { color:#278b70 !important; }
+  .hero-bg a .bg-emerald-500\/15 { background:#eaf6f0 !important; border-color:#cde9dc !important; }
+  .hero-bg a .bg-emerald-500\/30 { background:#d7efe4 !important; color:#278b70 !important; }
+  body > div.bg-\[\#030d17\] { background:#fff !important; color:#667085 !important; border-color:#eeeeee !important; }
+  body > div.bg-\[\#030d17\] .text-white { color:#263242 !important; }
+  body > div.bg-\[\#030d17\] a { color:#667085 !important; }
 
-  .mmt-search-card { background:#fff; border-radius:20px; box-shadow:0 8px 35px rgba(0,0,0,.16); border:1px solid #e2e8f0; padding:44px 32px 32px; position:relative; z-index:10; min-height:280px; scroll-margin-top:16px; }
+  /* ---- Desktop / tablet category nav (MMT style) ---- */
+  .mmt-nav-pill-wrapper { background:#fff; border-radius:16px; box-shadow:0 8px 28px rgba(0,0,0,.18); width:max-content; max-width:100%; margin:0 auto -70px; position:relative; z-index:30; display:flex; padding:6px 10px 0; }
+  .mmt-nav-item { display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:6px; cursor:pointer; padding:14px 8px 12px; min-width:76px; flex:0 0 auto; color:#4a4a4a; border-bottom:3px solid transparent; transition:color .15s; text-align:center; background:none; }
+  .mmt-nav-item svg { width:32px; height:32px; color:#2b2f38; stroke-width:1.5; }
+  .mmt-nav-item span { font-size:13px; font-weight:500; line-height:1.2; max-width:84px; }
+  .nav-arrow { position:absolute; top:50%; transform:translateY(-50%); width:34px; height:34px; border-radius:50%; background:#fff; color:#008cff; border:0; box-shadow:0 2px 10px rgba(0,0,0,.28); display:none; align-items:center; justify-content:center; z-index:5; cursor:pointer; }
+  .nav-arrow.show { display:flex; }
+  #navPrev { left:-14px; } #navNext { right:-14px; }
+  .mmt-nav-item:hover { color:#008cff; }
+  .mmt-nav-item.active-pill { color:#008cff; border-bottom-color:#008cff; }
+  .mmt-nav-item.active-pill svg { color:#008cff; }
+
+  /* ---- Search card ---- */
+  .mmt-search-card { background:#fff; border:1px solid #e8e8e8; box-shadow:0 8px 28px rgba(31,45,61,.08); border-radius:20px; padding:44px 32px 32px; position:relative; z-index:10; min-height:280px; scroll-margin-top:16px; }
   .mmt-input-col { padding:10px 14px; border:1px solid #cbd5e1; border-radius:12px; background:#fff; transition:border-color .2s, box-shadow .2s; }
   .mmt-input-col:hover, .mmt-input-col:focus-within { border-color:#008cff; box-shadow:0 0 0 1px #008cff; }
-  .mmt-search-btn { background:linear-gradient(93deg,#53b2fe,#065af3); box-shadow:0 3px 12px rgba(6,90,243,.4); border-radius:34px; color:#fff; font-weight:900; letter-spacing:1px; padding:12px 64px; margin:0 auto; display:block; transition:transform .15s, box-shadow .15s; }
+  .mmt-input-col input[type="date"] {
+    display:block; width:100%; min-height:36px; margin-top:5px; padding:4px 0;
+    background:transparent; color:#20242c; font-size:16px; font-weight:700; line-height:1.5;
+    border:0; outline:none; box-shadow:none;
+  }
+  .mmt-search-btn { background:linear-gradient(93deg,#53b2fe,#065af3); box-shadow:0 4px 14px rgba(6,90,243,.35); border-radius:34px; color:#fff; font-weight:900; letter-spacing:1px; padding:12px 64px; margin:0 auto; display:block; transition:transform .15s, box-shadow .15s; }
   .mmt-search-btn:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(6,90,243,.5); }
+  #searchFormHeading { color:#2878c8 !important; }
+  #offersSection { color:#20242c; }
 
-  .sticky-scroll-nav { position:fixed; inset:0 0 auto 0; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,.12); z-index:50; transform:translateY(-100%); transition:transform .3s ease-in-out; }
+  /* ---- Sticky mini nav ---- */
+  .sticky-scroll-nav { position:fixed; inset:0 0 auto 0; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,.12); z-index:50; transform:translateY(-100%); transition:transform .3s ease-in-out; padding-top:calc(0.625rem + env(safe-area-inset-top, 0px)) !important; }
   .sticky-scroll-nav.visible { transform:translateY(0); }
   .counter-btn { width:32px; height:32px; border:1px solid #cbd5e1; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#334155; font-weight:800; transition:all .15s; }
   .counter-btn:hover { border-color:#008cff; color:#008cff; background:#f0f7ff; }
 
-  /* Notch / safe-area support */
-  .sticky-scroll-nav { padding-top: calc(0.625rem + env(safe-area-inset-top, 0px)) !important; }
-  .modal-backdrop { padding-top: max(1rem, env(safe-area-inset-top, 0px)); padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)); }
-  footer { padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px)); }
+  /* ---- Safe area ---- */
+  .modal-backdrop { padding-top:max(1rem, env(safe-area-inset-top, 0px)); padding-bottom:max(1rem, env(safe-area-inset-bottom, 0px)); }
+  footer { padding-bottom:calc(2rem + env(safe-area-inset-bottom, 0px)); }
 
-  /* ---- Mobile service tiles (MMT style) ---- */
+  /* ---- Mobile tiles ---- */
   .m-tile { display:flex; flex-direction:column; align-items:center; text-align:center; cursor:pointer; -webkit-tap-highlight-color:transparent; }
   .m-ico { display:flex; align-items:center; justify-content:center; border-radius:16px; background:linear-gradient(145deg,#eaf5ff,#cfe6ff); color:#0a63d6; transition:box-shadow .15s, transform .15s; }
   .m-tile:active .m-ico { transform:scale(.94); }
@@ -63,28 +103,169 @@
   .m-grid-item .m-ico { width:46px; height:46px; margin-bottom:6px; }
   .m-grid-item .m-lbl { font-size:11.5px; font-weight:600; color:#475569; line-height:1.2; }
 
-  .m-bottom-nav { position:fixed; left:0; right:0; bottom:0; z-index:45; background:#fff; border-radius:20px 20px 0 0; box-shadow:0 -4px 20px rgba(0,0,0,.12); display:flex; padding:8px 8px calc(8px + env(safe-area-inset-bottom, 0px)); }
-  .m-bottom-nav a, .m-bottom-nav button { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:11px; font-weight:700; color:#64748b; background:none; border:0; }
-  .m-bottom-nav .on { color:#008cff; }
 
-  /* Placeholder for empty date inputs (Android shows nothing) */
-  .date-wrap { position:relative; }
-  .date-ph { display:none; }
+  /* ===== MMT-style mobile home ===== */
+  .mmy-pill { display:inline-flex; align-items:center; gap:4px; padding:7px 12px; border-radius:12px; background:linear-gradient(90deg,#f8f0d4,#f0e3b3); border:1px solid #e3d29a; font-weight:900; font-size:14px; color:#1b1d22; }
+  .mmy-dot { position:absolute; top:-2px; right:-3px; width:10px; height:10px; border-radius:50%; background:#e11d48; border:2px solid #fff; }
+  .mmy-biz { padding:4px 9px; border-radius:8px; background:#fde8ec; color:#d6244b; font-weight:900; font-size:13px; }
+  .mmy-ask { display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; padding:18px 14px; border:2px solid #2f6fd0; border-radius:16px; background:#fff; color:#8a93a3; font-size:15px; text-align:left; margin-bottom:16px; box-shadow:0 0 0 3px rgba(47,111,208,.07); }
+  .mmy-ask .ic { width:38px; height:38px; border-radius:50%; border:2px solid #1b2a4a; display:flex; align-items:center; justify-content:center; color:#1b2a4a; flex:0 0 auto; }
+
+  #mTopTiles { gap:8px !important; }
+  #mTopTiles .m-top { min-height:128px; padding:14px 4px 12px; border-radius:18px; border:0; background:linear-gradient(180deg,#f9f2df,#f2ebd9); box-shadow:none; justify-content:center; }
+  #mTopTiles .m-top .m-ico { width:60px; height:60px; margin-bottom:8px; border-radius:0; background:transparent; color:#a87b12; }
+  #mTopTiles .m-top .m-ico svg { width:50px; height:50px; stroke-width:1.6; filter:drop-shadow(1px 2px 0 rgba(168,123,18,.18)); }
+  #mTopTiles .m-top .m-lbl { font-size:14.5px; font-weight:800; color:#111; line-height:1.15; }
+
+  #mGridTiles { background:#fff; border:1.5px solid #e6e6e6; border-radius:26px; padding:20px 6px 22px; box-shadow:none; }
+  #mGridTiles .m-grid-item { padding:0 2px; }
+  #mGridTiles .m-grid-item .m-ico { width:56px; height:56px; margin-bottom:6px; border-radius:0; background:transparent; color:#a87b12; }
+  #mGridTiles .m-grid-item .m-ico svg { width:36px; height:36px; stroke-width:1.6; }
+  #mGridTiles .m-grid-item .m-lbl { font-size:13.5px; font-weight:500; color:#2b2f38; line-height:1.25; }
+  #mTopTiles .m-tile.m-active .m-ico, #mGridTiles .m-tile.m-active .m-ico { box-shadow:0 0 0 2px #d4a437; border-radius:16px; }
+  .mmy-notch { width:64px; height:22px; margin:-1px auto 0; background:#fff; border:1.5px solid #e6e6e6; border-top:0; border-radius:0 0 40px 40px; display:flex; align-items:center; justify-content:center; color:#a87b12; }
+
+  .m-bottom-nav { position:fixed; left:10px; right:84px; bottom:calc(10px + env(safe-area-inset-bottom, 0px)); z-index:45; background:rgba(40,36,30,.9); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); border-radius:34px; padding:7px 6px; display:flex; box-shadow:0 8px 24px rgba(0,0,0,.25); }
+  .m-bottom-nav a, .m-bottom-nav button { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:11px; font-weight:700; color:#fff; background:none; border:0; padding:6px 0; border-radius:26px; }
+  .m-bottom-nav .on { color:#f5c542; background:rgba(255,255,255,.14); }
+  .mmy-fab { position:fixed; right:12px; bottom:calc(12px + env(safe-area-inset-bottom, 0px)); width:64px; height:64px; border-radius:50%; z-index:46; background:radial-gradient(circle at 30% 30%,#2b4a8a,#0e1b3d); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:10px; font-weight:800; border:2px solid #fff; box-shadow:0 6px 18px rgba(14,27,61,.4); }
+  .mmy-tab { padding:8px 16px; border-bottom:3px solid transparent; font-weight:600; color:#667085; white-space:nowrap; font-size:15px; }
+  .mmy-tab.act { border:1.5px solid #d4a437; border-radius:10px; background:#fffaf0; color:#a87b12; font-weight:800; }
 
   @media (max-width:767px) {
     /* 16px stops iOS Safari auto-zoom on focus */
-    input, select, textarea { font-size: 16px !important; }
-    body { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
-    .mmt-nav-pill-wrapper { display:none; }
+    input, select, textarea { font-size:16px !important; }
+    body { padding-bottom:calc(100px + env(safe-area-inset-bottom, 0px)); }
+    .hero-bg { padding-top:14px !important; padding-bottom:20px !important; }
+    .mmt-nav-pill-wrapper { display:none !important; }
     .mmt-search-card { padding:20px 16px 24px; }
-    .date-ph { display:block; position:absolute; left:0; top:6px; font-size:16px; font-weight:700; color:#94a3b8; pointer-events:none; }
-    .date-wrap.has-val .date-ph { display:none; }
-    .date-wrap input { min-height:30px; }
+  }
+  /* ===== Desktop top bar + explore bar (hidden on phone) ===== */
+  .dt-top, .mmy-explore { display:none; }
+  .mmy-viewall { color:#a87b12; }
+  .mmy-vabtn { background:#c99a1f; color:#fff; }
+
+  @media (min-width:768px) {
+    body { background:#f2f2f2 !important; }
+    .hero-bg {
+      padding-top:0 !important; padding-bottom:0 !important;
+      background:linear-gradient(180deg,rgba(8,12,20,.62),rgba(8,12,20,.38) 55%,rgba(8,12,20,.6)),
+                 url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat !important;
+      color:#fff !important;
+    }
+    .hero-bg > div { max-width:1320px !important; }
+    #pillNav > :first-child { margin-left:auto; }
+    #pillNav > :last-child { margin-right:auto; }
+
+    .dt-top { display:flex; align-items:center; justify-content:space-between; padding:16px 0 28px; color:#fff; }
+    .dt-logo { display:flex; align-items:center; gap:10px; color:#fff; font-weight:900; font-size:24px; letter-spacing:-.5px; }
+    .dt-logo b { color:#53b2fe; font-weight:900; }
+    .dt-logo .mk { width:42px; height:42px; border-radius:12px; background:linear-gradient(145deg,#2563eb,#4f46e5); display:flex; align-items:center; justify-content:center; font-size:22px; }
+    .dt-left { display:flex; align-items:center; }
+    .dt-menu-btn { width:42px; height:42px; border-radius:12px; background:rgba(255,255,255,.2); color:#fff; display:flex; align-items:center; justify-content:center; margin-right:14px; border:0; cursor:pointer; }
+    .dt-menu-btn:hover { background:rgba(255,255,255,.3); }
+    .dt-links { display:flex; align-items:center; gap:26px; }
+    .dt-link { display:flex; align-items:center; gap:10px; color:#fff; line-height:1.2; }
+    .dt-link .ic { width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
+    .dt-link strong { display:block; font-size:13px; font-weight:800; }
+    .dt-link small { display:block; font-size:11px; opacity:.8; font-weight:500; }
+    .dt-link:hover strong { text-decoration:underline; }
+    .dt-login { display:flex; align-items:center; gap:8px; background:linear-gradient(93deg,#53b2fe,#065af3); padding:13px 20px; border-radius:10px; font-weight:800; font-size:13px; color:#fff; }
+    .dt-lang { background:rgba(255,255,255,.22); padding:13px 16px; border-radius:10px; font-size:13px; font-weight:700; color:#fff; }
+
+    .mmt-search-card { border:0; border-radius:22px; padding:96px 28px 62px; box-shadow:0 10px 40px rgba(0,0,0,.28); min-height:0; }
+    #hotelsSearchPanel .grid { gap:0; border:1px solid #e2e8f0; border-radius:16px; }
+    #hotelsSearchPanel .mmt-input-col { border:0; border-right:1px solid #e2e8f0; border-radius:0; padding:14px 18px; box-shadow:none; }
+    #hotelsSearchPanel .mmt-input-col:first-child { border-radius:16px 0 0 16px; }
+    #hotelsSearchPanel .mmt-input-col:last-child { border-right:0; border-radius:0 16px 16px 0; }
+    #hotelsSearchPanel .mmt-input-col:hover, #hotelsSearchPanel .mmt-input-col:focus-within { background:#eaf5ff; box-shadow:none; }
+    #citySearchInput { font-size:24px; }
+    #hotelsSearchPanel .mmt-search-btn { position:absolute; left:50%; bottom:-27px; transform:translateX(-50%); width:270px; height:55px; padding:0; font-size:26px; letter-spacing:.5px; z-index:5; }
+    #hotelsSearchPanel .mmt-search-btn:hover { transform:translateX(-50%) translateY(-2px); }
+
+    .mmy-explore { display:block; position:relative; z-index:20; }
+    .mmy-explore-title { display:flex; justify-content:center; align-items:center; gap:14px; color:#fff; font-weight:800; font-size:14px; margin:44px 0 14px; }
+    .mmy-explore-bar { display:flex; background:#fff; border-radius:999px; width:max-content; max-width:100%; margin:0 auto -36px; box-shadow:0 6px 24px rgba(0,0,0,.18); overflow-x:auto; }
+    .mmy-ex-item { display:flex; align-items:center; gap:12px; padding:16px 26px; border:0; border-right:1px solid #e5e7eb; background:none; cursor:pointer; color:#2b2f38; white-space:nowrap; text-align:left; }
+    .mmy-ex-item:last-child { border-right:0; }
+    a.mmy-ex-item { text-decoration:none; }
+    .mmy-ex-item strong { display:block; font-size:15px; font-weight:600; }
+    .mmy-ex-item small { display:block; font-size:13px; color:#667085; }
+    .mmy-ex-item:hover strong { color:#008cff; }
+
+    #offersSection .mmy-viewall { color:#008cff; font-size:15px; letter-spacing:.3px; text-transform:uppercase; }
+    #offersSection .mmy-vabtn { background:#fff; color:#008cff; border:1px solid #e2e8f0; }
+    .mmy-tab.act { border:0; border-bottom:3px solid #008cff; border-radius:0; background:transparent; color:#008cff; font-weight:800; }
   }
 </style>
 </head>
 
 <body class="text-slate-800 antialiased flex flex-col min-h-screen justify-between">
+
+<!-- MakesMyYatra Mobile Side Menu -->
+<div id="mmyMenuOverlay" onclick="closeMMYMenu()" class="fixed inset-0 bg-black/50 z-[100] hidden"></div>
+
+<aside id="mmySideMenu" class="fixed top-0 left-0 h-full w-[86%] max-w-[390px] bg-white z-[101] shadow-2xl -translate-x-full transition-transform duration-300 overflow-y-auto">
+    <div class="p-6 pt-12">
+
+        <div class="rounded-2xl border border-amber-200 bg-[#fbf7e9] p-5 mb-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-xs font-bold text-amber-700">WELCOME TO</p>
+                    <h2 class="text-xl font-black text-slate-900">MAKESMY<span class="text-blue-600">YATRA</span></h2>
+                </div>
+                <button onclick="closeMMYMenu()" class="w-9 h-9 rounded-full bg-white border flex items-center justify-center" aria-label="Close menu">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <p class="text-sm text-slate-500 mt-2">Your journey, made easier.</p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 mb-6">
+            <a href="{% url 'track_booking' %}" class="border rounded-2xl p-3 flex flex-col items-center gap-2 text-center">
+                <i data-lucide="briefcase-business" class="w-7 h-7 text-blue-600"></i>
+                <span class="text-xs font-bold">My Trips</span>
+            </a>
+            <a href="{% url 'cab_list' %}" class="border rounded-2xl p-3 flex flex-col items-center gap-2 text-center">
+                <i data-lucide="car-front" class="w-7 h-7 text-emerald-600"></i>
+                <span class="text-xs font-bold">Cabs</span>
+            </a>
+            <a href="{% url 'support_request' %}" class="border rounded-2xl p-3 flex flex-col items-center gap-2 text-center">
+                <i data-lucide="headset" class="w-7 h-7 text-amber-600"></i>
+                <span class="text-xs font-bold">Support</span>
+            </a>
+        </div>
+
+        <div class="border rounded-2xl divide-y">
+            <a href="{% url 'index' %}" class="flex items-center gap-4 p-4 font-semibold text-slate-800">
+                <i data-lucide="house" class="text-blue-600"></i> Home
+                <i data-lucide="chevron-right" class="ml-auto text-slate-400"></i>
+            </a>
+            <a href="{% url 'track_booking' %}" class="flex items-center gap-4 p-4 font-semibold text-slate-800">
+                <i data-lucide="ticket" class="text-amber-600"></i> My Bookings
+                <i data-lucide="chevron-right" class="ml-auto text-slate-400"></i>
+            </a>
+            <a href="{% url 'support_request' %}" class="flex items-center gap-4 p-4 font-semibold text-slate-800">
+                <i data-lucide="message-circle" class="text-blue-600"></i> Customer Support
+                <i data-lucide="chevron-right" class="ml-auto text-slate-400"></i>
+            </a>
+            <a href="{% url 'partner_register' %}" class="flex items-center gap-4 p-4 font-semibold text-slate-800">
+                <i data-lucide="building-2" class="text-emerald-600"></i> List Your Property
+                <i data-lucide="chevron-right" class="ml-auto text-slate-400"></i>
+            </a>
+            <a href="{% url 'partner_login' %}" class="flex items-center gap-4 p-4 font-semibold text-slate-800">
+                <i data-lucide="key-round" class="text-amber-600"></i> Partner Login
+                <i data-lucide="chevron-right" class="ml-auto text-slate-400"></i>
+            </a>
+            <a href="{% url 'portal_login' %}" class="flex items-center gap-4 p-4 font-semibold text-slate-800">
+                <i data-lucide="lock" class="text-slate-700"></i> Admin Login
+                <i data-lucide="chevron-right" class="ml-auto text-slate-400"></i>
+            </a>
+        </div>
+
+        <p class="text-center text-xs text-slate-400 mt-6">MakesMyYatra · Travel Made Easier</p>
+    </div>
+</aside>
 
 <!-- ============ STICKY MINI NAV ============ -->
 <div id="stickyMiniNav" class="sticky-scroll-nav py-2.5 px-4 border-b border-slate-200">
@@ -106,6 +287,7 @@
       <span class="text-white font-bold">All India Verified Network:</span>
       <span class="hidden md:inline">Instant confirmation &amp; verified stays in top destinations across India.</span>
     </div>
+    {# TODO: replace with your real support number (both href and text) #}
     <a href="tel:+919816000000" class="text-slate-300 hover:text-white font-semibold flex items-center gap-1 transition text-[11px] whitespace-nowrap max-sm:mx-auto">
       <i data-lucide="phone-call" class="w-3.5 h-3.5 text-emerald-400"></i> 24x7 Traveler Support: +91 98160 XXXXX
     </a>
@@ -115,52 +297,57 @@
 <!-- ============ HERO ============ -->
 <header class="hero-bg relative pt-4 md:pt-6 pb-6 md:pb-28 px-4">
   <div class="max-w-[1200px] mx-auto">
-    <div class="flex items-center justify-between mb-4">
-      <a href="{% url 'index' %}" class="flex items-center gap-2 md:gap-2.5 min-w-0">
-        <div class="w-9 h-9 md:w-11 md:h-11 flex-shrink-0 rounded-xl md:rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 text-xl md:text-2xl">⛰️</div>
-        <div class="min-w-0">
-          <span class="text-lg md:text-2xl font-black tracking-tight text-white whitespace-nowrap">MAKES<span class="text-blue-400">MY</span>YATRA</span>
-          <span class="hidden md:block text-[9px] uppercase font-bold tracking-widest text-slate-300">Travel Super-App</span>
-        </div>
-      </a>
+    <!-- Mobile top bar (MMT style) -->
+    <div class="md:hidden flex items-center justify-between mb-4">
+      <div class="flex items-center gap-3">
+        <button type="button" id="openMobileMenu" onclick="openMMYMenu()" class="relative w-9 h-9 flex items-center justify-center text-slate-900" aria-label="Open menu" aria-expanded="false">
+          <i data-lucide="menu" class="w-7 h-7"></i><span class="mmy-dot"></span>
+        </button>
+        <a href="{% url 'index' %}" class="mmy-pill">⛰️ MakesMyYatra</a>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="{% url 'partner_register' %}" style="font-weight:900;color:#2878c8;font-size:15px">Partner</a>
+        <a href="{% url 'track_booking' %}" class="mmy-biz">My Trips</a>
+      </div>
+    </div>
+    <button type="button" onclick="focusMobileSearch()" class="mmy-ask md:hidden">
+      <span>Explore your next adventure in India…</span>
+      <span class="ic"><i data-lucide="search" class="w-5 h-5"></i></span>
+    </button>
 
-      <div class="flex items-center gap-3 flex-shrink-0">
-        <a href="{% url 'partner_register' %}" class="hidden md:flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-400/30 text-xs font-bold transition group">
-          <div class="w-7 h-7 rounded-xl bg-emerald-500/30 flex items-center justify-center"><i data-lucide="building-2" class="w-4 h-4 group-hover:scale-110 transition"></i></div>
-          <div>
-            <span class="block leading-tight text-white group-hover:text-emerald-200 transition">List Your Property</span>
-            <span class="text-[9px] font-medium">Grow your business across India</span>
-          </div>
-        </a>
-        <a href="{% url 'partner_login' %}" class="hidden lg:flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10 text-xs font-bold transition">
-          <i data-lucide="key-round" class="w-3.5 h-3.5 text-emerald-400"></i> Partner Login
-        </a>
-        <a href="{% url 'track_booking' %}" class="flex items-center gap-2 px-2 md:px-3.5 py-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/20 transition group" aria-label="My Trips">
-          <div class="w-7 h-7 rounded-xl bg-amber-400 text-slate-900 flex items-center justify-center"><i data-lucide="ticket" class="w-4 h-4"></i></div>
-          <div class="text-left hidden sm:block">
-            <span class="block text-xs font-black group-hover:text-amber-300 transition leading-tight">My Trips</span>
-            <span class="block text-[9px] text-slate-300 font-medium">Track Booking</span>
-          </div>
-        </a>
-        <a href="{% url 'portal_login' %}" class="hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-2xl border border-slate-700/80 bg-slate-900/60 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition">
-          <i data-lucide="lock" class="w-3.5 h-3.5 text-blue-400"></i> Admin
-        </a>
+    <!-- Desktop top bar (MMT style) -->
+    <div class="dt-top">
+      <div class="dt-left">
+        <button type="button" onclick="openMMYMenu()" class="dt-menu-btn" aria-label="Open menu"><i data-lucide="menu" class="w-6 h-6"></i></button>
+        <a href="{% url 'index' %}" class="dt-logo"><span class="mk">⛰️</span><span>MAKES<b>MY</b>YATRA</span></a>
+      </div>
+      <div class="dt-links">
+        <a href="{% url 'partner_register' %}" class="dt-link"><span class="ic"><i data-lucide="building-2" class="w-5 h-5"></i></span><span><strong>List Your Property</strong><small>Grow your business!</small></span></a>
+        <a href="{% url 'track_booking' %}" class="dt-link"><span class="ic"><i data-lucide="briefcase" class="w-5 h-5"></i></span><span><strong>My Trips</strong><small>Manage your bookings</small></span></a>
+        <a href="{% url 'support_request' %}" class="dt-link"><span class="ic"><i data-lucide="headset" class="w-5 h-5"></i></span><span><strong>Support</strong><small>24x7 traveller help</small></span></a>
+        <a href="{% url 'partner_login' %}" class="dt-login"><i data-lucide="key-round" class="w-4 h-4"></i> Partner Login</a>
+        <span class="dt-lang">INR &nbsp;|&nbsp; English</span>
       </div>
     </div>
 
-    <!-- Mobile only: MMT-style service tiles (rendered from TABS) -->
+    <!-- Mobile only: service tiles (rendered from TABS) -->
     <div class="md:hidden mb-4 space-y-3">
       <div id="mTopTiles" class="grid grid-cols-4 gap-2"></div>
-      <div id="mGridTiles" class="grid grid-cols-4 gap-y-2 gap-x-1 bg-white rounded-3xl p-3 shadow-lg"></div>
+      <div>
+        <div id="mGridTiles" class="grid grid-cols-4 gap-y-4 gap-x-1"></div>
+        <div class="mmy-notch"><i data-lucide="chevron-up" class="w-5 h-5"></i></div>
+      </div>
     </div>
 
     <!-- Desktop only: floating pill nav (rendered from TABS) -->
     <div class="mmt-nav-pill-wrapper">
+      <button type="button" id="navPrev" class="nav-arrow" aria-label="Previous"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
+      <button type="button" id="navNext" class="nav-arrow" aria-label="Next"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
       <nav id="pillNav" class="px-3 py-1 flex items-center justify-start overflow-x-auto no-scrollbar gap-1"></nav>
     </div>
 
     <!-- ============ SEARCH CARD ============ -->
-    <div id="mainSearchCard" class="mmt-search-card">
+    <div id="mainSearchCard" class="mmt-search-card hidden md:block">
 
       <!-- Hotels / Homestays -->
       <form id="hotelsSearchPanel" action="{% url 'index' %}" method="GET">
@@ -178,7 +365,7 @@
             <span class="label">City, Property Name Or Location</span>
             <input type="text" name="city" id="citySearchInput" autocomplete="off"
                    placeholder="Where do you want to travel in India?"
-                   value="{% if selected_city and selected_city != 'All' %}{{ selected_city }}{% endif %}"
+                   value="{{ selected_city|default:'' }}"
                    class="w-full bg-transparent font-black text-lg sm:text-xl text-slate-900 outline-none placeholder:text-slate-400 placeholder:font-normal mt-0.5"
                    onfocus="showCitySuggestions()" oninput="filterCitySuggestions()">
             <span class="block text-[11px] text-slate-400 truncate">Search city, state or tourist spot</span>
@@ -189,20 +376,18 @@
             </div>
           </div>
 
-          <!-- Dates -->
+          <!-- Check-In -->
           <div class="md:col-span-2 mmt-input-col">
             <label class="label" for="searchCheckIn">Check-In</label>
-            <div class="date-wrap">
-              <input type="date" name="check_in" id="searchCheckIn" value="{{ request.GET.check_in }}" class="w-full bg-transparent font-black text-sm text-slate-900 outline-none mt-1 cursor-pointer">
-              <span class="date-ph">Select date</span>
-            </div>
+            <input type="date" name="check_in" id="searchCheckIn" value="{{ request.GET.check_in|default:'' }}"
+                   class="w-full bg-transparent font-bold text-base text-slate-900 outline-none cursor-pointer">
           </div>
+
+          <!-- Check-Out -->
           <div class="md:col-span-2 mmt-input-col">
             <label class="label" for="searchCheckOut">Check-Out</label>
-            <div class="date-wrap">
-              <input type="date" name="check_out" id="searchCheckOut" value="{{ request.GET.check_out }}" class="w-full bg-transparent font-black text-sm text-slate-900 outline-none mt-1 cursor-pointer">
-              <span class="date-ph">Select date</span>
-            </div>
+            <input type="date" name="check_out" id="searchCheckOut" value="{{ request.GET.check_out|default:'' }}"
+                   class="w-full bg-transparent font-bold text-base text-slate-900 outline-none cursor-pointer">
           </div>
 
           <!-- Rooms & Guests -->
@@ -232,16 +417,18 @@
             </div>
           </div>
 
-          <!-- Price -->
+          <!-- Price (selection is kept after search) -->
           <div class="md:col-span-2 mmt-input-col">
             <label class="label" for="priceRangeSelect">Price Per Night</label>
+            {% with pr=request.GET.price_range %}
             <select name="price_range" id="priceRangeSelect" class="w-full bg-transparent font-black text-xs text-slate-900 outline-none mt-1 cursor-pointer">
-              <option value="">All Budgets</option>
-              <option value="0-1500">₹0 - ₹1,500</option>
-              <option value="1500-2500">₹1,500 - ₹2,500</option>
-              <option value="2500-5000">₹2,500 - ₹5,000</option>
-              <option value="5000+">₹5,000 &amp; Above</option>
+              <option value="" {% if not pr %}selected{% endif %}>All Budgets</option>
+              <option value="0-1500" {% if pr == '0-1500' %}selected{% endif %}>₹0 - ₹1,500</option>
+              <option value="1500-2500" {% if pr == '1500-2500' %}selected{% endif %}>₹1,500 - ₹2,500</option>
+              <option value="2500-5000" {% if pr == '2500-5000' %}selected{% endif %}>₹2,500 - ₹5,000</option>
+              <option value="5000+" {% if pr == '5000+' %}selected{% endif %}>₹5,000 &amp; Above</option>
             </select>
+            {% endwith %}
           </div>
         </div>
 
@@ -262,6 +449,7 @@
             <span>Book Cabs Now</span>
             <i data-lucide="arrow-right" class="w-4 h-4"></i>
           </a>
+          <div><button type="button" onclick="switchTab('hotels')" class="text-xs font-bold text-blue-600 hover:underline">← Go back to Hotels &amp; Cabs</button></div>
         </div>
       </div>
 
@@ -272,6 +460,7 @@
           <h3 id="packagesHeading" class="text-lg font-black text-slate-900"></h3>
           <p id="packagesDesc" class="text-xs text-slate-500"></p>
           <span class="inline-block px-3.5 py-1.5 bg-blue-50 text-blue-800 text-[11px] font-bold rounded-lg border border-blue-200">🚀 Coming Soon in Next Phase</span>
+          <div><button type="button" onclick="switchTab('hotels')" class="text-xs font-bold text-blue-600 hover:underline">← Go back to Hotels &amp; Cabs</button></div>
         </div>
       </div>
 
@@ -282,48 +471,53 @@
           <h3 id="dummyTitle" class="text-lg font-black text-slate-900"></h3>
           <p id="dummyDesc" class="text-xs text-slate-500"></p>
           <span class="inline-block px-3.5 py-1.5 bg-amber-50 text-amber-800 text-[11px] font-bold rounded-lg border border-amber-200">🚀 Coming Soon in Next Phase</span>
-          <div><button type="button" onclick="switchTab('hotels')" class="text-xs font-bold text-blue-600 hover:underline">← Go back to Hotels &amp; Stays</button></div>
+          <div><button type="button" onclick="switchTab('hotels')" class="text-xs font-bold text-blue-600 hover:underline">← Go back to Hotels &amp; Cabs</button></div>
         </div>
       </div>
+    </div>
+    <!-- Desktop: Explore More bar -->
+    <div class="mmy-explore">
+      <div class="mmy-explore-title"><i data-lucide="chevron-down" class="w-4 h-4"></i> Explore More <i data-lucide="chevron-down" class="w-4 h-4"></i></div>
+      <div id="exploreBar" class="mmy-explore-bar"></div>
     </div>
   </div>
 </header>
 
 <!-- ============ OFFERS ============ -->
-<section id="offersSection" class="max-w-[1200px] mx-auto px-4 mt-8 mb-6 w-full scroll-mt-4">
-  <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-    <div class="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-slate-100 gap-4">
-      <div class="flex items-center gap-6">
-        <h3 class="text-2xl font-black text-slate-900">Offers</h3>
-        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar text-xs font-bold">
-          <button type="button" class="px-3 py-1 rounded-full bg-slate-900 text-white">All Offers</button>
-          <button type="button" onclick="mobileTab('flights')" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Flights</button>
-          <button type="button" onclick="mobileTab('hotels')" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Hotels</button>
-          <button type="button" onclick="mobileTab('trains')" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Trains</button>
-          <button type="button" onclick="mobileTab('outstation-cabs')" class="px-3 py-1 rounded-full text-slate-600 hover:bg-slate-100">Cabs</button>
-        </div>
-      </div>
+<section id="offersSection" class="max-w-[1200px] mx-auto px-4 mt-8 md:mt-16 mb-6 w-full scroll-mt-4">
+  <div class="bg-white rounded-2xl p-0 md:p-6 md:shadow-sm md:border md:border-slate-100">
+    <div class="flex items-center justify-between">
+      <h3 class="text-3xl md:text-4xl font-black text-slate-900">Offers</h3>
+      <a href="#offerCards" class="mmy-viewall flex items-center gap-2 font-extrabold text-lg md:text-sm">View All
+        <span class="mmy-vabtn w-7 h-7 rounded-full flex items-center justify-center"><i data-lucide="chevron-right" class="w-4 h-4"></i></span></a>
     </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-5">
-      <div class="border border-slate-200 rounded-2xl p-4 flex gap-3 hover:shadow-md transition bg-gradient-to-tr from-amber-50/40 to-white">
+    <div class="flex items-center overflow-x-auto no-scrollbar mt-3 border-b-2 border-slate-200">
+      <button type="button" class="mmy-tab act">Trending</button>
+      <button type="button" onclick="mobileTab('flights')" class="mmy-tab">Flights</button>
+      <button type="button" onclick="mobileTab('hotels')" class="mmy-tab">Hotels</button>
+      <button type="button" onclick="mobileTab('villas')" class="mmy-tab">Homestays</button>
+      <button type="button" onclick="mobileTab('outstation-cabs')" class="mmy-tab">Cabs</button>
+    </div>
+    <div id="offerCards" class="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 overflow-x-auto md:overflow-visible no-scrollbar snap-x">
+      <div class="min-w-[80%] md:min-w-0 snap-start border border-slate-200 rounded-2xl p-4 flex gap-3 hover:shadow-md transition bg-gradient-to-tr from-amber-50/40 to-white">
         <span class="text-3xl">🎁</span>
         <div><span class="text-[10px] font-black uppercase text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Coupon Deal</span>
           <h4 class="text-sm font-bold text-slate-900 mt-1">Flat Discount / Special Offers</h4>
           <p class="text-xs text-slate-500 mt-0.5">Use Active Code: <b>WELCOME10</b></p></div>
       </div>
-      <div class="border border-slate-200 rounded-2xl p-4 flex gap-3 hover:shadow-md transition bg-gradient-to-tr from-blue-50/40 to-white">
+      <div class="min-w-[80%] md:min-w-0 snap-start border border-slate-200 rounded-2xl p-4 flex gap-3 hover:shadow-md transition bg-gradient-to-tr from-blue-50/40 to-white">
         <span class="text-3xl">📅</span>
         <div><span class="text-[10px] font-black uppercase text-blue-600 bg-blue-50 px-2 py-0.5 rounded">Advance Savings</span>
           <h4 class="text-sm font-bold text-slate-900 mt-1">EARLY BIRD: Flat 10% OFF!</h4>
           <p class="text-xs text-slate-500 mt-0.5">Auto-applied for bookings made 7+ days ahead</p></div>
       </div>
-      <div class="border border-slate-200 rounded-2xl p-4 flex gap-3 hover:shadow-md transition bg-gradient-to-tr from-emerald-50/40 to-white">
+      <div class="min-w-[80%] md:min-w-0 snap-start border border-slate-200 rounded-2xl p-4 flex gap-3 hover:shadow-md transition bg-gradient-to-tr from-emerald-50/40 to-white">
         <span class="text-3xl">🏔️</span>
         <div><span class="text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Long Stay Deal</span>
           <h4 class="text-sm font-bold text-slate-900 mt-1">LONG VACATION: Flat 15% OFF!</h4>
           <p class="text-xs text-slate-500 mt-0.5">Auto-applied on reservations of 3+ nights</p></div>
       </div>
-      <a href="{% url 'cab_list' %}" class="border border-slate-200 rounded-2xl p-4 flex gap-3 hover:shadow-md hover:border-purple-300 transition bg-gradient-to-tr from-purple-50/40 to-white group">
+      <a href="{% url 'cab_list' %}" class="min-w-[80%] md:min-w-0 snap-start border border-slate-200 rounded-2xl p-4 flex gap-3 hover:shadow-md hover:border-purple-300 transition bg-gradient-to-tr from-purple-50/40 to-white group">
         <span class="text-3xl">🚗</span>
         <div>
           <span class="text-[10px] font-black uppercase text-purple-600 bg-purple-50 px-2 py-0.5 rounded">Cabs Now Live</span>
@@ -363,7 +557,7 @@
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {% for hotel in hotels %}
-        <article class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group">
+    <article class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group">
       <div class="relative aspect-[4/3] bg-slate-100 overflow-hidden">
         <img src="{{ hotel.cover_image|default:'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80' }}"
              alt="{{ hotel.name }}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
@@ -382,7 +576,8 @@
         <div>
           <div class="flex items-center justify-between mb-1">
             <span class="uppercase tracking-wider font-bold text-[10px] text-blue-600">{{ hotel.category }}</span>
-            <button type="button" data-id="{{ hotel.id }}" data-name="{{ hotel.name }}" onclick="openReviewModal(this)" class="text-[11px] font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1 transition">
+            {# NOTE: change 'submit_review' to the real URL name of your review-submit view #}
+            <button type="button" data-id="{{ hotel.id }}" data-name="{{ hotel.name }}" data-url="{% url 'submit_review' hotel.id %}" onclick="openReviewModal(this)" class="text-[11px] font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1 transition">
               <i data-lucide="message-square" class="w-3.5 h-3.5"></i> Add Review
             </button>
           </div>
@@ -409,7 +604,7 @@
             {% if hotel.has_pool %}<span class="chip bg-cyan-50 text-cyan-800 border-cyan-200"><i data-lucide="waves" class="w-3 h-3"></i> Swimming Pool</span>{% endif %}
           </div>
 
-          {# NOTE: pass only approved reviews from the view (Prefetch) #}
+          {# NOTE: in the view use prefetch_related('reviews', 'room_types') to avoid N+1 queries #}
           {% with rev=hotel.reviews.all.0 %}
           {% if rev %}
           <div class="mt-3.5 pt-3 border-t border-slate-100">
@@ -624,11 +819,12 @@
   <button type="button" onclick="document.getElementById('offersSection').scrollIntoView({behavior:'smooth'})"><i data-lucide="percent" class="w-6 h-6"></i>Offers</button>
   <a href="{% url 'cab_list' %}"><i data-lucide="car" class="w-6 h-6"></i>Cabs</a>
 </nav>
+<a href="{% url 'support_request' %}" class="mmy-fab md:hidden" aria-label="Ask for help"><i data-lucide="headset" class="w-6 h-6"></i>Ask MMY</a>
 
 <script>
 /* ================= CONFIG ================= */
 const SURGE_PERCENT = 20;   // Fri & Sat nights
-// GST on hotel rooms (per room, per night, on declared tariff): up to 1000 = 0%, 1001-7500 = 5%, above 7500 = 18% 
+// GST on hotel rooms (per room, per night, on declared tariff): up to 1000 = 0%, 1001-7500 = 5%, above 7500 = 18%
 // (rates in force since 22 Sep 2025 - confirm with your CA). Final calculation is done on the server (pricing.py).
 function gstRateFor(nightRate) { return nightRate <= 1000 ? 0 : (nightRate <= 7500 ? 0.05 : 0.18); }
 const DEFAULT_RATE = 1850;
@@ -639,12 +835,12 @@ const inr = (n) => '₹' + Math.round(n).toLocaleString('en-IN');
 const TABS = [
   ['flights','Flights','Flights','plane','Domestic flights connecting metros, hill stations and tourist cities across India.','Domestic Flights Booking'],
   ['hotels','Hotels','Hotels','hotel','Book verified hotels, resorts, heritage stays and budget homestays across India.','Hotels, Resorts & Heritage Stays'],
-  ['villas','Villas & Homestays','Homestays','home','Explore private villas, cozy homestays and scenic retreats across India.','Villas & Homestays in India'],
   ['packages','Holiday Packages','Holidays','palmtree','Explore curated holiday packages, sightseeing tours and customizable trips for families, couples and friends.','India Holiday Packages'],
-  ['trains','Trains','Trains','train-track','Train reservations and railway connectivity across India, including heritage and toy trains.','Train Bookings'],
-  ['buses','Buses','Buses','bus','State transport and private Volvo buses connecting cities across India.','Bus Bookings'],
+  ['outstation-cabs','Outstation Cabs','Outstation Cabs','car-front','Book reliable one-way and round-trip cabs for intercity travel, sightseeing and long journeys.','Outstation Taxi Services'],
+  ['villas','Villas & Homestays','Homestays','house','Explore private villas, cozy homestays and scenic retreats across India.','Villas & Homestays in India'],
+  ['trains','Trains','Trains','train-front','Train reservations and railway connectivity across India, including heritage and toy trains.','Train Bookings'],
+  ['buses','Buses','Buses','bus-front','State transport and private Volvo buses connecting cities across India.','Bus Bookings'],
   ['airport-cabs','Airport Cabs','Airport Cabs','car-taxi-front','Book convenient airport transfers to hotels, tourist destinations and major cities across India.','Airport Pickup & Drop Cabs'],
-  ['outstation-cabs','Outstation Cabs','Outstation Cabs','car','Book reliable one-way and round-trip cabs for intercity travel, sightseeing and long journeys.','Outstation Taxi Services'],
   ['hourly','Hourly Stays','Hourly Stays','clock','Short-duration transit stays and hourly rooms near airports, stations and city centres.','Hourly Stays & Day Rooms'],
   ['tours','Tours & Attractions','Tours','compass','Discover sightseeing tours, adventure activities, cultural experiences and popular attractions across India.','Tours & Local Attractions'],
   ['visa','Visa','Visa','stamp','Get guidance on permits for restricted areas, along with international visa and travel documentation.','Permits & Visa Desk'],
@@ -652,12 +848,44 @@ const TABS = [
   ['insurance','Travel Insurance','Insurance','shield-check','Explore travel insurance options for trip interruptions, medical emergencies and eligible adventure activities.','Travel Insurance'],
   ['getaways','Nearby Getaways','Getaways','map','Plan weekend retreats, scenic escapes and offbeat trips near your city.','Curated Nearby Getaways'],
   ['giftcards','Gift Cards','Gift Cards','gift','Gift memorable holidays, hotel stays and travel experiences to your family and friends.','MakesMyYatra Gift Cards'],
+  ['flightstatus','Flight Status','Flight Status','plane-takeoff','Check live status of domestic flights.','Flight Status'],
   ['pnr','PNR Status','PNR Status','receipt','Check your railway ticket booking status and access available train journey information.','Railway PNR Status Tracker'],
 ];
 
-// Mobile tiles: same order as MakeMyTrip's phone home screen
-const M_TOP = ['flights','hotels','trains','packages'];
-const M_GRID = ['airport-cabs','villas','buses','outstation-cabs','tours','hourly','forex','visa','insurance','pnr','giftcards','getaways'];
+// Primary mobile modules: Flights, Hotels, Holiday Packages, Outstation Cabs
+// Custom icons (Lucide has no bullet-train side view). Same stroke style as Lucide, so colour/size come from CSS.
+const CUSTOM_ICONS = {
+  trains: (cls) => `<svg class="${cls}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M2.5 16.5v-2c0-1.3.6-2.4 1.7-3.2L8 8.6c.6-.4 1.2-.6 1.9-.6H19a2.5 2.5 0 0 1 2.5 2.5v6H2.5z"/>
+    <path d="M7 12.2l2-3.6M9 12.2h12.5M14 8v4.2M18.5 8v4.2"/>
+    <path d="M2.5 16.5h19"/><path d="M1.5 20h21"/>
+    <circle cx="7" cy="18.3" r=".9"/><circle cx="12" cy="18.3" r=".9"/><circle cx="17" cy="18.3" r=".9"/>
+    <path d="M4 14.3h1.2"/></svg>`
+};
+function iconHtml(t, cls) { const c = CUSTOM_ICONS[t[0]]; return c ? c(cls) : `<i data-lucide="${t[3]}" class="${cls}"></i>`; }
+
+// Desktop category nav (MMT style) + "Explore More" bar
+const D_TABS = ['flights','hotels','villas','packages','trains','buses','outstation-cabs','tours','visa','forex','insurance','airport-cabs','hourly','getaways','giftcards','pnr'];
+const D_LABELS = { villas:'Villas & Homestays', 'outstation-cabs':'Cabs', tours:'Tours & Attractions', forex:'Forex Card & Currency', insurance:'Travel Insurance' };
+// [tab key (or ''), icon, title, subtitle, link (optional)]
+const EXPLORE = [
+  ['flightstatus','plane-takeoff','Flight Status','Live domestic flight status',''],
+  ['','building-2','List Your Property','Grow your business',"{% url 'partner_register' %}"],
+  ['','briefcase','Track Booking','Find booking by ID',"{% url 'track_booking' %}"],
+  ['','headset','Traveller Support','24x7 help desk',"{% url 'support_request' %}"],
+  ['','car-front','Book Cabs','Verified drivers',"{% url 'cab_list' %}"],
+];
+function renderExplore() {
+  $('exploreBar').innerHTML = EXPLORE.map(([k, ic, t, sub, href]) => {
+    const inner = `<i data-lucide="${ic}" class="w-7 h-7" style="color:#3479bd"></i><span><strong>${t}</strong><small>${sub}</small></span>`;
+    return href ? `<a href="${href}" class="mmy-ex-item">${inner}</a>`
+                : `<button type="button" class="mmy-ex-item" onclick="mobileTab('${k}')">${inner}</button>`;
+  }).join('');
+}
+const M_TOP = ['flights','hotels','packages','trains'];
+const M_GRID = ['airport-cabs','villas','outstation-cabs','forex','tours','hourly','visa','insurance','getaways','giftcards','flightstatus','pnr'];
+// Mobile tile labels (MMT style, wraps on 2 lines)
+const M_LABELS = { trains:'Trains/ Bus', 'airport-cabs':'Airport Cabs &amp; Rentals', villas:'Villas &amp; Homestays', 'outstation-cabs':'Outstation Cabs', forex:'Forex Card &amp; Currency', tours:'Tours &amp; Attractions', getaways:'Nearby Getaways' };
 
 // [value, label, hint]  (value = city name sent to your search view)
 const CITIES = [
@@ -704,8 +932,10 @@ let guests = { room: 1, adult: 2, child: 0 };
 
 /* ================= RENDER STATIC UI FROM CONFIG ================= */
 function renderNavs() {
-  $('pillNav').innerHTML = TABS.map(([k, label, , icon]) =>
-    `<button type="button" data-tab="${k}" onclick="switchTab('${k}')" class="mmt-nav-item"><i data-lucide="${icon}" class="w-5 h-5 mb-0.5"></i><span class="text-[11px]">${label}</span></button>`).join('');
+  $('pillNav').innerHTML = D_TABS.map(k => {
+    const t = TABS.find(x => x[0] === k);
+    return `<button type="button" data-tab="${k}" onclick="switchTab('${k}')" class="mmt-nav-item">${iconHtml(t, '')}<span>${D_LABELS[k] || t[1]}</span></button>`;
+  }).join('');
   $('stickyTabs').innerHTML = TABS.map(([k, , short]) =>
     `<button type="button" data-tab="${k}" onclick="switchTab('${k}')" class="sticky-tab-btn px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 whitespace-nowrap">${short}</button>`).join('');
 }
@@ -713,8 +943,8 @@ function renderNavs() {
 function tileHtml(key, cls) {
   const t = TABS.find(x => x[0] === key);
   return `<button type="button" data-mtab="${key}" onclick="mobileTab('${key}')" class="m-tile ${cls}">
-    <span class="m-ico"><i data-lucide="${t[3]}" class="w-6 h-6"></i></span>
-    <span class="m-lbl">${t[1]}</span></button>`;
+    <span class="m-ico">${iconHtml(t, 'w-6 h-6')}</span>
+    <span class="m-lbl">${M_LABELS[key] || t[1]}</span></button>`;
 }
 function renderMobileTiles() {
   $('mTopTiles').innerHTML = M_TOP.map(k => tileHtml(k, 'm-top')).join('');
@@ -761,13 +991,6 @@ function formatDateStr(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-// Shows "Select date" on phones while a date box is empty
-function syncDatePlaceholders() {
-  document.querySelectorAll('.date-wrap').forEach(w => {
-    w.classList.toggle('has-val', !!w.querySelector('input').value);
-  });
-}
-
 /* ================= CITY SEARCH ================= */
 function showCitySuggestions() { $('citySuggestionsDropdown').classList.remove('hidden'); }
 function selectCity(name) {
@@ -806,7 +1029,7 @@ document.addEventListener('click', (e) => {
   if (!gm.contains(e.target)) gm.classList.add('hidden');
 });
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { closeBookingModal(); closeReviewModal(); }
+  if (e.key === 'Escape') { closeBookingModal(); closeReviewModal(); closeMMYMenu(); }
 });
 
 /* ================= PRICING (PREVIEW ONLY — server must recompute) ================= */
@@ -1023,7 +1246,7 @@ function closeBookingModal() {
 
 /* ================= REVIEW MODAL ================= */
 function openReviewModal(btn) {
-  $('reviewSubmitForm').action = `/hotel/${btn.dataset.id}/review/submit/`;
+  $('reviewSubmitForm').action = btn.dataset.url;   
   $('reviewHotelName').innerText = btn.dataset.name;
   $('reviewModal').classList.add('open');
 }
@@ -1037,8 +1260,13 @@ function scrollToSearchCard() {
 
 // Phone: tap a tile -> select that service and jump to its form
 function mobileTab(tab) {
+  $('mainSearchCard').classList.remove('hidden');   // card stays hidden on phone until a tile is tapped
   switchTab(tab);
   scrollToSearchCard();
+}
+function focusMobileSearch() {
+  mobileTab('hotels');
+  setTimeout(() => $('citySearchInput').focus(), 350);
 }
 
 function switchTab(tab) {
@@ -1079,8 +1307,23 @@ window.addEventListener('scroll', () => {
   $('stickyMiniNav').classList.toggle('visible', $('mainSearchCard').getBoundingClientRect().top < 0);
 }, { passive: true });
 
+/* ================= MOBILE SIDE MENU ================= */
+function openMMYMenu() {
+  $('mmySideMenu').classList.remove('-translate-x-full');
+  $('mmyMenuOverlay').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  const b = $('openMobileMenu'); if (b) b.setAttribute('aria-expanded', 'true');
+}
+function closeMMYMenu() {
+  $('mmySideMenu').classList.add('-translate-x-full');
+  $('mmyMenuOverlay').classList.add('hidden');
+  document.body.style.overflow = '';
+  const b = $('openMobileMenu'); if (b) b.setAttribute('aria-expanded', 'false');
+}
+
 /* ================= INIT ================= */
 renderNavs();
+renderExplore();
 renderMobileTiles();
 renderCities();
 renderTrending();
@@ -1091,17 +1334,36 @@ renderCounters();
   $('searchCheckIn').min = today;
   $('searchCheckOut').min = today;
   $('searchCheckIn').addEventListener('change', (e) => {
-    $('searchCheckOut').min = e.target.value;
-    if ($('searchCheckOut').value && $('searchCheckOut').value <= e.target.value) $('searchCheckOut').value = '';
-    syncDatePlaceholders();
+    const checkIn = e.target.value;
+    if (!checkIn) return;
+    const nextDay = new Date(checkIn + 'T00:00:00');
+    nextDay.setDate(nextDay.getDate() + 1);
+    const minCheckout = formatDateStr(nextDay);
+    const checkout = $('searchCheckOut');
+    checkout.min = minCheckout;
+    if (checkout.value && checkout.value < minCheckout) checkout.value = '';
   });
-  $('searchCheckOut').addEventListener('change', syncDatePlaceholders);
-  $('searchCheckIn').addEventListener('input', syncDatePlaceholders);
-  $('searchCheckOut').addEventListener('input', syncDatePlaceholders);
-  syncDatePlaceholders();
 })();
 switchTab('hotels');
+// show the search card on phones when the page is a search result
+if (/[?&](city|check_in|price_range)=/.test(location.search)) $('mainSearchCard').classList.remove('hidden');
 lucide.createIcons();
+
+/* ===== Desktop nav arrows (shown only when tabs overflow) ===== */
+(function () {
+  const nav = $('pillNav'), prev = $('navPrev'), next = $('navNext');
+  function update() {
+    const over = nav.scrollWidth > nav.clientWidth + 4;
+    prev.classList.toggle('show', over && nav.scrollLeft > 5);
+    next.classList.toggle('show', over && nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 5);
+  }
+  prev.addEventListener('click', () => nav.scrollBy({ left: -320, behavior: 'smooth' }));
+  next.addEventListener('click', () => nav.scrollBy({ left: 320, behavior: 'smooth' }));
+  nav.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  update(); setTimeout(update, 400);
+})();
 </script>
+
 </body>
 </html>
